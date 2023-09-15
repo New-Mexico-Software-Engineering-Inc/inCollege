@@ -1,6 +1,6 @@
-# In College App Manager
+# inCollege
 
-A simple Python application that manages user logins, account creations, and other functionalities for the "In College App."
+A simple Python application that manages use logins, account creations, and other functionalities for the "inCollege Application" Written by New Mexico Software Engineering, Inc.
 
 ## Features
 
