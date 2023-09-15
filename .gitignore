@@ -1,0 +1,5 @@
+# Environment Files
+*Env/
+
+# SQLite Files
+*.db
