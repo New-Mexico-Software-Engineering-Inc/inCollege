@@ -12,9 +12,7 @@ A simple Python application that manages user logins, account creations, and oth
 ## Requirements
 
 - Python 3.x
-- SQLite
-- bcrypt
-- password_strength
+- venv
 
 ## Installation
 
