@@ -63,17 +63,17 @@ class inCollegeAppManager:
                 for i, row in enumerate(self._cursor.fetchall()):
                     skill_name, long_description = row
                     print(f"\nSkill {i+1}: {skill_name}, Description: {long_description}")
-                input("\nPlease Select an Skill:")
-                print('Under Construction')
+                print('q: Quit')
+                if input("\nPlease Select an Skill:").lower() != 'q': print("\nUnder Construction\n")
             def __SearchJob():
-                print("Under Construction")
+                print("\nUnder Construction\n")
             def __ConnectWUser():
-                print('Under Construction')
+                print("\nUnder Construction\n")
 
             """
             TODO: Change this to work with main loop, implement "client/host connection" state transition logic.
             """
-            options = {2: __SearchJob, 3:__LearnSkill, 1:__ConnectWUser}
+            options = {1: __SearchJob, 3:__LearnSkill, 2:__ConnectWUser}
             while True:
                 print("\n1. Search for Job")
                 print("2. Find Someone you Know")
@@ -95,7 +95,7 @@ class inCollegeAppManager:
                     print("You have successfully logged in.")
                     additional_options(_acc)
                 else:
-                    print('Account does not Exist')
+                    print('"Incorrect username / password, please try again')
                     
         def _create_account_procedure():
             try:
