@@ -4,6 +4,8 @@ import os
 import bcrypt
 from password_strength import PasswordPolicy
 
+
+
 class inCollegeAppManager:
     """
         Manages the inCollege App's database, login, and account creation.
@@ -104,6 +106,8 @@ class inCollegeAppManager:
                 _acc = self._create_account(username=username, password=password)
                 if _acc is not None:
                     print('Successfully Created Account.')
+                    #name_first = input("Enter your first name")
+                    name_last = input("Enter your last name")
                 else:
                     print('Failed At Creating Account.')
             except Exception as e:
