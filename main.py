@@ -19,7 +19,9 @@ class inCollegeAppManager:
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS accounts (
             username TEXT PRIMARY KEY,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL
         );
         ''')
         cursor.execute('''
@@ -103,11 +105,13 @@ class inCollegeAppManager:
             try:
                 username = input("Enter unique username: \n")
                 password = input("Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n")
-                _acc = self._create_account(username=username, password=password)
+                name_first = input("Enter your first name: \n")
+                name_last = input("Enter your last name: \n")
+                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last)
                 if _acc is not None:
+
                     print('Successfully Created Account.')
-                    #name_first = input("Enter your first name")
-                    name_last = input("Enter your last name")
+
                 else:
                     print('Failed At Creating Account.')
             except Exception as e:
@@ -131,7 +135,7 @@ class inCollegeAppManager:
         print('Goodbye!')    
         exit(0)
         
-    def _create_account(self, username, password) -> Any:
+    def _create_account(self, username, password, first_name, last_name) -> Any:
         """
             Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
         """
@@ -144,7 +148,7 @@ class inCollegeAppManager:
         if not valid_password(password):
                 raise Exception("Invalid password. Please ensure it meets the requirements.")
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        self._cursor.execute('INSERT INTO accounts (username, password) VALUES (?, ?);', (username,   hashed_password))
+        self._cursor.execute('INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);', (username, hashed_password, first_name, last_name))
         self._db.commit()
         return self.__login(username=username, password=password)
 
