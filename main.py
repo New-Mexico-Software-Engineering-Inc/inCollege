@@ -51,7 +51,6 @@ class inCollegeAppManager:
         self._PasswordPolicy = PasswordPolicy.from_names(
             length = 8, uppercase = 1, numbers = 1, special = 1,
         )
-        
 
     def Run(self, ): # Can only Serve One Client at a time :(
         """Main loop for user interaction."""
@@ -59,6 +58,7 @@ class inCollegeAppManager:
             print("\n1. Log in")
             print("2. Create a new account")
             print("3. Exit")
+            print("4. Play Video")
         
         def additional_options(user):
             def __LearnSkill():
@@ -87,29 +87,45 @@ class inCollegeAppManager:
                 if option == 4: break
                 run_option = options.get(option, None)
                 if run_option: run_option()
-                
-            
-            
-        def _login_procedure(): 
-            
-                username = input("Enter your username: ")
-                password = input("Enter your password: ")
-                _acc = self.__login(username=username, password=password)
-                if _acc is not None:
-                    print("You have successfully logged in.")
-                    additional_options(_acc)
-                else:
-                    print('"Incorrect username / password, please try again')
+
+        def _login_procedure():
+            print("(Type 'exit' at any point to leave account creation)")
+            username = input("Enter your username: ")
+            if username == "exit":
+                print("returning to main menu")
+                return
+            password = input("Enter your password: ")
+            if password == "exit":
+                print("returning to main menu")
+                return
+            _acc = self.__login(username=username, password=password)
+            if _acc is not None:
+                print("You have successfully logged in.")
+                additional_options(_acc)
+            else:
+                print('"Incorrect username / password, please try again')
                     
         def _create_account_procedure():
             try:
+                print("(Type 'exit' at any point to leave account creation)")
                 username = input("Enter unique username: \n")
+                if username == "exit":
+                    print("returning to main menu")
+                    return
                 password = input("Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n")
+                if password == "exit":
+                    print("returning to main menu")
+                    return
                 name_first = input("Enter your first name: \n")
+                if name_first == "exit":
+                    print("returning to main menu")
+                    return
                 name_last = input("Enter your last name: \n")
+                if name_last == "exit":
+                    print("returning to main menu")
+                    return
                 _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last)
                 if _acc is not None:
-
                     print('Successfully Created Account.')
 
                 else:
@@ -126,6 +142,8 @@ class inCollegeAppManager:
                 _create_account_procedure()
             elif choice == "3":
                 self._Terminate()
+            elif choice == "4":
+                print("Video is playing")
             else:
                 print("Invalid choice. Please try again.")
     
@@ -151,7 +169,6 @@ class inCollegeAppManager:
         self._cursor.execute('INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);', (username, hashed_password, first_name, last_name))
         self._db.commit()
         return self.__login(username=username, password=password)
-
 
     def __login(self, username, password):
         user = self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username,)).fetchone()
