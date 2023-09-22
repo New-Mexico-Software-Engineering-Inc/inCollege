@@ -192,9 +192,12 @@ class inCollegeAppManager:
         user = self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username,)).fetchone()
         return user if user and bcrypt.checkpw(password.encode('utf-8'), user[1]) else None
 
-
-
-
+    def _is_person_in_database(self, first_name, last_name):
+        user = self._cursor.execute("SELECT * FROM accounts WHERE first_name=? AND last_name =?;", (first_name,last_name)).fetchone()
+        if user:
+            return True
+        else:
+            return False   
 
 # Introduction
 def main():
