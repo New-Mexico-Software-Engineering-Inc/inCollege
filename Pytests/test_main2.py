@@ -57,4 +57,32 @@ def test_demoVideo(monkeypatch, capsys):
     # the video playing message must appear
     assert expectedOut2 in capture.out
 
-    
+
+# test if the search by name function on home screen works correctly when user exists
+def test_searchByNameSucces(monkeypatch, capsys):
+    # we expect to see a return stating that this user does have an account
+    expectedOut = "looks like they have an account\n"
+
+    # the inputs will be to select search for a person, enter first name, enter last name, then exit
+    userInput = StringIO("3\nfname1\nlname1\n4\n")
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    assert expectedOut in capture.out
+
+
+# test if the search by name function on home screen works correctly when user does not exist
+def test_searchByNameFailure(monkeypatch, capsys):
+    # we expect to see this output as the user does not exist in the system
+    expectedOut = "sorry, they are not part of the InCollege system yet\n"
+
+    # the input will be to select search for a person, enter bad first name, enter bad last name, then exit
+    userInput = StringIO("3\nfname6\nlname6\n4\n")
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    assert expectedOut in capture.out
