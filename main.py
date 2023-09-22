@@ -33,7 +33,6 @@ class inCollegeAppManager:
         conn.commit()
 
 
-
         cursor.execute("SELECT COUNT(*) FROM skills")
         # if table is empty, populate table from file
         if cursor.fetchone()[0] == 0:
@@ -59,7 +58,7 @@ class inCollegeAppManager:
             print("\n\n Meet Sarah, a recent graduate who turned her dreams into reality with inCollege! \n Sarah joined inCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to inCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that inCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #inCollegeImpact \n ")
             print("\n1. Log in")
             print("2. Create a new account")
-            print("3. Find Someone you Know")
+            print("3. Find someone you know")
             print("4. Exit")
             print("5. Play Demo Video\n")
         
@@ -71,7 +70,7 @@ class inCollegeAppManager:
                     skill_name, long_description = row
                     print(f"\nSkill {i+1}: {skill_name}, Description: {long_description}")
                 print('q: Quit')
-                if input("\nPlease Select an Skill:").lower() != 'q': print("\nUnder Construction\n")
+                if input("\nPlease Select a Skill:").lower() != 'q': print("\nUnder Construction\n")
             def __SearchJob():
                 print("\nUnder Construction\n")
             def __ConnectWUser():
@@ -82,11 +81,11 @@ class inCollegeAppManager:
             """
             options = {1: __SearchJob, 3:__LearnSkill, 2:__ConnectWUser}
             while True:
-                print("\n1. Search for Job")
-                print("2. Find Someone you Know")
+                print("\n1. Search for a job")
+                print("2. Find someone you know")
                 print("3. Learn a new skill")
                 print("4. Log out")
-                option = int(input("\nPlease Select an Option."))
+                option = int(input("\nPlease Select an Option: "))
                 if option == 4: break
                 run_option = options.get(option, None)
                 if run_option: run_option()
@@ -99,7 +98,7 @@ class inCollegeAppManager:
                 print("You have successfully logged in.")
                 additional_options(_acc)
             else:
-                print('"Incorrect username / password, please try again')
+                print('Incorrect username / password, please try again')
 
         def find_user_from_home_page():
             first_name = input("what is the first name of the person you are looking for:\n")
