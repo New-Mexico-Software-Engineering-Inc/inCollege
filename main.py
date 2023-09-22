@@ -69,7 +69,7 @@ class inCollegeAppManager:
                 for i, row in enumerate(self._cursor.fetchall()):
                     skill_name, long_description = row
                     print(f"\nSkill {i+1}: {skill_name}, Description: {long_description}")
-                print('q: Quit')
+                print('\nq: Quit')
                 if input("\nPlease Select a Skill:").lower() != 'q': print("\nUnder Construction\n")
             def __SearchJob():
                 print("\nUnder Construction\n")
