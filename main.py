@@ -105,10 +105,10 @@ class inCollegeAppManager:
         def find_user_from_home_page():
             first_name = input("what is the first name of the person you are looking for:\n")
             last_name = input("what is the last name of the person you are looking for:\n")
-            if self._is_person_in_database(first_name,last_name):
+            if self._is_person_in_database(first_name, last_name):
                 print("looks like they have an account")
             else:
-                print("sorry, we couldnt find anyone with that name")
+                print("sorry, they are not part of the InCollege system yet")
                     
         def _create_account_procedure():
             try:
