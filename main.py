@@ -55,10 +55,11 @@ class inCollegeAppManager:
     def Run(self, ): # Can only Serve One Client at a time :(
         """Main loop for user interaction."""
         def intro():
+            print("\n\n Meet Sarah, a recent graduate who turned her dreams into reality with inCollege! \n Sarah joined inCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to inCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that inCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #inCollegeImpact \n ")
             print("\n1. Log in")
             print("2. Create a new account")
             print("3. Exit")
-            print("4. Play Video")
+            print("4. Play Demo Video\n")
         
         def additional_options(user):
             def __LearnSkill():
