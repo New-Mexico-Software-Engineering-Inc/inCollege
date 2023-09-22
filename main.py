@@ -91,7 +91,6 @@ class inCollegeAppManager:
                 run_option = options.get(option, None)
                 if run_option: run_option()
 
-
         def _login_procedure():
             username = input("Enter your username: ")
             password = input("Enter your password: ")
