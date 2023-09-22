@@ -35,3 +35,26 @@ def test_asksForNames(monkeypatch, capsys):
     capture = runInCollege(capsys);
 
     assert expectedPrompt in capture.out;
+
+
+# function to test that the play demo video option is there and the video plays
+def test_demoVideo(monkeypatch, capsys):
+    # this message will show in the options on home screen
+    expectedOut = "Play Demo Video\n"
+
+    # this message will show when the video plays successfully
+    expectedOut2 = "Video is playing\n"
+
+    # input will select option 5 to play video then option 4 to quit the program
+    userInput = StringIO("5\n4\n")
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # the video option must appear in output
+    assert expectedOut in capture.out
+    # the video playing message must appear
+    assert expectedOut2 in capture.out
+
+    
