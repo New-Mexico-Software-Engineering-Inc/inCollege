@@ -152,11 +152,11 @@ class inCollegeAppManager:
         def valid_password(password):
             """ Validates a Password based on requirements. """
             return not self._PasswordPolicy.test(password) and len(password) < 13
-        
-        if self._cursor.execute('SELECT COUNT(*) FROM accounts;').fetchone()[0] >= 5: raise Exception("All permitted accounts have been created. Please come back later.")
-        if self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username,)).fetchone(): raise Exception("Username already exists. Please choose another one.")
         if not valid_password(password):
                 raise Exception("Invalid password. Please ensure it meets the requirements.")
+        if self._cursor.execute('SELECT COUNT(*) FROM accounts;').fetchone()[0] >= 5: raise Exception("All permitted accounts have been created. Please come back later.")
+        if self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username,)).fetchone(): raise Exception("Username already exists. Please choose another one.")
+
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         self._cursor.execute('INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);', (username, hashed_password, first_name, last_name))
         self._db.commit()
