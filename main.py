@@ -100,6 +100,16 @@ class inCollegeAppManager:
                     additional_options(_acc)
                 else:
                     print('"Incorrect username / password, please try again')
+
+        def _login_procedure():
+            username = input("Enter your username: ")
+            password = input("Enter your password: ")
+            _acc = self.__login(username=username, password=password)
+            if _acc is not None:
+                print("You have successfully logged in.")
+                additional_options(_acc)
+            else:
+                print('"Incorrect username / password, please try again')
                     
         def _create_account_procedure():
             try:
