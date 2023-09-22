@@ -31,7 +31,8 @@ class inCollegeAppManager:
         );
         ''')
         conn.commit()
-        
+
+
 
         cursor.execute("SELECT COUNT(*) FROM skills")
         # if table is empty, populate table from file
@@ -52,14 +53,15 @@ class inCollegeAppManager:
             length = 8, uppercase = 1, numbers = 1, special = 1,
         )
 
-    def Run(self, ): # Can only Serve One Client at a time :(
+    def Run(self): # Can only Serve One Client at a time :(
         """Main loop for user interaction."""
         def intro():
             print("\n\n Meet Sarah, a recent graduate who turned her dreams into reality with inCollege! \n Sarah joined inCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to inCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that inCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #inCollegeImpact \n ")
             print("\n1. Log in")
             print("2. Create a new account")
-            print("3. Exit")
-            print("4. Play Demo Video\n")
+            print("3. Find Someone you Know")
+            print("4. Exit")
+            print("5. Play Demo Video\n")
         
         def additional_options(user):
             def __LearnSkill():
@@ -89,29 +91,6 @@ class inCollegeAppManager:
                 run_option = options.get(option, None)
                 if run_option: run_option()
 
-        def _login_procedure():
-            print("(Type 'exit' at any point to leave account creation)")
-            username = input("Enter your username: ")
-            if username == "exit":
-                print("returning to main menu")
-                return
-            password = input("Enter your password: ")
-            if password == "exit":
-                print("returning to main menu")
-                return
-                
-            
-            
-        def _login_procedure(): 
-            
-                username = input("Enter your username: ")
-                password = input("Enter your password: ")
-                _acc = self.__login(username=username, password=password)
-                if _acc is not None:
-                    print("You have successfully logged in.")
-                    additional_options(_acc)
-                else:
-                    print('"Incorrect username / password, please try again')
 
         def _login_procedure():
             username = input("Enter your username: ")
@@ -122,26 +101,21 @@ class inCollegeAppManager:
                 additional_options(_acc)
             else:
                 print('"Incorrect username / password, please try again')
+
+        def find_user_from_home_page():
+            first_name = input("what is the first name of the person you are looking for:\n")
+            last_name = input("what is the last name of the person you are looking for:\n")
+            if self._is_person_in_database(first_name,last_name):
+                print("looks like they have an account")
+            else:
+                print("sorry, we couldnt find anyone with that name")
                     
         def _create_account_procedure():
             try:
-                print("(Type 'exit' at any point to leave account creation)")
                 username = input("Enter unique username: \n")
-                if username == "exit":
-                    print("returning to main menu")
-                    return
                 password = input("Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n")
-                if password == "exit":
-                    print("returning to main menu")
-                    return
                 name_first = input("Enter your first name: \n")
-                if name_first == "exit":
-                    print("returning to main menu")
-                    return
                 name_last = input("Enter your last name: \n")
-                if name_last == "exit":
-                    print("returning to main menu")
-                    return
                 _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last)
                 if _acc is not None:
                     print('Successfully Created Account.')
@@ -159,8 +133,10 @@ class inCollegeAppManager:
             elif choice == "2":
                 _create_account_procedure()
             elif choice == "3":
-                self._Terminate()
+                find_user_from_home_page()
             elif choice == "4":
+                self._Terminate()
+            elif choice == "5":
                 print("Video is playing")
             else:
                 print("Invalid choice. Please try again.")
@@ -192,9 +168,10 @@ class inCollegeAppManager:
         user = self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username,)).fetchone()
         return user if user and bcrypt.checkpw(password.encode('utf-8'), user[1]) else None
 
-
-
-
+    def _is_person_in_database(self, first_name, last_name):
+        user = self._cursor.execute("SELECT * FROM accounts WHERE first_name=? AND last_name =?;", (first_name,last_name)).fetchone()
+        if user:
+            return True
 
 # Introduction
 def main():
