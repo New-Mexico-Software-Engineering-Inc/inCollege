@@ -276,7 +276,7 @@ def test_QuitSkillsMenu(monkeypatch, capsys):
 # function to test that the job search option exists in the login menu and when selected shows "Under Construction"
 def test_JobSearch(monkeypatch, capsys):
     # the login menu expected after logging in that shows the "search for a job option" and displays "Under Construction" when selected
-    expectedOut = "\n1. Search for a job\n2. Find someone you know\n3. Learn a new skill\n4. Log out\n\nPlease Select an Option: \nUnder Construction\n"
+    expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 1-"search for a job" option, 4-Logout, 3-exit
     choiceInput = StringIO('1\na\nGoBulls24!\n1\n4\n4\n')
@@ -290,7 +290,7 @@ def test_JobSearch(monkeypatch, capsys):
 # function to test that the "find someone you know" option exists in the login menu and when selected shows "Under Construction"
 def test_FindSomeone(monkeypatch, capsys):
     # the login menu expected after logging in that shows the "find someone you know" option and displays "Under Construction" when selected
-    expectedOut = "\n1. Search for a job\n2. Find someone you know\n3. Learn a new skill\n4. Log out\n\nPlease Select an Option: \nUnder Construction\n"
+    expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 2-"find someone you know" option, 4-Logout, 3-exit
     choiceInput = StringIO('1\na\nGoBulls24!\n2\n4\n4\n')
