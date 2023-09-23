@@ -75,20 +75,41 @@ class inCollegeAppManager:
                 print("\nUnder Construction\n")
             def __ConnectWUser():
                 print("\nUnder Construction\n")
+            def __DeleteThisAccount():
+                verify = input("are you sure you want to delete your account? \nThis can not be undone. (y/n)")
+                if(verify == "y"):
+                    verify = input("are you REALLY sure? (y/n)")
+                    if(verify == "y"):
+                        print("we are sorry to see you go")
+                        self._cursor.execute("DELETE FROM accounts WHERE username =?;",(user[0],))
+                        print(user)
+                        return True
+
+                print("account creation cancled, returning to account menu")
+                return False
 
             """
             TODO: Change this to work with main loop, implement "client/host connection" state transition logic.
             """
-            options = {1: __SearchJob, 3:__LearnSkill, 2:__ConnectWUser}
             while True:
                 print("\n1. Search for a job")
                 print("2. Find someone you know")
                 print("3. Learn a new skill")
                 print("4. Log out")
+                print("5. delete my account")
                 option = int(input("\nPlease Select an Option: "))
+                if option == 1:
+                    __SearchJob()
+                if option == 2:
+                    __ConnectWUser()
+                if option == 3:
+                    __LearnSkill()
                 if option == 4: break
-                run_option = options.get(option, None)
-                if run_option: run_option()
+                if option == 5:
+                    verify = __DeleteThisAccount()
+                    if verify == True:
+                        break
+
 
         def _login_procedure():
             username = input("Enter your username: ")
@@ -155,7 +176,7 @@ class inCollegeAppManager:
         if not valid_password(password):
                 raise Exception("Invalid password. Please ensure it meets the requirements.")
         if self._cursor.execute('SELECT COUNT(*) FROM accounts;').fetchone()[0] >= 5: raise Exception("All permitted accounts have been created. Please come back later.")
-        if self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username,)).fetchone(): raise Exception("Username already exists. Please choose another one.")
+        if self._cursor.execute('SELECT * FROM accounts WHERE username=?;', (username)).fetchone(): raise Exception("Username already exists. Please choose another one.")
 
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         self._cursor.execute('INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);', (username, hashed_password, first_name, last_name))
