@@ -31,11 +31,13 @@ class DatabaseManager:
         self.conn.close()
     
     def post_job(self, skill_name, long_description, job_title, job_description, employer, location, salary, user_id):
-        self.cursor.execute('''
-            INSERT INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?);''',
-            (skill_name, long_description, job_title, job_description, employer, location, salary, user_id))
-        self.commit()
+        user = self.fetch('SELECT * FROM accounts WHERE user_id=?;', (user_id,))
+        assert user is not None, "Could not find user"
+        
+        self.execute('''
+            INSERT INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by, user_first_name, user_last_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''',
+            (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
         return True
 
 
@@ -46,6 +48,7 @@ class inCollegeAppManager:
         self._PasswordPolicy = PasswordPolicy.from_names(
             length=8, uppercase=1, numbers=1, special=1,
         )
+        self._current_user = None
         
 
     def setup_database(self):
@@ -68,7 +71,7 @@ class inCollegeAppManager:
 
         self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS jobs (
-            job_id INTEGER PRIMARY KEY AUTOINCREMENT,  
+            job_id INTEGER PRIMARY KEY AUTOINCREMENT,
             skill_name TEXT NOT NULL,
             long_description TEXT UNIQUE NOT NULL,
             job_title TEXT NOT NULL,
@@ -77,6 +80,8 @@ class inCollegeAppManager:
             location TEXT NOT NULL,
             salary REAL NOT NULL,
             posted_by INTEGER,
+            user_first_name TEXT NOT NULL,
+            user_last_name TEXT NOT NULL,
             FOREIGN KEY (posted_by) REFERENCES accounts(user_id)
         );
         ''')
@@ -114,6 +119,7 @@ class inCollegeAppManager:
             """
             Login options for a user
             """
+            self._current_user = user
             def __LearnSkill():
                 # Fetch all records from the 'skills' table
                 self.db_manager.execute("SELECT * FROM skills")
@@ -132,8 +138,8 @@ class inCollegeAppManager:
                     verify = input("are you REALLY sure? (y/n)")
                     if(verify == "y"):
                         print("we are sorry to see you go")
-                        self.db_manager.execute("DELETE FROM accounts WHERE user_id =?;",(user[0],))
-                        print(user)
+                        self.db_manager.execute("DELETE FROM accounts WHERE user_id =?;",(self._current_user[0],))
+                        print(self._current_user)
                         self.db_manager.commit()
                         return True
 
@@ -153,15 +159,21 @@ class inCollegeAppManager:
                 print("q: Log out")
 
                 option = input("\nPlease Select an Option: ")
-                if option == 'q': break
+                if option == 'q':
+                    self._current_user = None
+                    break
                 if option == '5': 
-                    if __DeleteThisAccount() == True: break
+                    if __DeleteThisAccount() == True: 
+                        self._current_user = None
+                        break
                 if option in options: options[option]()
                 
         def _postJob():
             """
             Posts a job under the specified username
             """
+            if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 5:
+                raise Exception("All jobs have been created. Please come back later.")
             try:
                 # Capture job details
                 job_title = input("Enter the job title: \n")
@@ -174,14 +186,8 @@ class inCollegeAppManager:
 
                 assert job_title and job_description and skill_name and long_description and employer and location and salary, "Error: Cannot leave field Blank."
 
-                # Retrieve user's primary key
-                user = self.db_manager.execute('SELECT rowid FROM accounts WHERE user_id=?;', (user[0],)).fetchone()
-                if not user:
-                    raise Exception("User not found.")
-                user_id = user[0]
-
                 # Insert job details into jobs table
-                if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, user_id):
+                if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, self._current_user[0]):
                     raise Exception("Could not create job.")
                 
                 print('Successfully Posted Job.')
@@ -267,18 +273,22 @@ class inCollegeAppManager:
         if self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;', (username,)):
             raise Exception("Username already exists. Please choose another one.")
 
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
         self.db_manager.execute(
             'INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);',
             (username, hashed_password, first_name, last_name))
-        self.db_manager.commit()
 
         return self.__login(username=username, password=password)
  # Returns the account from Database
 
-    def __login(self, username, password):
-        user = self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;', (username,))
-        return user if user and bcrypt.checkpw(password.encode('utf-8'), user[1]) else None
+    def __login(self, username: str, password: str):
+        user = self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;',    (username,))
+        if user:
+            hashed_password = user[2].encode('utf-8')  # Encode back to bytes
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+                return user
+        return None
 
     # Updated to use db_manager
     def _is_person_in_database(self, first_name, last_name):
