@@ -133,10 +133,10 @@ def test_Create5Accounts(monkeypatch, capsys):
         userIn += f"2\n{userList[i]}\n{pwList[i]}\n{fnames[i]}\n{lnames[i]}\n"
 
     # loop to verify login works correctly for all 5 following same process as above
-    # but with patterm 1, username1, pw1, 4, 1, username2, pw2, 4, ...
+    # but with patterm 1, username1, pw1, q, 1, username2, pw2, q, ...
 
     for i in range(5):
-        userIn += f"1\n{userList[i]}\n{pwList[i]}\n4\n"
+        userIn += f"1\n{userList[i]}\n{pwList[i]}\nq\n"
 
     # ends program 
     userIn += "4\n"
@@ -196,7 +196,7 @@ def test_LoginLimit(monkeypatch, capsys):
     for i in range(25):
         userIn += "1\na\nRandomPW1!\n"
 
-    # add 3 to end program
+    # add 4 to end program
     userIn += "4\n"
 
     userInput = StringIO(userIn)
@@ -214,8 +214,8 @@ def test_SuccessfulLogin(monkeypatch, capsys):
     # successful login message after logging in we expect from the program
     expectedLoginSuccess = "You have successfully logged in"
     # create a StringIO object and set it as the test input:
-    # 1-login, "a"-username, "GoBulls24!"-password, 4-Logout, 3-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n4\n4\n')
+    # 1-login, "a"-username, "GoBulls24!"-password, q-Logout, 3-exit
+    choiceInput = StringIO('1\na\nGoBulls24!\nq\n4\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -245,8 +245,8 @@ def test_SkillsMenu(monkeypatch, capsys):
 
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, 1-skill #1, 3-Skills menu, 2-skill #2, 
-    # 3-Skills menu, 3-skill #3, 3-Skills menu, 4-skill #4, 3-Skills menu, 5-skill #5, 4-Logout, 4-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\n4\n4\n')
+    # 3-Skills menu, 3-skill #3, 3-Skills menu, 4-skill #4, 3-Skills menu, 5-skill #5, q-Logout, 4-exit
+    choiceInput = StringIO('1\na\nGoBulls24!\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\n4\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -264,8 +264,8 @@ def test_QuitSkillsMenu(monkeypatch, capsys):
     expectedQuitOutput = "\nq: Quit\n\nPlease Select a Skill:"
 
     # create a StringIO object and set it as the test input:
-    # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, "q"-option to quit, 4-Logout, 3-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n3\nq\n4\n4\n')
+    # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, "q"-option to quit, q-Logout, 3-exit
+    choiceInput = StringIO('1\na\nGoBulls24!\n3\nq\nq\n4\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -278,8 +278,8 @@ def test_JobSearch(monkeypatch, capsys):
     # the login menu expected after logging in that shows the "search for a job option" and displays "Under Construction" when selected
     expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
-    # 1-login, "a"-username, "GoBulls24!"-password, 1-"search for a job" option, 4-Logout, 3-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n1\n4\n4\n')
+    # 1-login, "a"-username, "GoBulls24!"-password, 1-"search for a job" option, q-Logout, 3-exit
+    choiceInput = StringIO('1\na\nGoBulls24!\n1\nq\n4\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input

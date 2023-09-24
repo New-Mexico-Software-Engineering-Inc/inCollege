@@ -139,7 +139,7 @@ def test_FindUsersOnceLoggedIn(monkeypatch, capsys):
     expectedOut = "looks like they have an account"
 
     # set input to login, then search for their friend by name, then logout and exit
-    userIn = "1\na\nGoBulls24!\n2\nfname2\nlname2\n4\n4\n"
+    userIn = "1\na\nGoBulls24!\n2\nfname2\nlname2\nq\n4\n"
 
     userInput = StringIO(userIn)
 
