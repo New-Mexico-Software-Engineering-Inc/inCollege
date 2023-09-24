@@ -86,3 +86,66 @@ def test_searchByNameFailure(monkeypatch, capsys):
     capture = runInCollege(capsys)
 
     assert expectedOut in capture.out
+
+
+# Checking if Sucess Story shown on main page
+def test_SucessStory(monkeypatch, capsys):
+    expectedOut = "\n\n Meet Sarah, a recent graduate who turned her dreams into reality with inCollege! \n Sarah joined inCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to inCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that inCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #inCollegeImpact \n "
+    # create a StringIO object and set it as the test input:
+    # 4-exit
+    userInput = StringIO("4\n")
+    # Set the stdin stream as our desired input
+    monkeypatch.setattr('sys.stdin', userInput)
+    # Run the program and capture program input
+    capture = runInCollege(capsys)
+    # ensure the program displayed the successful login message
+    assert expectedOut in capture.out
+
+
+# Test that the delete function correctly deletes an account
+def test_DeleteSuccess(monkeypatch, capsys):
+    # we expect to see both of the following prompted when an account is deleted
+    expectedOut = "we are sorry to see you go"
+
+    # we expect to see this message prompted when we try to sign in with the now delted account
+    expectedOut2 = "Incorrect username / password, please try again"
+
+    userIn = ""
+
+    # this input will prompt the deletion of an account
+    # 1 - login, enter credentials, 5 - delete account, verify with y twice
+    userIn += "1\ne\nGoBulls28!\n5\ny\ny\n"
+
+    # now we attempt to login with the same credentials
+    userIn += "1\ne\nGoBulls28!\n"
+
+    # after doing this test, we recreate the account and end the program
+    userIn += "2\ne\nGoBulls28!\nfname5\nlname5\n4\n"
+
+    userInput = StringIO(userIn)
+
+    # setup input to be the created string
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that both of the expected outputs have been printed, showing a successful deletion of the account specified
+    assert expectedOut in capture.out
+    assert expectedOut2 in capture.out
+
+# test for finding users while logged in
+def test_FindUsersOnceLoggedIn(monkeypatch, capsys):
+    # expect to see that the person we searched already exists within the inCollege system
+    expectedOut = "looks like they have an account"
+
+    # set input to login, then search for their friend by name, then logout and exit
+    userIn = "1\na\nGoBulls24!\n2\nfname2\nlname2\n4\n4\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that the friend was successfully found after logging in
+    assert expectedOut in capture.out
