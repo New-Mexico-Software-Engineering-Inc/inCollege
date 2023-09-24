@@ -132,3 +132,20 @@ def test_DeleteSuccess(monkeypatch, capsys):
     # test that both of the expected outputs have been printed, showing a successful deletion of the account specified
     assert expectedOut in capture.out
     assert expectedOut2 in capture.out
+
+# test for finding users while logged in
+def test_FindUsersOnceLoggedIn(monkeypatch, capsys):
+    # expect to see that the person we searched already exists within the inCollege system
+    expectedOut = "looks like they have an account"
+
+    # set input to login, then search for their friend by name, then logout and exit
+    userIn = "1\na\nGoBulls24!\n2\nfname2\nlname2\n4\n4\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that the friend was successfully found after logging in
+    assert expectedOut in capture.out

@@ -287,6 +287,13 @@ def test_JobSearch(monkeypatch, capsys):
     # ensure the program displayed the "search for a job" option in the login menu and displayed "Under Construction" when selected
     assert expectedOut in captured.out
 
+
+"""
+**********************************************************************************************
+TEST NO LONGER UTILIZED AS THE FUNCTION OF "find someone you know" HAS BEEN 
+IMPLEMENTED AND NO LONGER SHOWS AN UNDER CONSTRUCTION MESSAGE WHEN SELECTED
+THE NEW FUNCTIONALITY HAS BEEN TESTED IN test_Main2.py
+**********************************************************************************************
 # function to test that the "find someone you know" option exists in the login menu and when selected shows "Under Construction"
 def test_FindSomeone(monkeypatch, capsys):
     # the login menu expected after logging in that shows the "find someone you know" option and displays "Under Construction" when selected
@@ -300,3 +307,4 @@ def test_FindSomeone(monkeypatch, capsys):
     captured = runInCollege(capsys)
     # ensure the program displayed the "find someone you know" option in the login menu and displayed "Under Construction" when selected
     assert expectedOut in captured.out
+"""
