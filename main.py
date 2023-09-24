@@ -73,8 +73,6 @@ class inCollegeAppManager:
                 if input("\nPlease Select a Skill:").lower() != 'q': print("\nUnder Construction\n")
             def __SearchJob():
                 print("\nUnder Construction\n")
-            def __ConnectWUser():
-                print("\nUnder Construction\n")
             def __DeleteThisAccount():
                 verify = input("are you sure you want to delete your account? \nThis can not be undone. (y/n)")
                 if(verify == "y"):
@@ -101,7 +99,7 @@ class inCollegeAppManager:
                 if option == 1:
                     __SearchJob()
                 if option == 2:
-                    __ConnectWUser()
+                    find_user_from_account_page()
                 if option == 3:
                     __LearnSkill()
                 if option == 4: break
@@ -121,13 +119,28 @@ class inCollegeAppManager:
             else:
                 print('Incorrect username / password, please try again')
 
+
         def find_user_from_home_page():
+            #returns user, for future use
             first_name = input("what is the first name of the person you are looking for:\n")
             last_name = input("what is the last name of the person you are looking for:\n")
-            if self._is_person_in_database(first_name, last_name):
+            user = self._is_person_in_database(first_name, last_name)
+            if user:
                 print("looks like they have an account")
+                return user
             else:
                 print("sorry, they are not part of the InCollege system yet")
+                return False
+        def find_user_from_account_page():
+            first_name = input("what is the first name of the person you are looking for:\n")
+            last_name = input("what is the last name of the person you are looking for:\n")
+            user = self._is_person_in_database(first_name, last_name)
+            if user:
+                print("looks like they have an account")
+                return user
+            else:
+                print("sorry, they are not part of the InCollege system yet")
+                return False
                     
         def _create_account_procedure():
             try:
@@ -190,7 +203,7 @@ class inCollegeAppManager:
     def _is_person_in_database(self, first_name, last_name):
         user = self._cursor.execute("SELECT * FROM accounts WHERE first_name=? AND last_name =?;", (first_name,last_name)).fetchone()
         if user:
-            return True
+            return user
         else:
             return False   
 
