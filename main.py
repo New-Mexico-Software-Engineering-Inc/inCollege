@@ -85,7 +85,7 @@ class inCollegeAppManager:
                         print(user)
                         return True
 
-                print("account creation cancled, returning to account menu")
+                print("account creation canceled, returning to account menu")
                 return False
 
             """
