@@ -1,3 +1,4 @@
 bcrypt>=4.0.1
 password_strength
 venv
+pytest
