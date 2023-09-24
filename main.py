@@ -128,6 +128,10 @@ class inCollegeAppManager:
                     print(f"\nSkill {i+1}: {skill_name}, Description: {long_description}")
                 print('\nq: Quit')
                 if input("\nPlease Select a Skill:").lower() != 'q': print("\nUnder Construction\n")
+
+            def __ConnectWUser():
+                find_user_from_account_page()
+
             def __SearchJob():
                 print("\nUnder Construction\n")
             def __DeleteThisAccount():
