@@ -191,8 +191,9 @@ class inCollegeAppManager:
         user = self._cursor.execute("SELECT * FROM accounts WHERE first_name=? AND last_name =?;", (first_name,last_name)).fetchone()
         if user:
             return True
+        else:
+            return False   
 
-# Introduction
 def main():
     inCollegeAppManager().Run()
 
