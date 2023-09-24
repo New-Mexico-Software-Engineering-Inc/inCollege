@@ -149,3 +149,80 @@ def test_FindUsersOnceLoggedIn(monkeypatch, capsys):
 
     # test that the friend was successfully found after logging in
     assert expectedOut in capture.out
+
+
+# test that we can create up to 5 jobs
+def test_Post5Jobs(monkeypatch, capsys):
+    # first, we must clear the database for jobs so that we can verify we are able to make up to 5
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM jobs;
+        ''')
+    conn.commit()
+    conn.close()
+
+
+    # we expect to see that the job was successfully posted 5 times when we try to post 5 jobs
+    expectedOut = "Successfully Posted Job."
+
+    userIn = ''
+
+    # we will attempt to create 5 jobs, so here are lists corresponding to the necessary entries for 5 jobs
+    jobTitles = ['Job A', 'Job B', 'Job C', 'Job D', 'Job E']
+    jobDescriptions = ['Desc A', 'Desc B', 'Desc C', 'Desc D', 'Desc E']
+    requiredSkill = ['Skill A', 'Skill B', 'Skill C', 'Skill D', 'Skill E']
+    longDescriptions = ['long Desc A', 'long Desc B', 'long Desc C', 'long Desc D', 'long Desc E']
+    employers = ['employer A', 'employer B', 'employer C', 'employer D', 'employer E']
+    locations = ['Location A', 'Location B', 'Location C', 'Location D', 'Location E']
+    salaries = [100.0, 200.0, 300.0, 400.0, 500.0]
+
+    # first we must login with an existing account
+    userIn += '1\na\nGoBulls24!\n'
+
+    # now we will try to create 5 jobs so we will loop the following inputs 5 times for each list entry
+    # 4 - post a job, then enter all criteria, then 4 - post a job, then enter all criteria, ...
+    for i in range(5):
+        userIn += f'4\n{jobTitles[i]}\n{jobDescriptions[i]}\n{requiredSkill[i]}\n{longDescriptions[i]}\n'
+        userIn += f'{employers[i]}\n{locations[i]}\n{salaries[i]}\n'
+
+    # then logout and exit the program
+    userIn += 'q\n4\n'
+
+    # set the system to take the created input string as the user input
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # since we created 5 jobs, we should see the successful job posting message 5 times
+    assert 5 == capture.out.count(expectedOut)
+
+
+# test that trying to post a 6th job fails
+# !!!!!! this test must be ran after test_Post5Jobs to ensure that 5 jobs are already posted !!!!!!
+def test_Post6thJobFails(monkeypatch, capsys):
+    # for a failed job posting, we expect to see the following error occur
+    expectedOut = 'All jobs have been created. Please come back later.'
+
+    # the list below holds all values to create a 6th job
+    jobEntries = ['title', 'desc', 'skill', 'long desc', 'employer', 'location', 200.0]
+
+    # setup input string to sign in under a created account and then select to post a job using command 4
+    userIn = '1\na\nGoBulls24!\n4\n'
+
+    # add all of the necessary job entries to the user input string
+    for i in range(7):
+        userIn += f'{jobEntries[i]}\n'
+
+    # then logout using q and exit using 4
+    userIn += 'q\n4\n'
+
+    # set user input to come from the created input string
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that the expected failure message appears in the output
+    assert expectedOut in capture.out

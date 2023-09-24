@@ -175,7 +175,8 @@ class inCollegeAppManager:
             Posts a job under the specified username
             """
             if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 5:
-                raise Exception("All jobs have been created. Please come back later.")
+                print("All jobs have been created. Please come back later.")
+                return
             try:
                 # Capture job details
                 job_title = input("Enter the job title: \n")
