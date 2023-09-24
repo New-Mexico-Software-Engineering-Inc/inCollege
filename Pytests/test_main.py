@@ -299,8 +299,8 @@ def test_FindSomeone(monkeypatch, capsys):
     # the login menu expected after logging in that shows the "find someone you know" option and displays "Under Construction" when selected
     expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
-    # 1-login, "a"-username, "GoBulls24!"-password, 2-"find someone you know" option, 4-Logout, 3-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n2\n4\n4\n')
+    # 1-login, "a"-username, "GoBulls24!"-password, 2-"find someone you know" option, q-Logout, 3-exit
+    choiceInput = StringIO('1\na\nGoBulls24!\n2\nq\n4\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input

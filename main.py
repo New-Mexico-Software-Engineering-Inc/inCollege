@@ -123,8 +123,8 @@ class inCollegeAppManager:
             def __LearnSkill():
                 # Fetch all records from the 'skills' table
                 self.db_manager.execute("SELECT * FROM skills")
-                for i, row in enumerate(self.db_manager.fetchall()):
-                    skill_name, long_description = row
+                for i, row in enumerate(self.db_manager.fetchall("SELECT * FROM skills")):
+                    skill_name, long_description = row[0], row[1]
                     print(f"\nSkill {i+1}: {skill_name}, Description: {long_description}")
                 print('\nq: Quit')
                 if input("\nPlease Select a Skill:").lower() != 'q': print("\nUnder Construction\n")
