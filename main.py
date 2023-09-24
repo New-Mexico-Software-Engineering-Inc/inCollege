@@ -89,29 +89,6 @@ class inCollegeAppManager:
                 run_option = options.get(option, None)
                 if run_option: run_option()
 
-        def _login_procedure():
-            print("(Type 'exit' at any point to leave account creation)")
-            username = input("Enter your username: ")
-            if username == "exit":
-                print("returning to main menu")
-                return
-            password = input("Enter your password: ")
-            if password == "exit":
-                print("returning to main menu")
-                return
-                
-            
-            
-        def _login_procedure(): 
-            
-                username = input("Enter your username: ")
-                password = input("Enter your password: ")
-                _acc = self.__login(username=username, password=password)
-                if _acc is not None:
-                    print("You have successfully logged in.")
-                    additional_options(_acc)
-                else:
-                    print('"Incorrect username / password, please try again')
 
         def _login_procedure():
             username = input("Enter your username: ")
