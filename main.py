@@ -185,7 +185,16 @@ class inCollegeAppManager:
                 long_description = input("Enter a long description for the skill: \n")
                 employer = input("Enter the employer: \n")
                 location = input("Enter the location: \n")
-                salary = float(input("Enter the salary: \n"))  # Assuming salary is a floating-point number
+                salary = input("Enter the salary: \n")
+
+                # ensure that the value entered for salary is numerical, otherwise we print message and leave function
+                try:
+                    float(salary)
+                except ValueError:
+                    print("Please enter a number for salary")
+                    return
+
+                salary = float(salary)
 
                 assert job_title and job_description and skill_name and long_description and employer and location and salary, "Error: Cannot leave field Blank."
 

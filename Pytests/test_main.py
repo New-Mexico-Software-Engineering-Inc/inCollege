@@ -1,7 +1,8 @@
+# Sprint 1 Test Cases
 # The functions use monkeypatch to mock input and capsys to capture output
 # Created by: Ryan Martinez, Austin Martin 
 # Date created: 09/15/2023
-# Last Update: 09/17/2023
+# Last Update: 09/24/2023
 import sqlite3
 import pytest
 import main

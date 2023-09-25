@@ -1,4 +1,8 @@
-# Week 2 Pytests
+# Sprint 2 Test Cases
+# The functions use monkeypatch to mock input and capsys to capture output
+# Created by: Austin Martin, Emin Mahmudzade
+# Date created: 09/22/2023
+# Last Update: 09/24/2023
 
 import sqlite3
 import pytest
@@ -225,4 +229,95 @@ def test_Post6thJobFails(monkeypatch, capsys):
     capture = runInCollege(capsys)
 
     # test that the expected failure message appears in the output
+    assert expectedOut in capture.out
+
+# test for checking quit to main
+def test_ReturnMain(monkeypatch, capsys):
+    # expect to see returning to main after log out
+    expectedOut = "Video is playing\n"
+    # set input to login,log out and exit
+    userIn = "1\na\nGoBulls24!\nq\n5\n4\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that the the option for returning main page works
+    assert expectedOut in capture.out
+
+
+# test for checking job posting asks for all parametrs
+def test_PostJob(monkeypatch, capsys):
+    # first, we must clear the database for jobs so that we can verify we are able to make up to 5
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM jobs;
+        ''')
+    conn.commit()
+    conn.close()
+
+    # the list below holds all values to create a job
+    jobEntries = ['title', 'desc', 'skill', 'long desc', 'employer', 'location', 200.0]
+
+    # for job posting option , all this parametrs should be asked
+    expectedOut = "Enter the job title:"
+    expectedOut1 = "Enter the job description:"
+    expectedOut2 = "Enter the required skill name:"
+    expectedOut3 = "Enter a long description for the skill:"
+    expectedOut4 = "Enter the employer:"
+    expectedOut5 = "Enter the location:"
+    expectedOut6 = "Enter the salary:"
+
+
+    # set input to login, check for post job button and exit
+    userIn = "1\na\nGoBulls24!\n4\n"
+
+    # add all of the necessary job entries to the user input string
+    for i in range(7):
+        userIn += f'{jobEntries[i]}\n'
+    userIn += "q\n4\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that the the user gets asked for all parametrs
+    assert expectedOut in capture.out
+    assert expectedOut1 in capture.out
+    assert expectedOut2 in capture.out
+    assert expectedOut3 in capture.out
+    assert expectedOut4 in capture.out
+    assert expectedOut5 in capture.out
+    assert expectedOut6 in capture.out
+
+
+# testing if not number input for salary gives an error
+def test_NotNumberSalary(monkeypatch, capsys):
+
+    # the list below holds all values to create a job
+    jobEntries = ['title', 'desc', 'skill', 'long desc', 'employer', 'location', 'NotNumber']
+
+    # for job posting option , all this parametrs should be asked
+    expectedOut = "Please enter a number for salary"
+
+    # set input to login, check for post job button and exit
+    userIn = "1\na\nGoBulls24!\n4\n"
+
+    # add all of the necessary job entries to the user input string
+    for i in range(7):
+        userIn += f'{jobEntries[i]}\n'
+    userIn += "q\n4\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # test that the user inputs not number in salary parametr
     assert expectedOut in capture.out
