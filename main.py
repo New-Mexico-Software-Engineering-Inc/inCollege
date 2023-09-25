@@ -42,7 +42,7 @@ class DatabaseManager:
 
 
 class inCollegeAppManager:
-    def __init__(self, data_file="users.db", skills_file='data\example_skills.txt'):
+    def __init__(self, data_file="users.db", skills_file='data/example_skills.txt'):
         self.db_manager = DatabaseManager(data_file)
         self.setup_database()
         self._PasswordPolicy = PasswordPolicy.from_names(
@@ -90,7 +90,7 @@ class inCollegeAppManager:
         if self.db_manager.fetch("SELECT COUNT(*) FROM skills")[0] == 0:
             self.populate_skills_from_file()
 
-    def populate_skills_from_file(self, skills_file='data\example_skills.txt'):
+    def populate_skills_from_file(self, skills_file='data/example_skills.txt'):
         try:
             with open(os.path.join(os.getcwd(), skills_file), 'r') as f:
                 for line in f:
