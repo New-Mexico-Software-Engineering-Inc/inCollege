@@ -109,13 +109,80 @@ class inCollegeAppManager:
         """Main loop for user interaction."""
         def intro():
             print("\n\n Meet Sarah, a recent graduate who turned her dreams into reality with inCollege! \n Sarah joined inCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to inCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that inCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #inCollegeImpact \n ")
-            print("\n1. Log in")
+            print("\nIN COLLEGE")
+            print("-----------")
+            print("1. Log in")
             print("2. Create a new account")
             print("3. Find someone you know")
             print("4. Useful Links")
             print("5. Exit")
             print("6. Play Demo Video\n")
-        
+
+        def useful_links(from_home_page):
+
+            def general_options(from_home_page):
+
+                def sign_up_options():
+                    print("SIGN UP")
+                    print("--------")
+
+
+                while True:
+                    print("GENERAL HELP")
+                    print("------------")
+                    print("1. Help Center")
+                    print("2. About")
+                    print("3. Press")
+                    print("4. Blog")
+                    print("5. Careers")
+                    print("6. Developers")
+                    if from_home_page:
+                        print("7. Sign Up")
+                    print("q. quit")
+
+                    choice = input("Select an option: ")
+                    print()
+                    if choice == "1":
+                        print()
+                    elif choice == "2":
+                        print()
+                    elif choice == "3":
+                        print()
+                    elif choice == "4":
+                        print()
+                    elif choice == "5":
+                        print()
+                    elif choice == "6":
+                        print()
+                    elif choice == "7" and from_home_page:
+                        _create_account_procedure()
+                    elif choice == "q":
+                        break
+
+            while True:
+                print("\nUSEFUL LINKS")
+                print("------------")
+                print("1. General")
+                print("2. Browse InCollege")
+                print("3. Business Solutions")
+                print("4. Directories")
+                print("q. quit\n")
+
+                choice = input("Select an option: ")
+                print()
+                if choice == "1":
+                    general_options(from_home_page)
+                elif choice == "2":
+                    print("Under Construction")
+                elif choice == "3":
+                    print("Under Construction")
+                elif choice == "4":
+                    print("Under Construction")
+                elif choice == "q":
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+                print()
         def additional_options(user):
             """
             Login options for a user
@@ -154,6 +221,8 @@ class inCollegeAppManager:
             """
             options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, }
             while True:
+                print("ACCOUNT OPTIONS")
+                print("---------------")
                 print("\n1: Search for a job")
                 print("2: Find someone you know")
                 print("3: Learn a new skill")
@@ -246,29 +315,7 @@ class inCollegeAppManager:
                 print("sorry, they are not part of the InCollege system yet")
                 return False
 
-        def useful_links_from_home_page():
-            while True:
-                print("\n1. General")
-                print("2. Browse InCollege")
-                print("3. Business Solutions")
-                print("4. Directories")
-                print("5. quit\n")
 
-                choice = input("Select an option: ")
-                print()
-                if choice == "1":
-                    print("Under Construction")
-                elif choice == "2":
-                    print("Under Construction")
-                elif choice == "3":
-                    print("Under Construction")
-                elif choice == "4":
-                    print("Under Construction")
-                elif choice == "5":
-                    break
-                else:
-                    print("Invalid choice. Please try again.")
-                print()
 
 
                     
@@ -297,7 +344,7 @@ class inCollegeAppManager:
             elif choice == "3":
                 find_user_from_home_page()
             elif choice == "4":
-                useful_links_from_home_page()
+                useful_links(True)
             elif choice == "5":
                 self._Terminate()
             elif choice == "6":
