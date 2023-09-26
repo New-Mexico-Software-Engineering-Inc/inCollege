@@ -126,8 +126,9 @@ class inCollegeAppManager:
             print("2. Create a new account")
             print("3. Find someone you know")
             print("4. Useful Links")
-            print("5. Exit")
-            print("6. Play Demo Video\n")
+            print("5. Play Demo Video")
+            print("6. InCollege Important Links")
+            print("q. Quit")
         
         def additional_options(user):
             """
@@ -165,20 +166,21 @@ class inCollegeAppManager:
             """
             TODO: Change this to work with main loop, implement "client/host connection" state transition logic.
             """
-            options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, }
+            options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, '5':important_InCollege_links}
             while True:
                 print("\n1: Search for a job")
                 print("2: Find someone you know")
                 print("3: Learn a new skill")
                 print("4: Post a job")
-                print("5: Delete my account")
+                print("5: InCollege Important links")
+                print("6: Delete my account")
                 print("q: Log out")
 
                 option = input("\nPlease Select an Option: ")
-                if option == 'q':
+                if option.lower() == 'q':
                     self._current_user = None
                     break
-                if option == '5': 
+                if option == '6': 
                     if __DeleteThisAccount() == True: 
                         self._current_user = None
                         break
@@ -282,7 +284,124 @@ class inCollegeAppManager:
                 else:
                     print("Invalid choice. Please try again.")
                 print()
+        
+        def guest_controls():
+            if self._current_user == None:
+                print("Guest Controls\n")
+                print(f"{'InCollege Email Notifications:':>31s} On")
+                print(f"{'InCollege SMS Notifications:':>31s} On")
+                print(f"{'InCollege Targeted Advertising:':>31s} On")
+                print(f"{'Language:':>31s} English")
+                print("\nNot signed in - cannot alter settings\n")
+            else:
+                while True:
+                    cur = self.db_manager.fetchall("SELECT * FROM settings WHERE username=?", (self._current_user[1], ))
+                    print(f"{'InCollege Email Notifications:':>31s} {'Off' if cur[0][1] == 0 else 'On'}")
+                    print(f"{'InCollege SMS Notifications:':>31s} {'Off' if cur[0][2] == 0 else 'On'}")
+                    print(f"{'InCollege Targeted Advertising:':>31s} {'Off' if cur[0][3] == 0 else 'On'}")
+                    print(f"{'Language:':>31s} {cur[0][4]}")
 
+                    change = input("\nWould you like to change one of these settings? (y/n) ")
+                    if change == "y":
+                        print("1. Email Notifications")
+                        print("2. SMS Notifcations")
+                        print("3. Targeted Advertising")
+                        print("4. Language")
+                        print("q. Quit")
+                        option = input("\nSelect which you would like to change: ")
+
+                        if option == "1":
+                            bool = 1 if cur[0][1] == 0 else 0
+                            self.db_manager.execute("UPDATE settings SET email_notifs=? WHERE username=?", (bool, self._current_user[1]))
+                            print("Email notifications successfully turned", "on." if bool else "off.")
+                        elif option == "2":
+                            bool = 1 if cur[0][2] == 0 else 0
+                            self.db_manager.execute("UPDATE settings SET sms_notifs=? WHERE username=?", (bool, self._current_user[1]))
+                            print("SMS notifications successfully turned", "on." if bool else "off.")
+                        elif option == "3":
+                            bool = 1 if cur[0][3] == 0 else 0
+                            self.db_manager.execute("UPDATE settings SET target_ads=? WHERE username=?", (bool, self._current_user[1]))
+                            print("Targeted Advertising successfully turned", "on." if bool else "off.")
+                        elif option == "4":
+                            print("\nChange Language")
+                            print("1. English")
+                            print("2. Spanish")
+                            print("q. Quit")
+                            choice = input("Select a language option: ")
+                            if choice == "1" or choice == "2":
+                                language = "Spanish" if choice == "2" else "English"
+                                self.db_manager.execute("UPDATE settings SET language=? WHERE username=?", (language, self._current_user[1]))
+                                print("Language successfully switched to", language, ".")
+                            elif choice != "q":
+                                print("Invalid choice. Please try again.")
+                            print()
+                        elif option != "q":
+                            print("Invalid choice. Please try again.")
+                        print()
+                    else:
+                        break
+
+        def privacy_policy():
+            while True:
+                print("Privacy Policy")
+                print("\n1. Read Privacy Policy")
+                print("2. Guest Controls")
+                print("q. Quit")
+
+                choice = input("Select an option: ")
+                print()
+                if choice == "1":
+                    print("Under Construction")
+                elif choice == "2":
+                    guest_controls()
+                elif choice.lower() == "q":
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+                print()
+
+        def important_InCollege_links():
+            while True:
+                print("\nInCollege Important Links")
+                print("1. A Copyright Notice")
+                print("2. About")
+                print("3. Accessibility")
+                print("4. User Agreement")
+                print("5. Privacy Policy")
+                print("6. Cookie Policy")
+                print("7. Copyright Policy")
+                print("8. Brand Policy")
+                print("9. Guest Controls")
+                print("a. Languages")
+                print("q. quit\n")
+
+                choice = input("Select an option: ")
+                print()
+                if choice == "1":
+                    print("Under Construction")
+                elif choice == "2":
+                    print("Under Construction")
+                elif choice == "3":
+                    print("Under Construction")
+                elif choice == "4":
+                    print("Under Construction")
+                elif choice == "5":
+                    privacy_policy()
+                elif choice == "6":
+                    print("Under Construction")
+                elif choice == "7":
+                    print("Under Construction")
+                elif choice == "8":
+                    print("Under Construction")
+                elif choice == "9":
+                    print("Under Construction")
+                elif choice == "a":
+                    print("Under Construction")
+                elif choice.lower() == "q":
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+                print()
 
                     
         def _create_account_procedure():
@@ -312,9 +431,11 @@ class inCollegeAppManager:
             elif choice == "4":
                 useful_links_from_home_page()
             elif choice == "5":
-                self._Terminate()
-            elif choice == "6":
                 print("Video is playing")
+            elif choice == "6":
+                important_InCollege_links()
+            elif choice.lower() == "q":
+                self._Terminate()
             else:
                 print("Invalid choice. Please try again.")
     
