@@ -63,6 +63,17 @@ class inCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            username TEXT PRIMARY KEY,
+            email_notifs BOOL NOT NULL,
+            sms_notifs BOOL NOT NULL,
+            target_ads BOOL NOT NULL,
+            language TEXT NOT NULL,
+            FOREIGN KEY (username) REFERENCES accounts(username) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS skills (
             skill_name TEXT PRIMARY KEY,
             long_description TEXT UNIQUE NOT NULL
@@ -304,6 +315,10 @@ class inCollegeAppManager:
         self.db_manager.execute(
             'INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);',
             (username, hashed_password, first_name, last_name))
+        
+        self.db_manager.execute(
+            'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
+            (username, 1, 1, 1, "English"))
 
         return self.__login(username=username, password=password)
  # Returns the account from Database
