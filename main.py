@@ -125,8 +125,9 @@ class inCollegeAppManager:
             print("\n1. Log in")
             print("2. Create a new account")
             print("3. Find someone you know")
-            print("4. Exit")
-            print("5. Play Demo Video\n")
+            print("4. Useful Links")
+            print("5. Exit")
+            print("6. Play Demo Video\n")
         
         def additional_options(user):
             """
@@ -257,6 +258,32 @@ class inCollegeAppManager:
             else:
                 print("sorry, they are not part of the InCollege system yet")
                 return False
+
+        def useful_links_from_home_page():
+            while True:
+                print("\n1. General")
+                print("2. Browse InCollege")
+                print("3. Business Solutions")
+                print("4. Directories")
+                print("5. quit\n")
+
+                choice = input("Select an option: ")
+                print()
+                if choice == "1":
+                    print("Under Construction")
+                elif choice == "2":
+                    print("Under Construction")
+                elif choice == "3":
+                    print("Under Construction")
+                elif choice == "4":
+                    print("Under Construction")
+                elif choice == "5":
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+                print()
+
+
                     
         def _create_account_procedure():
             try:
@@ -283,8 +310,10 @@ class inCollegeAppManager:
             elif choice == "3":
                 find_user_from_home_page()
             elif choice == "4":
-                self._Terminate()
+                useful_links_from_home_page()
             elif choice == "5":
+                self._Terminate()
+            elif choice == "6":
                 print("Video is playing")
             else:
                 print("Invalid choice. Please try again.")
