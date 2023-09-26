@@ -52,6 +52,8 @@ class inCollegeAppManager:
         
 
     def setup_database(self):
+        self.db_manager.execute("PRAGMA foreign_keys=ON;")
+
         self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS accounts (
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,6 +61,17 @@ class inCollegeAppManager:
             password TEXT NOT NULL,
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            username TEXT PRIMARY KEY,
+            email_notifs BOOL NOT NULL,
+            sms_notifs BOOL NOT NULL,
+            target_ads BOOL NOT NULL,
+            language TEXT NOT NULL,
+            FOREIGN KEY (username) REFERENCES accounts(username) ON DELETE CASCADE
         );
         ''')
 
@@ -136,17 +149,17 @@ class inCollegeAppManager:
             def __SearchJob():
                 print("\nUnder Construction\n")
             def __DeleteThisAccount():
-                verify = input("are you sure you want to delete your account? \nThis can not be undone. (y/n)")
+                verify = input("Are you sure you want to delete your account? \nThis can not be undone. (y/n) ")
                 if(verify == "y"):
-                    verify = input("are you REALLY sure? (y/n)")
+                    verify = input("Are you REALLY sure? (y/n) ")
                     if(verify == "y"):
-                        print("we are sorry to see you go")
+                        print("We are sorry to see you go")
                         self.db_manager.execute("DELETE FROM accounts WHERE user_id =?;",(self._current_user[0],))
-                        print(self._current_user)
+                        # print(self._current_user)
                         self.db_manager.commit()
                         return True
 
-                print("account creation canceled, returning to account menu")
+                print("Account deletion canceled, returning to account menu")
                 return False
 
             """
@@ -157,8 +170,8 @@ class inCollegeAppManager:
                 print("\n1: Search for a job")
                 print("2: Find someone you know")
                 print("3: Learn a new skill")
-                print("4: Post a Job")
-                print("5: delete my account")
+                print("4: Post a job")
+                print("5: Delete my account")
                 print("q: Log out")
 
                 option = input("\nPlease Select an Option: ")
@@ -333,6 +346,10 @@ class inCollegeAppManager:
         self.db_manager.execute(
             'INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);',
             (username, hashed_password, first_name, last_name))
+        
+        self.db_manager.execute(
+            'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
+            (username, 1, 1, 1, "English"))
 
         return self.__login(username=username, password=password)
  # Returns the account from Database
