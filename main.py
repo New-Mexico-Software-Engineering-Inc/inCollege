@@ -171,24 +171,24 @@ class inCollegeAppManager:
                     choice = input("Select an option: ")
                     print()
                     if choice == "1":
-                        print("Under Construction")
+                        print("We're here to help\n")
                     elif choice == "2":
-                        print("Under Construction")
+                        print("In College: Welcome to In College, the world's largest college student network \nwith many users in many countries and territories worldwide\n")
                     elif choice == "3":
-                        print("Under Construction")
+                        print("In College Pressroom: Stay on top of the latest news, updates, and reports\n")
                     elif choice == "4":
-                        print("Under Construction")
+                        print("Under Construction\n")
                     elif choice == "5":
-                        print("Under Construction")
+                        print("Under Construction\n")
                     elif choice == "6":
-                        print("Under Construction")
+                        print("Under Construction\n")
                     elif choice == "7" and from_home_page:
                         sign_up_options()
                     elif choice == "q":
                         break
 
             while True:
-                print("\nUSEFUL LINKS")
+                print("USEFUL LINKS")
                 print("------------")
                 print("1. General")
                 print("2. Browse InCollege")
@@ -201,11 +201,11 @@ class inCollegeAppManager:
                 if choice == "1":
                     general_options(from_home_page)
                 elif choice == "2":
-                    print("Under Construction")
+                    print("Under Construction\n")
                 elif choice == "3":
-                    print("Under Construction")
+                    print("Under Construction\n")
                 elif choice == "4":
-                    print("Under Construction")
+                    print("Under Construction\n")
                 elif choice == "q":
                     break
                 else:
@@ -248,26 +248,29 @@ class inCollegeAppManager:
             """
             TODO: Change this to work with main loop, implement "client/host connection" state transition logic.
             """
-            options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, '5':important_InCollege_links}
+            options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, '6':important_InCollege_links}
             while True:
-                print("ACCOUNT OPTIONS")
+                print("\nACCOUNT OPTIONS")
                 print("---------------")
-                print("\n1: Search for a job")
+                print("1: Search for a job")
                 print("2: Find someone you know")
                 print("3: Learn a new skill")
                 print("4: Post a job")
-                print("5: InCollege Important links")
-                print("6: Delete my account")
+                print("5. Useful Links")
+                print("6: InCollege Important links")
+                print("7: Delete my account")
                 print("q: Log out")
 
                 option = input("\nPlease Select an Option: ")
                 if option.lower() == 'q':
                     self._current_user = None
                     break
-                if option == '6': 
+                if option == '7':
                     if __DeleteThisAccount() == True: 
                         self._current_user = None
                         break
+                if option == "5":
+                    useful_links(False)
                 if option in options: options[option]()
                 
         def _postJob():
