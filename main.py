@@ -137,8 +137,22 @@ class inCollegeAppManager:
             def general_options(from_home_page):
 
                 def sign_up_options():
-                    print("SIGN UP")
-                    print("--------")
+                    while True:
+                        print("SIGN UP")
+                        print("--------")
+                        print("1. login")
+                        print("2. Create an Account")
+                        print("q. Quit")
+
+                        choice = input("Select an option: ")
+                        print()
+                        if choice == "1":
+                            _login_procedure()
+                        elif choice == "2":
+                            _create_account_procedure()
+                        elif choice == "q":
+                            break
+
 
 
                 while True:
@@ -157,19 +171,19 @@ class inCollegeAppManager:
                     choice = input("Select an option: ")
                     print()
                     if choice == "1":
-                        print()
+                        print("Under Construction")
                     elif choice == "2":
-                        print()
+                        print("Under Construction")
                     elif choice == "3":
-                        print()
+                        print("Under Construction")
                     elif choice == "4":
-                        print()
+                        print("Under Construction")
                     elif choice == "5":
-                        print()
+                        print("Under Construction")
                     elif choice == "6":
-                        print()
+                        print("Under Construction")
                     elif choice == "7" and from_home_page:
-                        _create_account_procedure()
+                        sign_up_options()
                     elif choice == "q":
                         break
 
@@ -464,7 +478,8 @@ class inCollegeAppManager:
                     print('Failed At Creating Account.')
             except Exception as e:
                 print('Error While Creating Account:\n', e)
-        
+
+        #home screen options
         while True:
             intro()
             choice = input("Select an option: ")
