@@ -247,7 +247,7 @@ class InCollegeAppManager:
                 if(verify == "y"):
                     verify = input("Are you REALLY sure? (y/n) ")
                     if(verify == "y"):
-                        print("We are sorry to see you go")
+                        print("\nWe are sorry to see you go!")
                         self.db_manager.execute("DELETE FROM accounts WHERE user_id =?;",(self._current_user[0],))
                         # print(self._current_user)
                         self.db_manager.commit()
