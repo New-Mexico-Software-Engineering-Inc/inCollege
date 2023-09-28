@@ -4,6 +4,8 @@ import os
 import bcrypt
 from password_strength import PasswordPolicy
 
+menuSeperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
+
 class DatabaseManager:
     def __init__(self, data_file):
         self.conn = sqlite3.connect(data_file)
@@ -41,7 +43,7 @@ class DatabaseManager:
         return True
 
 
-class inCollegeAppManager:
+class InCollegeAppManager:
     def __init__(self, data_file="users.db", skills_file='data/example_skills.txt'):
         self.db_manager = DatabaseManager(data_file)
         self.setup_database()
@@ -50,7 +52,6 @@ class inCollegeAppManager:
         )
         self._current_user = None
         
-
     def setup_database(self):
         self.db_manager.execute("PRAGMA foreign_keys=ON;")
 
@@ -121,9 +122,10 @@ class inCollegeAppManager:
     def Run(self): # Can only Serve One Client at a time :(
         """Main loop for user interaction."""
         def intro():
-            print("\n\n Meet Sarah, a recent graduate who turned her dreams into reality with inCollege! \n Sarah joined inCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to inCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that inCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #inCollegeImpact \n ")
-            print("\nIN COLLEGE")
-            print("-----------")
+            print(menuSeperate)
+            print(" Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! \n Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #InCollegeImpact \n ")
+            print("\nInCollege")
+            print("-------------------------------")
             print("1. Log in")
             print("2. Create a new account")
             print("3. Find someone you know")
@@ -138,9 +140,10 @@ class inCollegeAppManager:
 
                 def sign_up_options():
                     while True:
-                        print("SIGN UP")
-                        print("--------")
-                        print("1. login")
+                        print(menuSeperate)
+                        print("Sign In/Sign Up")
+                        print("-------------------------------")
+                        print("1. Login")
                         print("2. Create an Account")
                         print("q. Quit")
 
@@ -153,11 +156,10 @@ class inCollegeAppManager:
                         elif choice == "q":
                             break
 
-
-
                 while True:
-                    print("GENERAL HELP")
-                    print("------------")
+                    print(menuSeperate)
+                    print("General Help")
+                    print("-------------------------------")
                     print("1. Help Center")
                     print("2. About")
                     print("3. Press")
@@ -166,51 +168,53 @@ class inCollegeAppManager:
                     print("6. Developers")
                     if from_home_page:
                         print("7. Sign Up")
-                    print("q. quit")
+                    print("q. Quit")
 
                     choice = input("Select an option: ")
                     print()
                     if choice == "1":
-                        print("We're here to help\n")
+                        print("We're here to help!")
                     elif choice == "2":
-                        print("In College: Welcome to In College, the world's largest college student network \nwith many users in many countries and territories worldwide\n")
+                        print("In College: Welcome to In College, the world's largest college student network with many users in many countries and territories worldwide!")
                     elif choice == "3":
-                        print("In College Pressroom: Stay on top of the latest news, updates, and reports\n")
+                        print("In College Pressroom: Stay on top of the latest news, updates, and reports")
                     elif choice == "4":
-                        print("Under Construction\n")
+                        print("Under Construction")
                     elif choice == "5":
-                        print("Under Construction\n")
+                        print("Under Construction")
                     elif choice == "6":
-                        print("Under Construction\n")
+                        print("Under Construction")
                     elif choice == "7" and from_home_page:
                         sign_up_options()
                     elif choice == "q":
                         break
+                    else:
+                        print("Invalid choice. Please try again.")
 
             while True:
-                print("USEFUL LINKS")
-                print("------------")
+                print(menuSeperate)
+                print("Useful Links")
+                print("-------------------------------")
                 print("1. General")
                 print("2. Browse InCollege")
                 print("3. Business Solutions")
                 print("4. Directories")
-                print("q. quit\n")
+                print("q. Quit\n")
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
                     general_options(from_home_page)
                 elif choice == "2":
-                    print("Under Construction\n")
+                    print("Under Construction")
                 elif choice == "3":
-                    print("Under Construction\n")
+                    print("Under Construction")
                 elif choice == "4":
-                    print("Under Construction\n")
+                    print("Under Construction")
                 elif choice == "q":
                     break
                 else:
                     print("Invalid choice. Please try again.")
-                print()
 
         def additional_options(user):
             """
@@ -218,25 +222,32 @@ class inCollegeAppManager:
             """
             self._current_user = user
             def __LearnSkill():
+                print(menuSeperate)
+                print("Learn A Skill")
+                print("-------------------------------")
                 # Fetch all records from the 'skills' table
                 self.db_manager.execute("SELECT * FROM skills")
                 for i, row in enumerate(self.db_manager.fetchall("SELECT * FROM skills")):
                     skill_name, long_description = row[0], row[1]
                     print(f"\nSkill {i+1}: {skill_name}, Description: {long_description}")
                 print('\nq: Quit')
-                if input("\nPlease Select a Skill:").lower() != 'q': print("\nUnder Construction\n")
+                if input("\nPlease Select a Skill: ").lower() != 'q': print("\nUnder Construction")
 
             def __ConnectWUser():
                 find_user_from_account_page()
 
             def __SearchJob():
-                print("\nUnder Construction\n")
+                print("\nUnder Construction")
+
             def __DeleteThisAccount():
+                print(menuSeperate)
+                print("Delete Account")
+                print("-------------------------------")
                 verify = input("Are you sure you want to delete your account? \nThis can not be undone. (y/n) ")
                 if(verify == "y"):
                     verify = input("Are you REALLY sure? (y/n) ")
                     if(verify == "y"):
-                        print("We are sorry to see you go")
+                        print("\nWe are sorry to see you go!")
                         self.db_manager.execute("DELETE FROM accounts WHERE user_id =?;",(self._current_user[0],))
                         # print(self._current_user)
                         self.db_manager.commit()
@@ -250,8 +261,9 @@ class inCollegeAppManager:
             """
             options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, '6':important_InCollege_links}
             while True:
-                print("\nACCOUNT OPTIONS")
-                print("---------------")
+                print(menuSeperate)
+                print("Account Options")
+                print("-------------------------------")
                 print("1: Search for a job")
                 print("2: Find someone you know")
                 print("3: Learn a new skill")
@@ -262,16 +274,19 @@ class inCollegeAppManager:
                 print("q: Log out")
 
                 option = input("\nPlease Select an Option: ")
-                if option.lower() == 'q':
-                    self._current_user = None
-                    break
-                if option == '7':
+                if option in options: 
+                    options[option]()
+                elif option == "5":
+                    useful_links(False)
+                elif option == '7':
                     if __DeleteThisAccount() == True: 
                         self._current_user = None
                         break
-                if option == "5":
-                    useful_links(False)
-                if option in options: options[option]()
+                elif option.lower() == 'q':
+                    self._current_user = None
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
                 
         def _postJob():
             """
@@ -281,6 +296,9 @@ class inCollegeAppManager:
                 print("All jobs have been created. Please come back later.")
                 return
             try:
+                print(menuSeperate)
+                print("Create A Job")
+                print("-------------------------------")
                 # Capture job details
                 job_title = input("Enter the job title: \n")
                 job_description = input("Enter the job description: \n")
@@ -314,62 +332,69 @@ class inCollegeAppManager:
             """
             UI Screen for logging in
             """
+            print(menuSeperate)
+            print("Log In")
+            print("-------------------------------")
             username = input("Enter your username: ")
             password = input("Enter your password: ")
             _acc = self.__login(username=username, password=password)
             if _acc is not None:
-                print("You have successfully logged in.")
+                print("\nYou have successfully logged in.")
                 additional_options(_acc)
             else:
-                print('Incorrect username / password, please try again')
-
+                print('\nIncorrect username / password, please try again')
 
         def find_user_from_home_page():
             """
             Finds a user from the home page
             """
-            first_name = input("what is the first name of the person you are looking for:\n")
-            last_name = input("what is the last name of the person you are looking for:\n")
+            print(menuSeperate)
+            print("Find An InCollege User")
+            print("-------------------------------")
+            first_name = input("Please enter the first name of the person you are looking for:\n")
+            last_name = input("Please enter the last name of the person you are looking for:\n")
             user = self._is_person_in_database(first_name, last_name)
             if user:
-                print("looks like they have an account")
+                print("\nLooks like they have an account!")
                 return user
             else:
-                print("sorry, they are not part of the InCollege system yet")
+                print("\nSorry, they are not part of the InCollege system yet.")
                 return False
+            
         def find_user_from_account_page():
-            first_name = input("what is the first name of the person you are looking for:\n")
-            last_name = input("what is the last name of the person you are looking for:\n")
+            print(menuSeperate)
+            print("Find An InCollege User")
+            print("-------------------------------")
+            first_name = input("Please enter the first name of the person you are looking for:\n")
+            last_name = input("Please enter the last name of the person you are looking for:\n")
             user = self._is_person_in_database(first_name, last_name)
             if user:
-                print("looks like they have an account")
+                print("\nLooks like they have an account!")
                 return user
             else:
-                print("sorry, they are not part of the InCollege system yet")
+                print("\nSorry, they are not part of the InCollege system yet.")
                 return False
         
         def guest_controls():
-            if self._current_user == None:
-                print("Guest Controls\n")
-                print(f"{'InCollege Email Notifications:':>31s} On")
-                print(f"{'InCollege SMS Notifications:':>31s} On")
-                print(f"{'InCollege Targeted Advertising:':>31s} On")
-                print(f"{'Language:':>31s} English")
-                print("\nNot signed in - cannot alter settings\n")
-            else:
-                while True:
+            while True:
+                print(menuSeperate)
+                print("Guest Controls")
+                print("-------------------------------")
+                cur = 0
+                if self._current_user != None:
                     cur = self.db_manager.fetchall("SELECT * FROM settings WHERE username=?", (self._current_user[1], ))
-                    print(f"{'InCollege Email Notifications:':>31s} {'Off' if cur[0][1] == 0 else 'On'}")
-                    print(f"{'InCollege SMS Notifications:':>31s} {'Off' if cur[0][2] == 0 else 'On'}")
-                    print(f"{'InCollege Targeted Advertising:':>31s} {'Off' if cur[0][3] == 0 else 'On'}")
-                    print(f"{'Language:':>31s} {cur[0][4]}")
-
+                print(f"{'InCollege Email Notifications:':>31s} {'Off' if cur and cur[0][1] == 0 else 'On'}")
+                print(f"{'InCollege SMS Notifications:':>31s} {'Off' if cur and cur[0][2] == 0 else 'On'}")
+                print(f"{'InCollege Targeted Advertising:':>31s} {'Off' if cur and cur[0][3] == 0 else 'On'}")
+                if self._current_user == None:
+                    print("\nNot signed in - cannot alter settings")
+                    break
+                else:
                     change = input("\nWould you like to change one of these settings? (y/n) ")
                     if change == "y":
                         print("1. Email Notifications")
                         print("2. SMS Notifcations")
                         print("3. Targeted Advertising")
-                        print("4. Language")
                         print("q. Quit")
                         option = input("\nSelect which you would like to change: ")
 
@@ -385,19 +410,6 @@ class inCollegeAppManager:
                             bool = 1 if cur[0][3] == 0 else 0
                             self.db_manager.execute("UPDATE settings SET target_ads=? WHERE username=?", (bool, self._current_user[1]))
                             print("Targeted Advertising successfully turned", "on." if bool else "off.")
-                        elif option == "4":
-                            print("\nChange Language")
-                            print("1. English")
-                            print("2. Spanish")
-                            print("q. Quit")
-                            choice = input("Select a language option: ")
-                            if choice == "1" or choice == "2":
-                                language = "Spanish" if choice == "2" else "English"
-                                self.db_manager.execute("UPDATE settings SET language=? WHERE username=?", (language, self._current_user[1]))
-                                print("Language successfully switched to", language, ".")
-                            elif choice != "q":
-                                print("Invalid choice. Please try again.")
-                            print()
                         elif option != "q":
                             print("Invalid choice. Please try again.")
                         print()
@@ -406,26 +418,74 @@ class inCollegeAppManager:
 
         def privacy_policy():
             while True:
+                print(menuSeperate)
                 print("Privacy Policy")
-                print("\n1. Read Privacy Policy")
+                print("-------------------------------")
+                print("1. Read Privacy Policy")
                 print("2. Guest Controls")
                 print("q. Quit")
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("Privacy Policy for InCollege\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("1. Introduction: Welcome to InCollege! This Privacy Policy explains how we handle your information.\n")
+                    print("2. Information We Collect: We collect personal and usage data for improving our services.\n")
+                    print("3. How We Use Your Information: We use your data for providing and enhancing our services, communication, personalization, and analytics.\n")
+                    print("4. Data Sharing and Disclosure: We share data with service providers, for legal compliance, and during business transfers.\n")
+                    print("5. Your Choices: You can manage your settings, access, correct, or delete your data.\n")
+                    print("6. Security: We implement security measures but cannot guarantee absolute security.\n")
+                    print("7. Cookies and Tracking Technologies: We use cookies for analytics and functionality.\n")
+                    print("8. Children's Privacy: Our services are not for children under 13.\n")
+                    print("9. International Users: Your data may be transferred to and processed in the United States.\n")
+                    print("10. Changes to this Privacy Policy: We may update this policy; please review it periodically.\n")
+                    print("11. Contact Us: For questions or concerns, contact us at support@InCollege.com\n")
+                    print("12. Governing Law: This policy follows the laws of Tampa, Florida.\n")
+                    print("Thank you for choosing InCollege!")
                 elif choice == "2":
                     guest_controls()
                 elif choice.lower() == "q":
                     break
                 else:
                     print("Invalid choice. Please try again.")
-                print()
+
+        def languages_menu():
+            while True:
+                print(menuSeperate)
+                print("Languages")
+                print("-------------------------------")
+                print("1. English")
+                print("2. Spanish")
+                print("Current language: ", end="")
+                if self._current_user == None:
+                    print("English\n\nNot signed in - cannot alter language settings")
+                    break
+                else:
+                    cur = self.db_manager.fetchall("SELECT language FROM settings WHERE username=?", (self._current_user[1], ))
+                    print(cur[0][0])
+                    changeLanguage = input("Would you like to change languages? (y/n) ")
+                    if changeLanguage != "y":
+                        break
+                    else:
+                        print("\nChange Language")
+                        print("1. English")
+                        print("2. Spanish")
+                        print("q. Quit")
+                        choice = input("Select a language option: ")
+                        if choice == "1" or choice == "2":
+                            language = "Spanish" if choice == "2" else "English"
+                            self.db_manager.execute("UPDATE settings SET language=? WHERE username=?", (language, self._current_user[1]))
+                            print(f"Language successfully switched to {language}.")
+                        elif choice != "q":
+                            print("Invalid choice. Please try again.")
 
         def important_InCollege_links():
             while True:
-                print("\nInCollege Important Links")
+                print(menuSeperate)
+                print("InCollege Important Links")
+                print("-------------------------------")
                 print("1. A Copyright Notice")
                 print("2. About")
                 print("3. Accessibility")
@@ -436,49 +496,141 @@ class inCollegeAppManager:
                 print("8. Brand Policy")
                 print("9. Guest Controls")
                 print("a. Languages")
-                print("q. quit\n")
+                print("q. Quit\n")
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("InCollege Copyright Policy\n")
+                    print("© 2023 InCollege, Inc. All rights reserved.\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("This content is protected by copyright laws. Unauthorized use, reproduction, or distribution is prohibited.")
+                    print("For inquiries, contact copyright@InCollege.com\n")
+                    print("Thank you for respecting our copyright.")
                 elif choice == "2":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("About In College")
+                    print("Welcome to In College, the world's largest college student network with many users in many countries and territories worldwide!")
                 elif choice == "3":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("InCollege Accessibility\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("InCollege is dedicated to accessibility for all users. Our Accessibility Menu offers:\n")
+                    print("1. High Contrast Mode: Enhances readability.\n")
+                    print("2. Screen Reader Compatibility: Optimal for screen readers.\n")
+                    print("3. Simplified UI: Streamlined interface.\n")
+                    print("4. Help Center: Access resources and support.\n")
+                    print("5. Feedback: Report issues and suggest improvements.\n")
+                    print("We're committed to an inclusive InCollege experience. Contact us at support@InCollege.com or (813) 555-5555 for assistance or feedback.")
                 elif choice == "4":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("User Agreement for InCollege\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("Welcome to InCollege! By using our services, you agree to the following terms:\n")
+                    print("1. Acceptance: You agree to abide by this agreement.\n")
+                    print("2. Eligibility: Users must be at least 13 years old and have parental consent if under 18.\n")
+                    print("3. Privacy: Your data usage is governed by our Privacy Policy.\n")
+                    print("4. Conduct: Use InCollege lawfully and respectfully. No impersonation, harassment, or infringement of others' rights.\n")
+                    print("5. Content: Respect intellectual property rights. Do not use, reproduce, or distribute InCollege's content without permission.\n")
+                    print("6. Termination: We can suspend or terminate your InCollege access for violations.\n")
+                    print("7. Disclaimers: We provide InCollege 'as is' and are not liable for user-generated content or certain damages.\n")
+                    print("8. Changes: We may update this agreement; your use implies acceptance of changes.\n")
+                    print("9. Contact: Reach us at support@InCollege.com for questions or concerns.\n")
+                    print("10. Governing Law: This agreement follows the laws of Tampa, Florida.\n")
+                    print("Thank you for using InCollege. We hope you have a great experience!")
                 elif choice == "5":
                     privacy_policy()
                 elif choice == "6":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("Cookie Policy for InCollege\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("1. What Are Cookies?")
+                    print("Cookies are small text files that help us recognize your device and remember preferences.\n")
+                    print("2. Why Do We Use Cookies?")
+                    print("   - Essential Cookies: Required for basic functionality.")
+                    print("   - Analytics Cookies: Improve our services.")
+                    print("   - Advertising Cookies: Deliver targeted ads.\n")
+                    print("3. Types of Cookies")
+                    print("   - Session Cookies: Temporary cookies.")
+                    print("   - Persistent Cookies: Remain for a set period.")
+                    print("   - First-Party Cookies: Set by InCollege.")
+                    print("   - Third-Party Cookies: Set by third parties.\n")
+                    print("4. Your Choices")
+                    print("Manage cookies via browser settings. Choices may affect site functionality.\n")
+                    print("5. Third-Party Cookies")
+                    print("Third parties may use cookies; review their policies.\n")
+                    print("6. Updates to this Policy")
+                    print("We may update this policy; check periodically.\n")
+                    print("7. Contact Us")
+                    print("Questions or concerns? Contact us at support@InCollege.com\n")
+                    print("Thanks for using InCollege!")
                 elif choice == "7":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("A Copyright Notice for InCollege\n")
+                    print("© 2023 InCollege, Inc. All Rights Reserved.\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("The InCollege application and its content are protected by copyright laws. InCollege owns or has licensed all content.")
+                    print("By using InCollege, you agree to:\n")
+                    print("1. Ownership: All content belongs to InCollege or its providers.\n")
+                    print("2. Permissible Use: You can use InCollege for personal, non-commercial use only.\n")
+                    print("3. Prohibited: You cannot copy, distribute, modify, or remove copyrights, use for commercial purposes, or reverse engineer the app.\n")
+                    print("4. Trademarks: All trademarks are the property of InCollege or respective owners.\n")
+                    print("5. Reporting Infringements: Report copyright infringements to copyright@InCollege.com\n")
+                    print("6. Contact: For questions, contact us at:")
+                    print("            support@InCollege.com")                    
+                    print("            (813) 555-555\n")
+                    print("InCollege may update this notice; your continued use implies acceptance.\n")
                 elif choice == "8":
-                    print("Under Construction")
+                    print(menuSeperate)
+                    print("InCollege Brand Policy\n")
+                    print("Last Updated: September 28, 2023\n")
+                    print("Welcome to the InCollege Brand Policy. This document outlines the guidelines for the use of InCollege's branding elements,\
+                           \nincluding our logo, name, and other brand assets. By using our branding, you agree to follow these guidelines:\n")
+                    print("1. Logo Usage:")
+                    print("   - Use the official InCollege logo as provided by us.")
+                    print("   - Do not modify, distort, or alter the logo in any way.")
+                    print("   - Ensure proper spacing and clear visibility when placing the logo.\n")
+                    print("2. Name Usage:")
+                    print('   - Refer to our service as "InCollege" (with a capital "I" and "C").')
+                    print("   - Do not use our name in a way that suggests affiliation or endorsement without permission.\n")
+                    print("3. Color Palette:")
+                    print("   - Our primary brand colors are blue and white. Use them consistently.\n")
+                    print("4. Typography:")
+                    print("   - Use the designated fonts for InCollege materials.\n")
+                    print("5. Brand Assets:")
+                    print("   - Obtain permission to use any official InCollege brand assets.")
+                    print("   - Do not use our branding for misleading or harmful purposes.\n")
+                    print("6. Compliance:")
+                    print("   - Adhere to applicable laws and regulations when using our branding.\n")
+                    print("7. Reporting Misuse:")
+                    print("   - If you encounter unauthorized use of InCollege branding, please report it to us at copyright@InCollege.com\n")
+                    print("8. Changes to this Policy:")
+                    print("   - We may update this Brand Policy; please stay informed about any changes.\n")
+                    print("Thank you for respecting InCollege's brand identity. Proper usage of our branding helps maintain consistency and trust in our services.")
                 elif choice == "9":
-                    print("Under Construction")
+                    guest_controls()
                 elif choice == "a":
-                    print("Under Construction")
+                    languages_menu()
                 elif choice.lower() == "q":
                     break
                 else:
                     print("Invalid choice. Please try again.")
-                print()
-
-                    
+      
         def _create_account_procedure():
             try:
+                print(menuSeperate)
+                print("Create Account")
+                print("-------------------------------")
                 username = input("Enter unique username: \n")
                 password = input("Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n")
                 name_first = input("Enter your first name: \n")
                 name_last = input("Enter your last name: \n")
                 _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last)
                 if _acc is not None:
-                    print('Successfully Created Account.')
-
+                    print('\nSuccessfully Created Account.')
                 else:
-                    print('Failed At Creating Account.')
+                    print('\nFailed At Creating Account.')
             except Exception as e:
                 print('Error While Creating Account:\n', e)
 
@@ -553,7 +705,7 @@ class inCollegeAppManager:
         return bool(user)
 
 def main():
-    inCollegeAppManager().Run()
+    InCollegeAppManager().Run()
 
 if __name__ == '__main__':
     main()
