@@ -1,3 +1,4 @@
+import json
 from typing import Tuple, List, Optional, Any, Union
 import sqlite3
 import os
@@ -51,6 +52,9 @@ class InCollegeAppManager:
             length=8, uppercase=1, numbers=1, special=1,
         )
         self._current_user = None
+        with open('./data/menus.json', 'r') as f:
+            self.menus = json.load(f)['menus']
+        print(self.menus)
         
     def setup_database(self):
         self.db_manager.execute("PRAGMA foreign_keys=ON;")
@@ -122,17 +126,8 @@ class InCollegeAppManager:
     def Run(self): # Can only Serve One Client at a time :(
         """Main loop for user interaction."""
         def intro():
-            print(menuSeperate)
-            print(" Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! \n Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.\n Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. \n Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.\n Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! \n #CareerSuccess \n #InCollegeImpact \n ")
-            print("\nInCollege")
-            print("-------------------------------")
-            print("1. Log in")
-            print("2. Create a new account")
-            print("3. Find someone you know")
-            print("4. Useful Links")
-            print("5. Play Demo Video")
-            print("6. InCollege Important Links")
-            print("q. Quit\n")
+            print(menuSeperate) #menu
+            print(self.menus[0]["content"])
 
         def useful_links(from_home_page):
 
@@ -140,13 +135,8 @@ class InCollegeAppManager:
 
                 def sign_up_options():
                     while True:
-                        print(menuSeperate)
-                        print("Sign In/Sign Up")
-                        print("-------------------------------")
-                        print("1. Login")
-                        print("2. Create an Account")
-                        print("q. Quit")
-
+                        print(menuSeperate) #menu
+                        print(self.menus[1]["content"])
                         choice = input("Select an option: ")
                         print()
                         if choice == "1":
@@ -157,19 +147,11 @@ class InCollegeAppManager:
                             break
 
                 while True:
-                    print(menuSeperate)
-                    print("General Help")
-                    print("-------------------------------")
-                    print("1. Help Center")
-                    print("2. About")
-                    print("3. Press")
-                    print("4. Blog")
-                    print("5. Careers")
-                    print("6. Developers")
+                    print(menuSeperate) #menu
+                    print(self.menus[2]['content'])
                     if from_home_page:
                         print("7. Sign Up")
                     print("q. Quit")
-
                     choice = input("Select an option: ")
                     print()
                     if choice == "1":
@@ -192,14 +174,8 @@ class InCollegeAppManager:
                         print("Invalid choice. Please try again.")
 
             while True:
-                print(menuSeperate)
-                print("Useful Links")
-                print("-------------------------------")
-                print("1. General")
-                print("2. Browse InCollege")
-                print("3. Business Solutions")
-                print("4. Directories")
-                print("q. Quit\n")
+                print(menuSeperate) #menu
+                print(self.menus[3]['content'])
 
                 choice = input("Select an option: ")
                 print()
@@ -222,7 +198,7 @@ class InCollegeAppManager:
             """
             self._current_user = user
             def __LearnSkill():
-                print(menuSeperate)
+                print(menuSeperate) #menu
                 print("Learn A Skill")
                 print("-------------------------------")
                 # Fetch all records from the 'skills' table
@@ -240,7 +216,7 @@ class InCollegeAppManager:
                 print("\nUnder Construction")
 
             def __DeleteThisAccount():
-                print(menuSeperate)
+                print(menuSeperate) #menu
                 print("Delete Account")
                 print("-------------------------------")
                 verify = input("Are you sure you want to delete your account? \nThis can not be undone. (y/n) ")
@@ -261,17 +237,8 @@ class InCollegeAppManager:
             """
             options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, '6':important_InCollege_links}
             while True:
-                print(menuSeperate)
-                print("Account Options")
-                print("-------------------------------")
-                print("1: Search for a job")
-                print("2: Find someone you know")
-                print("3: Learn a new skill")
-                print("4: Post a job")
-                print("5. Useful Links")
-                print("6: InCollege Important links")
-                print("7: Delete my account")
-                print("q: Log out")
+                print(menuSeperate) #menu
+                print(self.menus[4]['content'])
 
                 option = input("\nPlease Select an Option: ")
                 if option in options: 
@@ -296,7 +263,7 @@ class InCollegeAppManager:
                 print("All jobs have been created. Please come back later.")
                 return
             try:
-                print(menuSeperate)
+                print(menuSeperate) #menu
                 print("Create A Job")
                 print("-------------------------------")
                 # Capture job details
@@ -332,7 +299,7 @@ class InCollegeAppManager:
             """
             UI Screen for logging in
             """
-            print(menuSeperate)
+            print(menuSeperate) #menu
             print("Log In")
             print("-------------------------------")
             username = input("Enter your username: ")
@@ -348,21 +315,17 @@ class InCollegeAppManager:
             """
             Finds a user from the home page
             """
-            print(menuSeperate)
+            print(menuSeperate) #menu
             print("Find An InCollege User")
             print("-------------------------------")
             first_name = input("Please enter the first name of the person you are looking for:\n")
             last_name = input("Please enter the last name of the person you are looking for:\n")
             user = self._is_person_in_database(first_name, last_name)
-            if user:
-                print("\nLooks like they have an account!")
-                return user
-            else:
-                print("\nSorry, they are not part of the InCollege system yet.")
-                return False
+            print("\nLooks like they have an account!") if user else print("\nSorry, they are not part of the InCollege system yet.")
+            return user if user else False
             
         def find_user_from_account_page():
-            print(menuSeperate)
+            print(menuSeperate) #menu
             print("Find An InCollege User")
             print("-------------------------------")
             first_name = input("Please enter the first name of the person you are looking for:\n")
@@ -377,7 +340,7 @@ class InCollegeAppManager:
         
         def guest_controls():
             while True:
-                print(menuSeperate)
+                print(menuSeperate) #menu
                 print("Guest Controls")
                 print("-------------------------------")
                 cur = 0
@@ -392,10 +355,7 @@ class InCollegeAppManager:
                 else:
                     change = input("\nWould you like to change one of these settings? (y/n) ")
                     if change == "y":
-                        print("1. Email Notifications")
-                        print("2. SMS Notifcations")
-                        print("3. Targeted Advertising")
-                        print("q. Quit")
+                        print(self.menus[5]["content"])
                         option = input("\nSelect which you would like to change: ")
 
                         if option == "1":
@@ -418,32 +378,14 @@ class InCollegeAppManager:
 
         def privacy_policy():
             while True:
-                print(menuSeperate)
-                print("Privacy Policy")
-                print("-------------------------------")
-                print("1. Read Privacy Policy")
-                print("2. Guest Controls")
-                print("q. Quit")
+                print(menuSeperate) #menu
+                print(self.menus[6]['content'])
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    print(menuSeperate)
-                    print("Privacy Policy for InCollege\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("1. Introduction: Welcome to InCollege! This Privacy Policy explains how we handle your information.\n")
-                    print("2. Information We Collect: We collect personal and usage data for improving our services.\n")
-                    print("3. How We Use Your Information: We use your data for providing and enhancing our services, communication, personalization, and analytics.\n")
-                    print("4. Data Sharing and Disclosure: We share data with service providers, for legal compliance, and during business transfers.\n")
-                    print("5. Your Choices: You can manage your settings, access, correct, or delete your data.\n")
-                    print("6. Security: We implement security measures but cannot guarantee absolute security.\n")
-                    print("7. Cookies and Tracking Technologies: We use cookies for analytics and functionality.\n")
-                    print("8. Children's Privacy: Our services are not for children under 13.\n")
-                    print("9. International Users: Your data may be transferred to and processed in the United States.\n")
-                    print("10. Changes to this Privacy Policy: We may update this policy; please review it periodically.\n")
-                    print("11. Contact Us: For questions or concerns, contact us at support@InCollege.com\n")
-                    print("12. Governing Law: This policy follows the laws of Tampa, Florida.\n")
-                    print("Thank you for choosing InCollege!")
+                    print(menuSeperate) #menu
+                    print(self.menus[7]['content'])
                 elif choice == "2":
                     guest_controls()
                 elif choice.lower() == "q":
@@ -453,11 +395,8 @@ class InCollegeAppManager:
 
         def languages_menu():
             while True:
-                print(menuSeperate)
-                print("Languages")
-                print("-------------------------------")
-                print("1. English")
-                print("2. Spanish")
+                print(menuSeperate) #menu
+                print(self.menus[8]['content'])
                 print("Current language: ", end="")
                 if self._current_user == None:
                     print("English\n\nNot signed in - cannot alter language settings")
@@ -469,10 +408,7 @@ class InCollegeAppManager:
                     if changeLanguage != "y":
                         break
                     else:
-                        print("\nChange Language")
-                        print("1. English")
-                        print("2. Spanish")
-                        print("q. Quit")
+                        print(self.menus[9]['content'])
                         choice = input("Select a language option: ")
                         if choice == "1" or choice == "2":
                             language = "Spanish" if choice == "2" else "English"
@@ -483,131 +419,34 @@ class InCollegeAppManager:
 
         def important_InCollege_links():
             while True:
-                print(menuSeperate)
-                print("InCollege Important Links")
-                print("-------------------------------")
-                print("1. A Copyright Notice")
-                print("2. About")
-                print("3. Accessibility")
-                print("4. User Agreement")
-                print("5. Privacy Policy")
-                print("6. Cookie Policy")
-                print("7. Copyright Policy")
-                print("8. Brand Policy")
-                print("9. Guest Controls")
-                print("a. Languages")
-                print("q. Quit\n")
+                print(menuSeperate) #menu
+                print(self.menus[10]['content'])
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    print(menuSeperate)
-                    print("InCollege Copyright Policy\n")
-                    print("© 2023 InCollege, Inc. All rights reserved.\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("This content is protected by copyright laws. Unauthorized use, reproduction, or distribution is prohibited.")
-                    print("For inquiries, contact copyright@InCollege.com\n")
-                    print("Thank you for respecting our copyright.")
+                    print(menuSeperate) #menu
+                    print(self.menus[11]['content'])
                 elif choice == "2":
-                    print(menuSeperate)
-                    print("About In College")
-                    print("Welcome to In College, the world's largest college student network with many users in many countries and territories worldwide!")
+                    print(menuSeperate) #menu
+                    print(self.menus[12]['content'])
                 elif choice == "3":
-                    print(menuSeperate)
-                    print("InCollege Accessibility\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("InCollege is dedicated to accessibility for all users. Our Accessibility Menu offers:\n")
-                    print("1. High Contrast Mode: Enhances readability.\n")
-                    print("2. Screen Reader Compatibility: Optimal for screen readers.\n")
-                    print("3. Simplified UI: Streamlined interface.\n")
-                    print("4. Help Center: Access resources and support.\n")
-                    print("5. Feedback: Report issues and suggest improvements.\n")
-                    print("We're committed to an inclusive InCollege experience. Contact us at support@InCollege.com or (813) 555-5555 for assistance or feedback.")
+                    print(menuSeperate) #menu
+                    print(self.menus[13]['content'])
                 elif choice == "4":
-                    print(menuSeperate)
-                    print("User Agreement for InCollege\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("Welcome to InCollege! By using our services, you agree to the following terms:\n")
-                    print("1. Acceptance: You agree to abide by this agreement.\n")
-                    print("2. Eligibility: Users must be at least 13 years old and have parental consent if under 18.\n")
-                    print("3. Privacy: Your data usage is governed by our Privacy Policy.\n")
-                    print("4. Conduct: Use InCollege lawfully and respectfully. No impersonation, harassment, or infringement of others' rights.\n")
-                    print("5. Content: Respect intellectual property rights. Do not use, reproduce, or distribute InCollege's content without permission.\n")
-                    print("6. Termination: We can suspend or terminate your InCollege access for violations.\n")
-                    print("7. Disclaimers: We provide InCollege 'as is' and are not liable for user-generated content or certain damages.\n")
-                    print("8. Changes: We may update this agreement; your use implies acceptance of changes.\n")
-                    print("9. Contact: Reach us at support@InCollege.com for questions or concerns.\n")
-                    print("10. Governing Law: This agreement follows the laws of Tampa, Florida.\n")
-                    print("Thank you for using InCollege. We hope you have a great experience!")
+                    print(menuSeperate) #menu
+                    print(self.menus[14]['content'])
                 elif choice == "5":
                     privacy_policy()
                 elif choice == "6":
-                    print(menuSeperate)
-                    print("Cookie Policy for InCollege\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("1. What Are Cookies?")
-                    print("Cookies are small text files that help us recognize your device and remember preferences.\n")
-                    print("2. Why Do We Use Cookies?")
-                    print("   - Essential Cookies: Required for basic functionality.")
-                    print("   - Analytics Cookies: Improve our services.")
-                    print("   - Advertising Cookies: Deliver targeted ads.\n")
-                    print("3. Types of Cookies")
-                    print("   - Session Cookies: Temporary cookies.")
-                    print("   - Persistent Cookies: Remain for a set period.")
-                    print("   - First-Party Cookies: Set by InCollege.")
-                    print("   - Third-Party Cookies: Set by third parties.\n")
-                    print("4. Your Choices")
-                    print("Manage cookies via browser settings. Choices may affect site functionality.\n")
-                    print("5. Third-Party Cookies")
-                    print("Third parties may use cookies; review their policies.\n")
-                    print("6. Updates to this Policy")
-                    print("We may update this policy; check periodically.\n")
-                    print("7. Contact Us")
-                    print("Questions or concerns? Contact us at support@InCollege.com\n")
-                    print("Thanks for using InCollege!")
+                    print(menuSeperate) #menu
+                    print(self.menus[15]['content'])
                 elif choice == "7":
-                    print(menuSeperate)
-                    print("A Copyright Notice for InCollege\n")
-                    print("© 2023 InCollege, Inc. All Rights Reserved.\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("The InCollege application and its content are protected by copyright laws. InCollege owns or has licensed all content.")
-                    print("By using InCollege, you agree to:\n")
-                    print("1. Ownership: All content belongs to InCollege or its providers.\n")
-                    print("2. Permissible Use: You can use InCollege for personal, non-commercial use only.\n")
-                    print("3. Prohibited: You cannot copy, distribute, modify, or remove copyrights, use for commercial purposes, or reverse engineer the app.\n")
-                    print("4. Trademarks: All trademarks are the property of InCollege or respective owners.\n")
-                    print("5. Reporting Infringements: Report copyright infringements to copyright@InCollege.com\n")
-                    print("6. Contact: For questions, contact us at:")
-                    print("            support@InCollege.com")                    
-                    print("            (813) 555-555\n")
-                    print("InCollege may update this notice; your continued use implies acceptance.\n")
+                    print(menuSeperate) #menu
+                    print(self.menus[16]['content'])
                 elif choice == "8":
-                    print(menuSeperate)
-                    print("InCollege Brand Policy\n")
-                    print("Last Updated: September 28, 2023\n")
-                    print("Welcome to the InCollege Brand Policy. This document outlines the guidelines for the use of InCollege's branding elements,\
-                           \nincluding our logo, name, and other brand assets. By using our branding, you agree to follow these guidelines:\n")
-                    print("1. Logo Usage:")
-                    print("   - Use the official InCollege logo as provided by us.")
-                    print("   - Do not modify, distort, or alter the logo in any way.")
-                    print("   - Ensure proper spacing and clear visibility when placing the logo.\n")
-                    print("2. Name Usage:")
-                    print('   - Refer to our service as "InCollege" (with a capital "I" and "C").')
-                    print("   - Do not use our name in a way that suggests affiliation or endorsement without permission.\n")
-                    print("3. Color Palette:")
-                    print("   - Our primary brand colors are blue and white. Use them consistently.\n")
-                    print("4. Typography:")
-                    print("   - Use the designated fonts for InCollege materials.\n")
-                    print("5. Brand Assets:")
-                    print("   - Obtain permission to use any official InCollege brand assets.")
-                    print("   - Do not use our branding for misleading or harmful purposes.\n")
-                    print("6. Compliance:")
-                    print("   - Adhere to applicable laws and regulations when using our branding.\n")
-                    print("7. Reporting Misuse:")
-                    print("   - If you encounter unauthorized use of InCollege branding, please report it to us at copyright@InCollege.com\n")
-                    print("8. Changes to this Policy:")
-                    print("   - We may update this Brand Policy; please stay informed about any changes.\n")
-                    print("Thank you for respecting InCollege's brand identity. Proper usage of our branding helps maintain consistency and trust in our services.")
+                    print(menuSeperate) #menu
+                    print(self.menus[17]['content'])
                 elif choice == "9":
                     guest_controls()
                 elif choice == "a":
@@ -619,7 +458,7 @@ class InCollegeAppManager:
       
         def _create_account_procedure():
             try:
-                print(menuSeperate)
+                print(menuSeperate) #menu
                 print("Create Account")
                 print("-------------------------------")
                 username = input("Enter unique username: \n")
