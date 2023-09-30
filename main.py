@@ -54,7 +54,6 @@ class InCollegeAppManager:
         self._current_user = None
         with open('./data/menus.json', 'r') as f:
             self.menus = json.load(f)['menus']
-        print(self.menus)
         
     def setup_database(self):
         self.db_manager.execute("PRAGMA foreign_keys=ON;")
