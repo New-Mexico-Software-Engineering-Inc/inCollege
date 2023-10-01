@@ -3,3 +3,6 @@
 
 # SQLite Files
 *.db
+
+# Python Compiled Files
+*.pyc

@@ -249,6 +249,7 @@ class InCollegeAppManager:
                         self._current_user = None
                         break
                 elif option.lower() == 'q':
+                    print('Succesfully Logged Out.')
                     self._current_user = None
                     break
                 else:

@@ -1,13 +1,14 @@
 # Sprint 3 Test Cases
 # The functions use monkeypatch to mock input and capsys to capture output
-# Created by: Emin Mahmudzade
+# Created by: Emin Mahmudzade, Jonathan Koch
 # Date created: 09/30/2023
-# Last Update: 09/30/2023
+# Last Update: 10/1/2023
 import sqlite3
 import json
 import pytest
 import main
 from io import StringIO
+import re
 with open('./data/menus.json', 'r') as f:
     menus = json.load(f)['menus']
 # function to run the inCollege program and return program output
@@ -23,10 +24,18 @@ def runInCollege(capsys):
     # return the program's output
     return capsys.readouterr()
 
+def __create_user_account():
+    try:
+        main.InCollegeAppManager()._create_account('a', 'GoBulls24!', 'fname', 'lname')
+    except Exception as e:
+        print(e)
+    
+
 
 # Test case to check the functionality of Important Links menu
 def test_Important_Links(monkeypatch, capsys):
     # Retrieve expected output for each menu item
+    __create_user_account()
     expectedOut = menus[10]['content']  # Retrieve content for the 11th menu item
     expectedOut1 = menus[11]['content']  # Retrieve content for the 12th menu item
     expectedOut2 = menus[12]['content']  # Retrieve content for the 13th menu item
@@ -72,6 +81,7 @@ def test_Important_Links(monkeypatch, capsys):
 
 # Test case to check the functionality of turning off guest controls
 def test_Change_Guest_Controls_off(monkeypatch, capsys):
+    __create_user_account()
     # Expected outputs for different scenarios
     expectedOut_def = " InCollege Email Notifications: On\n   InCollege SMS Notifications: On\nInCollege Targeted Advertising: On"
     expectedOut_1st_iteration = "Email notifications successfully turned off."
@@ -94,6 +104,7 @@ def test_Change_Guest_Controls_off(monkeypatch, capsys):
     
 # Test case to check the functionality of turning on guest controls
 def test_Change_Guest_Controls_on(monkeypatch, capsys):
+    __create_user_account()
     # Expected outputs for different scenarios
     expectedOut_def = " InCollege Email Notifications: Off\n   InCollege SMS Notifications: Off\nInCollege Targeted Advertising: Off"
     expectedOut_1st_iteration = "Email notifications successfully turned on."
@@ -116,6 +127,7 @@ def test_Change_Guest_Controls_on(monkeypatch, capsys):
     
 # Test case to check the functionality of changing language to Spanish
 def test_Change_Language_to_Spanish(monkeypatch, capsys):
+    __create_user_account()
     # Expected outputs for different scenarios
     expectedOut_def = "1. English\n2. Spanish"
     expectedOut_1st_iteration = "Language successfully switched to Spanish."
@@ -133,6 +145,7 @@ def test_Change_Language_to_Spanish(monkeypatch, capsys):
 
 # Test case to check the functionality of changing language to English
 def test_Change_Language_to_English(monkeypatch, capsys):
+    __create_user_account()
     # Expected outputs for different scenarios
     expectedOut_def = "1. English\n2. Spanish"
     expectedOut_1st_iteration = "Language successfully switched to English."
@@ -152,6 +165,7 @@ def test_Change_Language_to_English(monkeypatch, capsys):
     
 # Test case to check the functionality of Useful Links menu
 def test_Useful_Links(monkeypatch, capsys):
+    __create_user_account()
     # Retrieve expected output for specific menu items
     expectedOut = menus[2]['content']  # Retrieve content for the 3rd menu item
     expectedOut1 = "We're here to help!"  # Expected message for the 1st menu option
@@ -178,12 +192,13 @@ def test_Useful_Links(monkeypatch, capsys):
     
 # Test case to check the functionality of deleting user settings
 def test_Delete_Settings(monkeypatch, capsys):
+    __create_user_account()
     # Expected outputs for different scenarios
     expectedOut1 = "We are sorry to see you go!"  # Expected message when user settings are deleted
     expectedOut2 = " InCollege Email Notifications: On\n   InCollege SMS Notifications: On\nInCollege Targeted Advertising: On"  # Expected user settings before deletion
 
     # Set user input for the test scenario
-    userInput = StringIO("1\ne\nGoBulls28!\n6\n9\ny\n2\nn\nq\n7\ny\ny\n2\ne\nGoBulls28!\nfname5\nlname5\n1\ne\nGoBulls28!\n6\n9\n\nq\nq\nq\n")
+    userInput = StringIO("1\na\nGoBulls24!\n6\n9\ny\n2\nn\nq\n7\ny\ny\n2\ne\nGoBulls24!\nfname5\nlname5\n1\ne\nGoBulls24!\n6\n9\n\nq\nq\nq\n")
     
     monkeypatch.setattr('sys.stdin', userInput)
     
@@ -194,3 +209,39 @@ def test_Delete_Settings(monkeypatch, capsys):
     assert expectedOut1 in capture.out
     assert expectedOut2 in capture.out
 
+def test_Useful_Links_After_Login(monkeypatch, capsys):
+    __create_user_account()
+
+    # Set user input for the test scenario
+    userInput = StringIO("1\na\nGoBulls24!\n5\n1\nq\nq\nq\nq\n")
+    
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    # Run the program and capture the output
+    capture = runInCollege(capsys)
+    out = capture.out[capture.out.lower().index("successfully logged in"):capture.out.lower().index("succesfully logged out")].lower()
+    with open('debug.log', 'w') as f:
+        f.write(out)
+    # Assert that the expected outputs are present in the captured output
+    assert "sign up" not in out
+    assert "useful links" in out
+    
+def test_General_Links_Options(monkeypatch, capsys):
+    __create_user_account()
+
+    # Set user input for the test scenario
+    userInput = StringIO("4\n1\n7\nq\nq\nq\nq\n")
+    
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    # Run the program and capture the output
+    capture = runInCollege(capsys)
+    out =capture.out.lower()
+    context = re.search(r"sign in/sign up(.*\n){2}", out)
+    assert context is not None, 'Failed Searching for Sign Up.'
+    out = out[context.end()::]
+    context = re.search(r"select an option", out)
+    assert context is not None, 'Failed Searching for Options.'
+    out = out[:context.start()].strip()
+    out = [int(line.split('. ')[1].strip() not in ('login', 'create an account', 'quit')) for line in out.split('\n')]
+    assert sum(out) == 0

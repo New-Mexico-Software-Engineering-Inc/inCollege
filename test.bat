@@ -1,0 +1,1 @@
+.\inCollegeEnv\Scripts\activate.bat && pytest test_main3.py
