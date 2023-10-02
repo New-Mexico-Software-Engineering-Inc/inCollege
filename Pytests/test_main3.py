@@ -198,8 +198,7 @@ def test_Delete_Settings(monkeypatch, capsys):
     expectedOut2 = " InCollege Email Notifications: On\n   InCollege SMS Notifications: On\nInCollege Targeted Advertising: On"  # Expected user settings before deletion
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n6\n9\ny\n2\nn\nq\n7\ny\ny\n2\ne\nGoBulls24!\nfname5\nlname5\n1\ne\nGoBulls24!\n6\n9\n\nq\nq\nq\n")
-    
+    userInput = StringIO("1\na\nGoBulls24!\n6\n9\ny\n2\nn\nq\n7\ny\ny\n2\ne\nGoBulls24!\nfname1\nlname1\n1\na\nGoBulls24!\n6\n9\ny\n2\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
     
     # Run the program and capture the output
