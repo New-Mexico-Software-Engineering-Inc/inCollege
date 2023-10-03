@@ -312,6 +312,8 @@ class InCollegeAppManager:
                 elif option == '5':
                     useful_links(False)
                 elif option == '7':
+                    list_friends()
+                elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
@@ -337,8 +339,80 @@ class InCollegeAppManager:
             elif pendingRequest:
                 print(f"User {receiver} has already sent you a friend request.")
                 acceptRequest = input("Would you like to accept their friend request? (y/n) ")
-                # insert add friend function
-        
+                if acceptRequest == "y":
+                    add_friend(sender, receiver)
+
+        # NEED TO FIX TO NOT ADD SAME FRIENDSHIP MULTIPLE TIMES ******************************
+        def add_friend(friendA, friendB):
+            # check if there exists a friendship between the two users already
+            alreadyFriends1 = (self.db_manager.fetch("SELECT * FROM friendship WHERE (user_one=? AND user_two=?)", (friendA, friendB)))
+            alreadyFriends2 = (self.db_manager.fetch("SELECT * FROM friendship WHERE (user_one=? AND user_two=?)", (friendB, friendA)))
+
+            if alreadyFriends1 != None and alreadyFriends2 != None:
+                print(f"You are already friends with {friendB}\n")
+            else:
+                self.db_manager.execute("INSERT INTO friendship(user_one, user_two) VALUES (?, ?)", (friendA, friendB))
+
+
+        def remove_friend(friendToRemove):
+            currentUserName = self._current_user[1]
+            self.db_manager.execute("DELETE FROM friendship WHERE (user_one=? AND user_two=?)", (currentUserName, friendToRemove))
+            self.db_manager.execute("DELETE FROM friendship WHERE (user_one=? AND user_two=?)", (friendToRemove, currentUserName))
+
+
+        def list_friends():
+            def print_friends():
+                print("Friends List")
+                print("-------------------------------")
+
+                currentUserName = self._current_user[1]
+                friends = []
+                friendshipsWithUser1 = self.db_manager.fetchall("SELECT * FROM friendship WHERE (user_one=?)", (currentUserName))
+                friendshipsWithUser2 = self.db_manager.fetchall("SELECT * FROM friendship WHERE (user_two=?)", (currentUserName))
+
+                for i in friendshipsWithUser1:
+                    friends.append(i[2])
+                for i in friendshipsWithUser2:
+                    friends.append(i[1])
+
+                for i in range(len(friends)):
+                    print(f"{i + 1}: {friends[i]}")
+
+                print("\n")
+
+                return friends
+
+            friends = print_friends()
+            while True:
+                print("Show my Network Options:")
+                print("-------------------------------")
+                print("1. Remove a friend\nq. Quit\n")
+                choice = input("Please select an option: ")
+
+                if choice == "1":
+                    numToDelete = input("Please enter the number of your friend in your friends list: ")
+                    try:
+                        int(numToDelete)
+                    except ValueError:
+                        print("\nPlease enter the number associated with the friend in your friends list\n")
+                        continue
+
+                    numToDelete = int(numToDelete)
+                    # get actual index in friends
+                    numToDelete -= 1
+
+                    remove_friend(friends[numToDelete])
+                    # reprint all of friends
+                    print("\n")
+                    friends = print_friends()
+
+                elif choice == "q":
+                    break
+
+                else:
+                    print("Please select an available option")
+
+
         def post_job():
             """
             Posts a job under the specified username
