@@ -211,25 +211,8 @@ class InCollegeAppManager:
                 if input("\nPlease Select a Skill: ").lower() != 'q': print("\nUnder Construction")
 
             def __ConnectWUser():
-                while True:
-                    print(menuSeperate)
-                    print(self.menus[18]['content'])
-                    choice = input("Please select an option: ")
-                    print()
+                
 
-                    if choice == "1":
-                        # search by last name
-                        print("Searching by last name")
-                    elif choice == "2":
-                        # search by university
-                        print("Searching by university")
-                    elif choice == "3":
-                        # search by major
-                        print("Searching by major")
-                    elif choice == "q":
-                        break
-                    else:
-                        print("Invalid choice. Please try again.")
 
 
 
