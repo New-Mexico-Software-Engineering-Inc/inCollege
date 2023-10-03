@@ -64,7 +64,9 @@ class InCollegeAppManager:
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             first_name TEXT NOT NULL,
-            last_name TEXT NOT NULL
+            last_name TEXT NOT NULL,
+            university TEXT NOT NULL,
+            major TEXT NOT NULL
         );
         ''')
 
@@ -209,7 +211,27 @@ class InCollegeAppManager:
                 if input("\nPlease Select a Skill: ").lower() != 'q': print("\nUnder Construction")
 
             def __ConnectWUser():
-                find_user_from_account_page()
+                while True:
+                    print(menuSeperate)
+                    print(self.menus[18]['content'])
+                    choice = input("Please select an option: ")
+                    print()
+
+                    if choice == "1":
+                        # search by last name
+                        print("Searching by last name")
+                    elif choice == "2":
+                        # search by university
+                        print("Searching by university")
+                    elif choice == "3":
+                        # search by major
+                        print("Searching by major")
+                    elif choice == "q":
+                        break
+                    else:
+                        print("Invalid choice. Please try again.")
+
+
 
             def __SearchJob():
                 print("\nUnder Construction")
@@ -465,7 +487,9 @@ class InCollegeAppManager:
                 password = input("Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n")
                 name_first = input("Enter your first name: \n")
                 name_last = input("Enter your last name: \n")
-                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last)
+                univ = input("Enter your university: \n")
+                major = input("Enter your major: \n")
+                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major)
                 if _acc is not None:
                     print('\nSuccessfully Created Account.')
                 else:
@@ -500,7 +524,7 @@ class InCollegeAppManager:
         print('Goodbye!')    
         exit(0)
         
-    def _create_account(self, username, password, first_name, last_name) -> Any:
+    def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
         """
             Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
         """
@@ -511,7 +535,7 @@ class InCollegeAppManager:
         if not valid_password(password):
             raise Exception("Invalid password. Please ensure it meets the requirements.")
 
-        if self.db_manager.fetch('SELECT COUNT(*) FROM accounts;')[0] >= 5:
+        if self.db_manager.fetch('SELECT COUNT(*) FROM accounts;')[0] >= 10:
             raise Exception("All permitted accounts have been created. Please come back later.")
 
         if self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;', (username,)):
@@ -520,8 +544,8 @@ class InCollegeAppManager:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         self.db_manager.execute(
-            'INSERT INTO accounts (username, password, first_name, last_name) VALUES (?, ?, ?, ?);',
-            (username, hashed_password, first_name, last_name))
+            'INSERT INTO accounts (username, password, first_name, last_name, university, major) VALUES (?, ?, ?, ?, ?, ?);',
+            (username, hashed_password, first_name, last_name, university, major))
         
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
