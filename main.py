@@ -248,16 +248,22 @@ class InCollegeAppManager:
                     else:
                         print(f"Searching by {search_by[choice]}")
                         search_for = input(f"Enter the user you wish to find's {search_by[choice]}: ")
-                        users_matching = self.db_manager.fetchall(f"SELECT username, first_name, last_name, university, major FROM accounts WHERE {search_by[choice].replace(' ', '_')}=?", (search_for, ))
+                        users_matching = self.db_manager.fetchall(f"SELECT username, first_name, last_name, university, major FROM accounts \
+                                                                  WHERE {search_by[choice].replace(' ', '_')}=? AND NOT username=?", (search_for, self._current_user[1]))
+                                                
+                        if len(users_matching) == 0:
+                            print(f'\nNo users found with {search_by[choice]} equal to "{search_for}".')
+                            continue
+                        
                         for i in range(len(users_matching)):
                             users_matching[i] = list(users_matching[i])
                             users_matching[i].insert(0, i+1)
-          
+
                         print(f'\nUsers found with {search_by[choice]} equal to "{search_for}":')
                         head = ["User Num", "Username", "First Name", "Last Name", "University", "Major"]
                         print(tabulate(users_matching, headers=head, tablefmt="grid"))
 
-                        sendRequest = input("Would you like to send one of these users a friend request? (y/n) ")
+                        sendRequest = input("\nWould you like to send one of these users a friend request? (y/n) ")
                         if sendRequest == "y":
                             receiverNumber = input("Enter the User Num of the user to send a friend request: ")
                             try:
@@ -316,12 +322,12 @@ class InCollegeAppManager:
                     print("Invalid choice. Please try again.")
 
         def send_friend_request(sender, receiver):
-            requestExists = self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
-                                    (sender, receiver))
+            requestExists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                    (sender, receiver)))[0][0]
             
-            pendingRequest = self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
-                                    (receiver, sender))
-            
+            pendingRequest = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                    (receiver, sender)))[0][0]
+
             if not requestExists and not pendingRequest:
                 self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
                 print("\nFriend Request Sent Successfully!")
