@@ -4,8 +4,9 @@ import sqlite3
 import os
 import bcrypt
 from password_strength import PasswordPolicy
+from tabulate import tabulate
 
-menuSeperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
+menu_seperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
 
 class DatabaseManager:
     def __init__(self, data_file):
@@ -36,7 +37,7 @@ class DatabaseManager:
     def post_job(self, skill_name, long_description, job_title, job_description, employer, location, salary, user_id):
         user = self.fetch('SELECT * FROM accounts WHERE user_id=?;', (user_id,))
         assert user is not None, "Could not find user"
-        
+
         self.execute('''
             INSERT INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by, user_first_name, user_last_name)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''',
@@ -78,6 +79,26 @@ class InCollegeAppManager:
             target_ads BOOL NOT NULL,
             language TEXT NOT NULL,
             FOREIGN KEY (username) REFERENCES accounts(username) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS friend_requests (
+            request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            receiver TEXT NOT NULL,
+            FOREIGN KEY (sender) REFERENCES accounts(username) ON DELETE CASCADE,
+            FOREIGN KEY (receiver) REFERENCES accounts(username) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS friendship (
+            friendship_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_one TEXT NOT NULL,
+            user_two TEXT NOT NULL,
+            FOREIGN KEY (user_one) REFERENCES accounts(username) ON DELETE CASCADE,
+            FOREIGN KEY (user_two) REFERENCES accounts(username) ON DELETE CASCADE
         );
         ''')
 
@@ -127,7 +148,7 @@ class InCollegeAppManager:
     def Run(self): # Can only Serve One Client at a time :(
         """Main loop for user interaction."""
         def intro():
-            print(menuSeperate) #menu
+            print(menu_seperate) #menu
             print(self.menus[0]["content"])
 
         def useful_links(from_home_page):
@@ -136,7 +157,7 @@ class InCollegeAppManager:
 
                 def sign_up_options():
                     while True:
-                        print(menuSeperate) #menu
+                        print(menu_seperate) #menu
                         print(self.menus[1]["content"])
                         choice = input("Select an option: ")
                         print()
@@ -148,7 +169,7 @@ class InCollegeAppManager:
                             break
 
                 while True:
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[2]['content'])
                     if from_home_page:
                         print("7. Sign Up")
@@ -175,7 +196,7 @@ class InCollegeAppManager:
                         print("Invalid choice. Please try again.")
 
             while True:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print(self.menus[3]['content'])
 
                 choice = input("Select an option: ")
@@ -198,8 +219,8 @@ class InCollegeAppManager:
             Login options for a user
             """
             self._current_user = user
-            def __LearnSkill():
-                print(menuSeperate) #menu
+            def learn_skill():
+                print(menu_seperate) #menu
                 print("Learn A Skill")
                 print("-------------------------------")
                 # Fetch all records from the 'skills' table
@@ -210,17 +231,58 @@ class InCollegeAppManager:
                 print('\nq: Quit')
                 if input("\nPlease Select a Skill: ").lower() != 'q': print("\nUnder Construction")
 
-            def __ConnectWUser():
-                
 
+            def connect_with_user():
+                while True:
+                    print(menu_seperate)
+                    print(self.menus[18]['content'])
+                    choice = input("Please select an option: ")
+                    print()
+                    
+                    search_by = {"1":"last name", "2":"university", "3":"major"}
 
+                    if choice == "q":
+                        break
+                    elif choice not in search_by:
+                        print("Invalid choice. Please try again.")
+                        continue
+                    else:
+                        print(f"Searching by {search_by[choice]}")
+                        search_for = input(f"Enter the user you wish to find's {search_by[choice]}: ")
+                        users_matching = self.db_manager.fetchall(f"SELECT username, first_name, last_name, university, major FROM accounts \
+                                                                  WHERE {search_by[choice].replace(' ', '_')}=? AND NOT username=?", (search_for, self._current_user[1]))
+                                                
+                        if len(users_matching) == 0:
+                            print(f'\nNo users found with {search_by[choice]} equal to "{search_for}".')
+                            continue
+                        
+                        for i in range(len(users_matching)):
+                            users_matching[i] = list(users_matching[i])
+                            users_matching[i].insert(0, i+1)
 
+                        print(f'\nUsers found with {search_by[choice]} equal to "{search_for}":')
+                        head = ["User Num", "Username", "First Name", "Last Name", "University", "Major"]
+                        print(tabulate(users_matching, headers=head, tablefmt="grid"))
 
-            def __SearchJob():
+                        sendRequest = input("\nWould you like to send one of these users a friend request? (y/n) ")
+                        if sendRequest == "y":
+                            receiverNumber = input("Enter the User Num of the user to send a friend request: ")
+                            try:
+                                found = False
+                                for user in users_matching:
+                                    if user[0] == int(receiverNumber):
+                                        send_friend_request(self._current_user[1], user[1])
+                                        found = True
+                                if not found:
+                                    print("User not found, please try again.")
+                            except:
+                                print("User Num did not match. Please try again.")
+
+            def search_job():
                 print("\nUnder Construction")
 
-            def __DeleteThisAccount():
-                print(menuSeperate) #menu
+            def delete_this_account():
+                print(menu_seperate) #menu
                 print("Delete Account")
                 print("-------------------------------")
                 verify = input("Are you sure you want to delete your account? \nThis can not be undone. (y/n) ")
@@ -239,18 +301,18 @@ class InCollegeAppManager:
             """
             TODO: Change this to work with main loop, implement "client/host connection" state transition logic.
             """
-            options = {'1':__SearchJob, '2': __ConnectWUser, '3': __LearnSkill, '4': _postJob, '6':important_InCollege_links}
+            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '6':important_InCollege_links}
             while True:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print(self.menus[4]['content'])
 
                 option = input("\nPlease Select an Option: ")
                 if option in options: 
                     options[option]()
-                elif option == "5":
+                elif option == '5':
                     useful_links(False)
                 elif option == '7':
-                    if __DeleteThisAccount() == True: 
+                    if delete_this_account() == True: 
                         self._current_user = None
                         break
                 elif option.lower() == 'q':
@@ -259,8 +321,25 @@ class InCollegeAppManager:
                     break
                 else:
                     print("Invalid choice. Please try again.")
-                
-        def _postJob():
+
+        def send_friend_request(sender, receiver):
+            requestExists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                    (sender, receiver)))[0][0]
+            
+            pendingRequest = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                    (receiver, sender)))[0][0]
+
+            if not requestExists and not pendingRequest:
+                self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
+                print("\nFriend Request Sent Successfully!")
+            elif requestExists:
+                print(f"You have already sent user {receiver} a friend request.\nYou will be notified when they accept your request.")
+            elif pendingRequest:
+                print(f"User {receiver} has already sent you a friend request.")
+                acceptRequest = input("Would you like to accept their friend request? (y/n) ")
+                # insert add friend function
+        
+        def post_job():
             """
             Posts a job under the specified username
             """
@@ -268,7 +347,7 @@ class InCollegeAppManager:
                 print("All jobs have been created. Please come back later.")
                 return
             try:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print("Create A Job")
                 print("-------------------------------")
                 # Capture job details
@@ -304,7 +383,7 @@ class InCollegeAppManager:
             """
             UI Screen for logging in
             """
-            print(menuSeperate) #menu
+            print(menu_seperate) #menu
             print("Log In")
             print("-------------------------------")
             username = input("Enter your username: ")
@@ -320,7 +399,7 @@ class InCollegeAppManager:
             """
             Finds a user from the home page
             """
-            print(menuSeperate) #menu
+            print(menu_seperate) #menu
             print("Find An InCollege User")
             print("-------------------------------")
             first_name = input("Please enter the first name of the person you are looking for:\n")
@@ -330,7 +409,7 @@ class InCollegeAppManager:
             return user if user else False
             
         def find_user_from_account_page():
-            print(menuSeperate) #menu
+            print(menu_seperate) #menu
             print("Find An InCollege User")
             print("-------------------------------")
             first_name = input("Please enter the first name of the person you are looking for:\n")
@@ -345,7 +424,7 @@ class InCollegeAppManager:
         
         def guest_controls():
             while True:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print("Guest Controls")
                 print("-------------------------------")
                 cur = 0
@@ -383,13 +462,13 @@ class InCollegeAppManager:
 
         def privacy_policy():
             while True:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print(self.menus[6]['content'])
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[7]['content'])
                 elif choice == "2":
                     guest_controls()
@@ -400,7 +479,7 @@ class InCollegeAppManager:
 
         def languages_menu():
             while True:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print(self.menus[8]['content'])
                 print("Current language: ", end="")
                 if self._current_user == None:
@@ -424,33 +503,33 @@ class InCollegeAppManager:
 
         def important_InCollege_links():
             while True:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print(self.menus[10]['content'])
 
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[11]['content'])
                 elif choice == "2":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[12]['content'])
                 elif choice == "3":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[13]['content'])
                 elif choice == "4":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[14]['content'])
                 elif choice == "5":
                     privacy_policy()
                 elif choice == "6":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[15]['content'])
                 elif choice == "7":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[16]['content'])
                 elif choice == "8":
-                    print(menuSeperate) #menu
+                    print(menu_seperate) #menu
                     print(self.menus[17]['content'])
                 elif choice == "9":
                     guest_controls()
@@ -463,7 +542,7 @@ class InCollegeAppManager:
       
         def _create_account_procedure():
             try:
-                print(menuSeperate) #menu
+                print(menu_seperate) #menu
                 print("Create Account")
                 print("-------------------------------")
                 username = input("Enter unique username: \n")
