@@ -44,7 +44,6 @@ class DatabaseManager:
             (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
         return True
 
-
 class InCollegeAppManager:
     def __init__(self, data_file="users.db", skills_file='data/example_skills.txt'):
         self.db_manager = DatabaseManager(data_file)
@@ -219,6 +218,7 @@ class InCollegeAppManager:
             Login options for a user
             """
             self._current_user = user
+
             def learn_skill():
                 print(menu_seperate) #menu
                 print("Learn A Skill")
@@ -231,12 +231,74 @@ class InCollegeAppManager:
                 print('\nq: Quit')
                 if input("\nPlease Select a Skill: ").lower() != 'q': print("\nUnder Construction")
 
+            def friend_requests():
+                while True:
+                    print(menu_seperate)
+                    print("Incoming Friend Requests\n-------------------------------")
+                    pendingRequests = self.db_manager.fetchall("SELECT sender, first_name, last_name, university, major FROM friend_requests INNER JOIN accounts ON sender = username WHERE receiver=?", (self._current_user[1], ))
+                    if len(pendingRequests) == 0:
+                        print(f'\nYou have no new friend requests.')
+                        break
+                    else:
+                        for i in range(len(pendingRequests)):
+                            pendingRequests[i] = list(pendingRequests[i])
+                            pendingRequests[i].insert(0, i+1)
 
+                        print(f"You have {len(pendingRequests)} new friend requests!")
+
+                        print("\nFriend Requests:")
+                        head = ["Request Num", "Username", "First Name", "Last Name", "University", "Major"]
+                        print(tabulate(pendingRequests, headers=head, tablefmt="grid"))
+
+                        manageRequest = input("\nWould you like to manage your requests? (y/n) ")
+                        if manageRequest != "y":
+                            break
+                        else:
+                            requestNum = input("Enter the request number of the request you wish to respond to: ")
+                            try:
+                                found = False
+                                requestNum = int(requestNum) - 1
+                                if 0 <= requestNum < len(pendingRequests):
+                                    found = True
+                                    print(f"\nFriend Request from {pendingRequests[requestNum][1]}:")
+                                    print("1. Accept\n2. Reject\nq. Quit")
+                                    response = input("\nSelect a response: ")
+
+                                    if response == "1":
+                                        print("Add friend function")
+                                    elif response == "2":
+                                        self.db_manager.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (pendingRequests[requestNum][1], self._current_user[1]))
+                                        print("\nFriend request successfully denied.\nThe sender will not be notified you denied their request.")
+                                    elif response != "q":
+                                        print("Invalid choice. Please try again.")
+
+                                if not found:
+                                    print("Request Num did not match. Please try again.")
+                            except:
+                                print("Request Num did not match. Please try again.")
+
+            def send_friend_request(sender, receiver):
+                requestExists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                        (sender, receiver)))[0][0]
+                
+                pendingRequest = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                        (receiver, sender)))[0][0]
+
+                if not requestExists and not pendingRequest:
+                    self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
+                    print(f"\nFriend request to {receiver} sent successfully!")
+                elif requestExists:
+                    print(f"You have already sent user {receiver} a friend request.\nYou will be notified when they accept your request.")
+                elif pendingRequest:
+                    print(f"User {receiver} has already sent you a friend request.")
+                    acceptRequest = input("Would you like to accept their friend request? (y/n) ")
+                    # insert add friend function
+        
             def connect_with_user():
                 while True:
                     print(menu_seperate)
                     print(self.menus[18]['content'])
-                    choice = input("Please select an option: ")
+                    choice = input("Select an option: ")
                     print()
                     
                     search_by = {"1":"last name", "2":"university", "3":"major"}
@@ -247,7 +309,7 @@ class InCollegeAppManager:
                         print("Invalid choice. Please try again.")
                         continue
                     else:
-                        print(f"Searching by {search_by[choice]}")
+                        print(f"Searching by {search_by[choice]}.")
                         search_for = input(f"Enter the user you wish to find's {search_by[choice]}: ")
                         users_matching = self.db_manager.fetchall(f"SELECT username, first_name, last_name, university, major FROM accounts \
                                                                   WHERE {search_by[choice].replace(' ', '_')}=? AND NOT username=?", (search_for, self._current_user[1]))
@@ -266,13 +328,14 @@ class InCollegeAppManager:
 
                         sendRequest = input("\nWould you like to send one of these users a friend request? (y/n) ")
                         if sendRequest == "y":
-                            receiverNumber = input("Enter the User Num of the user to send a friend request: ")
+                            receiverNumber = input("Enter the user num of the user to send a friend request: ")
                             try:
                                 found = False
-                                for user in users_matching:
-                                    if user[0] == int(receiverNumber):
-                                        send_friend_request(self._current_user[1], user[1])
-                                        found = True
+                                receiverNumber = int(receiverNumber) - 1
+                                if 0 <= receiverNumber < len(users_matching):
+                                    send_friend_request(self._current_user[1], users_matching[receiverNumber][1])
+                                    found = True
+
                                 if not found:
                                     print("User not found, please try again.")
                             except:
@@ -298,21 +361,59 @@ class InCollegeAppManager:
                 print("Account deletion canceled, returning to account menu")
                 return False
 
-            """
-            TODO: Change this to work with main loop, implement "client/host connection" state transition logic.
-            """
-            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '6':important_InCollege_links}
+            def post_job():
+                """
+                Posts a job under the specified username
+                """
+                if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 5:
+                    print("All jobs have been created. Please come back later.")
+                    return
+                try:
+                    print(menu_seperate) #menu
+                    print("Create A Job")
+                    print("-------------------------------")
+                    # Capture job details
+                    job_title = input("Enter the job title: \n")
+                    job_description = input("Enter the job description: \n")
+                    skill_name = input("Enter the required skill name: \n")
+                    long_description = input("Enter a long description for the skill: \n")
+                    employer = input("Enter the employer: \n")
+                    location = input("Enter the location: \n")
+                    salary = input("Enter the salary: \n")
+
+                    # ensure that the value entered for salary is numerical, otherwise we print message and leave function
+                    try:
+                        float(salary)
+                    except ValueError:
+                        print("Please enter a number for salary")
+                        return
+
+                    salary = float(salary)
+
+                    assert job_title and job_description and skill_name and long_description and employer and location and salary, "Error: Cannot leave field Blank."
+
+                    # Insert job details into jobs table
+                    if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, self._current_user[0]):
+                        raise Exception("Could not create job.")
+                    
+                    print('Successfully Posted Job.')
+
+                except Exception as e:
+                    print('Error While Posting Job:\n', e)
+            
+            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '6':important_InCollege_links, '7':show_network, '8':friend_requests}
             while True:
                 print(menu_seperate) #menu
+                numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
+                if numberOfRequests:
+                    print(f"You have [{numberOfRequests}] new friend request{'s' if numberOfRequests > 1 else ''}!\n")
                 print(self.menus[4]['content'])
 
-                option = input("\nPlease Select an Option: ")
+                option = input("Select an option: ")
                 if option in options: 
                     options[option]()
                 elif option == '5':
                     useful_links(False)
-                elif option == '7':
-                    show_network()
                 elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
@@ -468,7 +569,7 @@ class InCollegeAppManager:
 
             except Exception as e:
                 print('Error While Posting Job:\n', e)
-                
+           
         def _login_procedure():
             """
             UI Screen for logging in
@@ -497,20 +598,6 @@ class InCollegeAppManager:
             user = self._is_person_in_database(first_name, last_name)
             print("\nLooks like they have an account!") if user else print("\nSorry, they are not part of the InCollege system yet.")
             return user if user else False
-            
-        def find_user_from_account_page():
-            print(menu_seperate) #menu
-            print("Find An InCollege User")
-            print("-------------------------------")
-            first_name = input("Please enter the first name of the person you are looking for:\n")
-            last_name = input("Please enter the last name of the person you are looking for:\n")
-            user = self._is_person_in_database(first_name, last_name)
-            if user:
-                print("\nLooks like they have an account!")
-                return user
-            else:
-                print("\nSorry, they are not part of the InCollege system yet.")
-                return False
         
         def guest_controls():
             while True:
@@ -669,12 +756,6 @@ class InCollegeAppManager:
                 self._Terminate()
             else:
                 print("Invalid choice. Please try again.")
-    
-    def _Terminate(self):
-        """Closes the database connection and exits the program."""
-        self.db_manager.close()
-        print('Goodbye!')    
-        exit(0)
         
     def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
         """
