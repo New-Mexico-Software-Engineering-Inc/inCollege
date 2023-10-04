@@ -406,7 +406,7 @@ class InCollegeAppManager:
                     try:
                         int(numToDelete)
                     except ValueError:
-                        print("\nPlease enter the number associated with the friend in your friends list\n")
+                        print("Please enter the number associated with the friend in your friends list\n")
                         continue
 
                     numToDelete = int(numToDelete)
@@ -414,7 +414,7 @@ class InCollegeAppManager:
                     numToDelete -= 1
 
                     if numToDelete >= len(friends):
-                        print("Please reenter a valid number\n")
+                        print("Please enter a valid number\n")
                         continue
 
                     remove_friend(friends[numToDelete])
@@ -426,7 +426,7 @@ class InCollegeAppManager:
                     break
 
                 else:
-                    print("Please select an available option")
+                    print("Please select an available option\n")
 
 
         def post_job():
