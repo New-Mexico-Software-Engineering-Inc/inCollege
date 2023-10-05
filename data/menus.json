@@ -7,13 +7,13 @@
             "content": "Sign In/Sign Up\n-------------------------------\n1. Login\n2. Create an Account\nq. Quit\n"
         },
         {
-            "content": "General Help\n-------------------------------\n1. Help Center\n2. About\n3. Press\n4. Blog\n5. Careers\n6. Developers\n"
+            "content": "General Help\n-------------------------------\n1. Help Center\n2. About\n3. Press\n4. Blog\n5. Careers\n6. Developers"
         },
         {
             "content": "Useful Links\n-------------------------------\n1. General\n2. Browse InCollege\n3. Business Solutions\n4. Directories\nq. Quit\n" 
         },
         {
-            "content": "Account Options\n-------------------------------\n1: Search for a job\n2: Find someone you know\n3: Learn a new skill\n4: Post a job\n5. Useful Links\n6: InCollege Important links\n7. Show my Network\n8: Friend Requests\n9: Delete my account\nq: Log out\n"
+            "content": "Account Options\n-------------------------------\n1: Search for a job\n2: Find someone you know\n3: Learn a new skill\n4: Post a job\n5. Useful links\n6: InCollege important links\n7. Show my network\n8: Delete my account\nq: Log out\n"
         },
         {
             "content": "1. Email Notifications\n2. SMS Notifications\n3. Targeted Advertising\nq. Quit\n" 
@@ -28,7 +28,7 @@
             "content": "Languages\n-------------------------------\n1. English\n2. Spanish\n"
         },
         {
-            "content": "Change Language\n1. English\n2. Spanish\nq. Quit\n"
+            "content": "Change Language\n-------------------------------\n1. English\n2. Spanish\nq. Quit\n"
         },
         {
             "content": "InCollege Important Links\n-------------------------------\n1. A Copyright Notice\n2. About\n3. Accessibility\n4. User Agreement\n5. Privacy Policy\n6. Cookie Policy\n7. Copyright Policy\n8. Brand Policy\n9. Guest Controls\na. Languages\nq. Quit\n"

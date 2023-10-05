@@ -45,7 +45,7 @@ class DatabaseManager:
         return True
 
 class InCollegeAppManager:
-    def __init__(self, data_file="users.db", skills_file='data/example_skills.txt'):
+    def __init__(self, data_file="users.db"):
         self.db_manager = DatabaseManager(data_file)
         self.setup_database()
         self._PasswordPolicy = PasswordPolicy.from_names(
@@ -143,16 +143,55 @@ class InCollegeAppManager:
         self.db_manager.close()
         print('Goodbye!')
         exit(0)
+        
+    def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
+        """
+            Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
+        """
+        def valid_password(password):
+            """ Validates a Password based on requirements. """
+            return not self._PasswordPolicy.test(password) and len(password) < 13
+        
+        if not valid_password(password):
+            raise Exception("Invalid password. Please ensure it meets the requirements.")
+
+        if self.db_manager.fetch('SELECT COUNT(*) FROM accounts;')[0] >= 10:
+            raise Exception("All permitted accounts have been created. Please come back later.")
+
+        if self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;', (username,)):
+            raise Exception("Username already exists. Please choose another one.")
+
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        self.db_manager.execute(
+            'INSERT INTO accounts (username, password, first_name, last_name, university, major) VALUES (?, ?, ?, ?, ?, ?);',
+            (username, hashed_password, first_name, last_name, university, major))
+        
+        self.db_manager.execute(
+            'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
+            (username, 1, 1, 1, "English"))
+
+        # Returns the account from Database
+        return self.__login(username=username, password=password)
+
+    def __login(self, username: str, password: str):
+        user = self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;',    (username,))
+        if user:
+            hashed_password = user[2].encode('utf-8')  # Encode back to bytes
+            if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
+                return user
+        return None
+
+    # Updated to use db_manager
+    def _is_person_in_database(self, first_name, last_name):
+        user = self.db_manager.fetch("SELECT * FROM accounts WHERE first_name=? AND last_name =?;", (first_name, last_name))
+        return bool(user)
 
     def Run(self): # Can only Serve One Client at a time :(
-        """Main loop for user interaction."""
-        def intro():
-            print(menu_seperate) #menu
-            print(self.menus[0]["content"])
+        # function that holds useful incollege links and their functionalities
+        def useful_links():
 
-        def useful_links(from_home_page):
-
-            def general_options(from_home_page):
+            def general_options():
 
                 def sign_up_options():
                     while True:
@@ -170,8 +209,8 @@ class InCollegeAppManager:
                 while True:
                     print(menu_seperate) #menu
                     print(self.menus[2]['content'])
-                    if from_home_page:
-                        print("7. Sign Up")
+                    if self._current_user == None:
+                        print("7. Sign in/Sign Up")
                     print("q. Quit")
                     choice = input("Select an option: ")
                     print()
@@ -187,7 +226,7 @@ class InCollegeAppManager:
                         print("Under Construction")
                     elif choice == "6":
                         print("Under Construction")
-                    elif choice == "7" and from_home_page:
+                    elif choice == "7" and self._current_user == None:
                         sign_up_options()
                     elif choice == "q":
                         break
@@ -201,7 +240,7 @@ class InCollegeAppManager:
                 choice = input("Select an option: ")
                 print()
                 if choice == "1":
-                    general_options(from_home_page)
+                    general_options()
                 elif choice == "2":
                     print("Under Construction")
                 elif choice == "3":
@@ -213,10 +252,126 @@ class InCollegeAppManager:
                 else:
                     print("Invalid choice. Please try again.")
 
-        def additional_options(user):
-            """
-            Login options for a user
-            """
+        def guest_controls():
+            while True:
+                print(menu_seperate) #menu
+                print("Guest Controls")
+                print("-------------------------------")
+                cur = 0
+                if self._current_user != None:
+                    cur = self.db_manager.fetchall("SELECT * FROM settings WHERE username=?", (self._current_user[1], ))
+                print(f"{'InCollege Email Notifications:':>31s} {'Off' if cur and cur[0][1] == 0 else 'On'}")
+                print(f"{'InCollege SMS Notifications:':>31s} {'Off' if cur and cur[0][2] == 0 else 'On'}")
+                print(f"{'InCollege Targeted Advertising:':>31s} {'Off' if cur and cur[0][3] == 0 else 'On'}")
+                if self._current_user == None:
+                    print("\nNot signed in - cannot alter settings")
+                    break
+                else:
+                    change = input("\nWould you like to change one of these settings? (y/n) ")
+                    if change == "y":
+                        print(self.menus[5]["content"])
+                        option = input("Select which you would like to change: ")
+
+                        if option == "1":
+                            bool = 1 if cur[0][1] == 0 else 0
+                            self.db_manager.execute("UPDATE settings SET email_notifs=? WHERE username=?", (bool, self._current_user[1]))
+                            print("Email notifications successfully turned", "on." if bool else "off.")
+                        elif option == "2":
+                            bool = 1 if cur[0][2] == 0 else 0
+                            self.db_manager.execute("UPDATE settings SET sms_notifs=? WHERE username=?", (bool, self._current_user[1]))
+                            print("SMS notifications successfully turned", "on." if bool else "off.")
+                        elif option == "3":
+                            bool = 1 if cur[0][3] == 0 else 0
+                            self.db_manager.execute("UPDATE settings SET target_ads=? WHERE username=?", (bool, self._current_user[1]))
+                            print("Targeted Advertising successfully turned", "on." if bool else "off.")
+                        elif option != "q":
+                            print("Invalid choice. Please try again.")
+                        print()
+                    else:
+                        break
+
+        def privacy_policy():
+            while True:
+                print(menu_seperate) #menu
+                print(self.menus[6]['content'])
+
+                choice = input("Select an option: ")
+                print()
+                if choice == "1":
+                    print(menu_seperate) #menu
+                    print(self.menus[7]['content'])
+                elif choice == "2":
+                    guest_controls()
+                elif choice == "q":
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+
+        def languages_menu():
+            while True:
+                print(menu_seperate) #menu
+                print(self.menus[8]['content'])
+                print("Current language: ", end="")
+                if self._current_user == None:
+                    print("English\n\nNot signed in - cannot alter language settings")
+                    break
+                else:
+                    cur = self.db_manager.fetchall("SELECT language FROM settings WHERE username=?", (self._current_user[1], ))
+                    print(cur[0][0])
+                    changeLanguage = input("Would you like to change languages? (y/n) ")
+                    if changeLanguage != "y":
+                        break
+                    else:
+                        print(f"\n{self.menus[9]['content']}")
+                        choice = input("Select a language option: ")
+                        if choice == "1" or choice == "2":
+                            language = "Spanish" if choice == "2" else "English"
+                            self.db_manager.execute("UPDATE settings SET language=? WHERE username=?", (language, self._current_user[1]))
+                            print(f"Language successfully switched to {language}.")
+                        elif choice != "q":
+                            print("Invalid choice. Please try again.")
+
+        def important_InCollege_links():
+            while True:
+                print(menu_seperate) #menu
+                print(self.menus[10]['content'])
+
+                choice = input("Select an option: ")
+                print()
+                if choice == "1":
+                    print(menu_seperate) #menu
+                    print(self.menus[11]['content'])
+                elif choice == "2":
+                    print(menu_seperate) #menu
+                    print(self.menus[12]['content'])
+                elif choice == "3":
+                    print(menu_seperate) #menu
+                    print(self.menus[13]['content'])
+                elif choice == "4":
+                    print(menu_seperate) #menu
+                    print(self.menus[14]['content'])
+                elif choice == "5":
+                    privacy_policy()
+                elif choice == "6":
+                    print(menu_seperate) #menu
+                    print(self.menus[15]['content'])
+                elif choice == "7":
+                    print(menu_seperate) #menu
+                    print(self.menus[16]['content'])
+                elif choice == "8":
+                    print(menu_seperate) #menu
+                    print(self.menus[17]['content'])
+                elif choice == "9":
+                    guest_controls()
+                elif choice == "a":
+                    languages_menu()
+                elif choice == "q":
+                    break
+                else:
+                    print("Invalid choice. Please try again.")
+
+        # function that holds the main menu for a signed in user and its functionality
+        def signed_in_menu(user):
             self._current_user = user
 
             def learn_skill():
@@ -233,67 +388,50 @@ class InCollegeAppManager:
 
             def friend_requests():
                 while True:
-                    print(menu_seperate)
-                    print("Incoming Friend Requests\n-------------------------------")
                     pendingRequests = self.db_manager.fetchall("SELECT sender, first_name, last_name, university, major FROM friend_requests INNER JOIN accounts ON sender = username WHERE receiver=?", (self._current_user[1], ))
-                    if len(pendingRequests) == 0:
+                    if not pendingRequests:
                         print(f'\nYou have no new friend requests.')
                         break
+                    print(menu_seperate)
+                    print("Incoming Friend Requests\n-------------------------------")
+
+                    for i in range(len(pendingRequests)):
+                        pendingRequests[i] = list(pendingRequests[i])
+                        pendingRequests[i].insert(0, i+1)
+
+                    print(f"You have {len(pendingRequests)} new friend requests!")
+
+                    print("\nFriend Requests:")
+                    head = ["Request Num", "Username", "First Name", "Last Name", "University", "Major"]
+                    print(tabulate(pendingRequests, headers=head, tablefmt="grid"))
+
+                    manageRequest = input("\nWould you like to manage your requests? (y/n) ")
+
+                    if manageRequest != "y":
+                        break
+                    
+                    requestNum = input("Enter the request number of the request you wish to respond to: ")
+                    try:
+                        requestNum = int(requestNum) - 1
+                    except:
+                        print("Request number did not match. Please try again.")
+                        continue
+
+                    if 0 <= requestNum < len(pendingRequests):
+                        print(f"\nFriend Request from {pendingRequests[requestNum][1]}:")
+                        print("1. Accept\n2. Reject\nq. Quit")
+                        response = input("\nSelect a response: ")
+
+                        if response == "1":
+                            add_friend(self._current_user[1], pendingRequests[requestNum][1])
+                        elif response == "2":
+                            self.db_manager.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (pendingRequests[requestNum][1], self._current_user[1]))
+                            print("\nFriend request successfully denied.\nThe sender will not be notified you denied their request.")
+                        elif response != "q":
+                            print("Invalid choice. Please try again.")
                     else:
-                        for i in range(len(pendingRequests)):
-                            pendingRequests[i] = list(pendingRequests[i])
-                            pendingRequests[i].insert(0, i+1)
+                        print("Request number did not match. Please try again.")
 
-                        print(f"You have {len(pendingRequests)} new friend requests!")
-
-                        print("\nFriend Requests:")
-                        head = ["Request Num", "Username", "First Name", "Last Name", "University", "Major"]
-                        print(tabulate(pendingRequests, headers=head, tablefmt="grid"))
-
-                        manageRequest = input("\nWould you like to manage your requests? (y/n) ")
-                        if manageRequest != "y":
-                            break
-                        else:
-                            requestNum = input("Enter the request number of the request you wish to respond to: ")
-                            try:
-                                found = False
-                                requestNum = int(requestNum) - 1
-                                if 0 <= requestNum < len(pendingRequests):
-                                    found = True
-                                    print(f"\nFriend Request from {pendingRequests[requestNum][1]}:")
-                                    print("1. Accept\n2. Reject\nq. Quit")
-                                    response = input("\nSelect a response: ")
-
-                                    if response == "1":
-                                        print("Add friend function")
-                                    elif response == "2":
-                                        self.db_manager.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (pendingRequests[requestNum][1], self._current_user[1]))
-                                        print("\nFriend request successfully denied.\nThe sender will not be notified you denied their request.")
-                                    elif response != "q":
-                                        print("Invalid choice. Please try again.")
-
-                                if not found:
-                                    print("Request Num did not match. Please try again.")
-                            except:
-                                print("Request Num did not match. Please try again.")
-
-            def send_friend_request(sender, receiver):
-                requestExists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
-                                        (sender, receiver)))[0][0]
-                
-                pendingRequest = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
-                                        (receiver, sender)))[0][0]
-
-                if not requestExists and not pendingRequest:
-                    self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
-                    print(f"\nFriend request to {receiver} sent successfully!")
-                elif requestExists:
-                    print(f"You have already sent user {receiver} a friend request.\nYou will be notified when they accept your request.")
-                elif pendingRequest:
-                    print(f"User {receiver} has already sent you a friend request.")
-                    acceptRequest = input("Would you like to accept their friend request? (y/n) ")
-                    # insert add friend function
-        
             def connect_with_user():
                 while True:
                     print(menu_seperate)
@@ -340,6 +478,127 @@ class InCollegeAppManager:
                                     print("User not found, please try again.")
                             except:
                                 print("User Num did not match. Please try again.")
+
+            # function that sends a friend request to the "receiver" user from the "sender" user
+            def send_friend_request(sender, receiver):
+                request_exists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                        (sender, receiver)))[0][0]
+                
+                pending_request = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
+                                        (receiver, sender)))[0][0]
+                
+                already_friends = (self.db_manager.fetchall("SELECT COUNT(*) FROM friendship WHERE (user_one=? AND user_two=?) OR (user_one=? AND user_two=?)",
+                                        (sender, receiver, receiver, sender)))[0][0]
+
+                if request_exists:
+                    print(f"\nYou have already sent user {receiver} a friend request.\nYou will be notified when they accept your request.")
+                elif pending_request:
+                    print(f"\nUser {receiver} has already sent you a friend request.")
+                    acceptRequest = input("Would you like to accept their friend request? (y/n) ")
+                    if acceptRequest == "y":
+                        add_friend(sender, receiver)
+                elif already_friends:
+                    print(f"\nYou are already friends with {receiver}.")
+                else:
+                    self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
+                    print(f"\nFriend request sent to {receiver} successfully!")
+
+            # function to add a friendship between the usernames passed as arguments so long as one does not already exist
+            def add_friend(friendA, friendB):
+                # check if there exists a friendship between the two users already
+                friendsOfA = create_friends_list(friendA)
+                friendsOfB = create_friends_list(friendB)
+
+                if friendB in friendsOfA and friendA in friendsOfB:
+                    print(f"You are already friends with {friendB}\n")
+                else:
+                    self.db_manager.execute("INSERT INTO friendship(user_one, user_two) VALUES (?, ?)", (friendA, friendB))
+                    self.db_manager.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (friendA, friendB))
+                    self.db_manager.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (friendB, friendA))
+                    print(f"You have successfully added {friendB} to your network!")
+
+            # function to remove a friendship if it exists between current user and passed argument username
+            def remove_friend(friend_to_remove):
+                current_user_name = self._current_user[1]
+                self.db_manager.execute("DELETE FROM friendship WHERE (user_one=? AND user_two=?)", (current_user_name, friend_to_remove))
+                self.db_manager.execute("DELETE FROM friendship WHERE (user_one=? AND user_two=?)", (friend_to_remove, current_user_name))
+                print(f"\nYou have removed {friend_to_remove} from your network.")
+
+            # function to create and return a list that holds all of the friends of the passed username
+            def create_friends_list(current_user_name):
+                friends_list = []
+                friendships_with_user1 = self.db_manager.fetchall("SELECT user_two, first_name, last_name, university, major \
+                        FROM friendship INNER JOIN accounts ON user_two = username WHERE (user_one=?)", (current_user_name, ))
+                friendships_with_user2 = self.db_manager.fetchall("SELECT user_one, first_name, last_name, university, major \
+                        FROM friendship INNER JOIN accounts ON user_one = username WHERE (user_two=?)", (current_user_name, ))
+
+                friends_list = friendships_with_user1 + friendships_with_user2
+
+                for i in range(len(friends_list)):
+                    friends_list[i] = list(friends_list[i])
+                    friends_list[i].insert(0, i+1)
+
+                return friends_list
+
+            def print_friends():
+                friends = create_friends_list(self._current_user[1])
+
+                if friends:
+                    print("\nFriends List")
+                    print("-------------------------------")
+                    head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major"]
+                    print(tabulate(friends, headers=head, tablefmt="grid"), "\n")
+
+                return friends
+
+            # function to show the user's list of friends, and then provide the option to remove any of them or to quit
+            def show_my_network():
+                while True:
+                    print(menu_seperate)
+                    print("Show my network")
+                    print("-------------------------------")
+                    print("1. Show friends list\n2. Remove a friend\n3. Manage friend requests\nq. Quit")
+                    choice = input("Please select an option: ")
+
+                    if choice == "1":
+                        friends = print_friends()
+                        if not friends:
+                            print("\nNo friends at this time.")
+                    elif choice == "2":
+                        friends = print_friends()
+                        if not friends:
+                            print("\nNo friends to remove.")
+                            continue
+
+                        numToDelete = input("Enter the number of the friend you wish to remove (enter q to cancel) : ")
+                        if numToDelete == "q":
+                            continue
+
+                        try:
+                            numToDelete = int(numToDelete)
+                        except ValueError:
+                            print("Please enter the number associated with the friend in your network.\n")
+                            continue
+
+                        # get actual index in friends
+                        numToDelete -= 1
+
+                        if numToDelete >= len(friends):
+                            print("Please enter the number associated with the friend in your network.\n")
+                            continue
+                        
+                        print(f"You are about to remove {friends[numToDelete][1]} from your network.")
+                        user_confirm = input("Do you wish to proceed? (y/n) ")
+                        if user_confirm == "y":
+                            remove_friend(friends[numToDelete][1])
+                        else:
+                            print("Removal cancelled.")
+                    elif choice == "3":
+                        friend_requests()
+                    elif choice == "q":
+                        break
+                    else:
+                        print("Invalid choice. Please try again.")
 
             def search_job():
                 print("\nUnder Construction")
@@ -401,7 +660,7 @@ class InCollegeAppManager:
                 except Exception as e:
                     print('Error While Posting Job:\n', e)
             
-            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '6':important_InCollege_links, '7':show_network, '8':friend_requests}
+            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -412,9 +671,7 @@ class InCollegeAppManager:
                 option = input("Select an option: ")
                 if option in options: 
                     options[option]()
-                elif option == '5':
-                    useful_links(False)
-                elif option == '9':
+                elif option == '8':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
@@ -425,151 +682,6 @@ class InCollegeAppManager:
                 else:
                     print("Invalid choice. Please try again.")
 
-        def send_friend_request(sender, receiver):
-            requestExists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
-                                    (sender, receiver)))[0][0]
-            
-            pendingRequest = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
-                                    (receiver, sender)))[0][0]
-
-            if not requestExists and not pendingRequest:
-                self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
-                print("\nFriend Request Sent Successfully!")
-            elif requestExists:
-                print(f"You have already sent user {receiver} a friend request.\nYou will be notified when they accept your request.")
-            elif pendingRequest:
-                print(f"User {receiver} has already sent you a friend request.")
-                acceptRequest = input("Would you like to accept their friend request? (y/n) ")
-                if acceptRequest == "y":
-                    add_friend(sender, receiver)
-
-        # function to add a friendship between the usernames passed as arguments so long as one does not already exist
-        def add_friend(friendA, friendB):
-            # check if there exists a friendship between the two users already
-            friendsOfA = create_friends_list(friendA)
-            friendsOfB = create_friends_list(friendB)
-
-
-            if friendB in friendsOfA and friendA in friendsOfB:
-                print(f"You are already friends with {friendB}\n")
-            else:
-                self.db_manager.execute("INSERT INTO friendship(user_one, user_two) VALUES (?, ?)", (friendA, friendB))
-
-        # function to remove a friendship if it exists between current user and passed argument username
-        def remove_friend(friendToRemove):
-            currentUserName = self._current_user[1]
-            self.db_manager.execute("DELETE FROM friendship WHERE (user_one=? AND user_two=?)", (currentUserName, friendToRemove))
-            self.db_manager.execute("DELETE FROM friendship WHERE (user_one=? AND user_two=?)", (friendToRemove, currentUserName))
-
-        # function to create and return a list that holds all of the friends of the passed username
-        def create_friends_list(currentUserName):
-            friends = []
-            friendshipsWithUser1 = self.db_manager.fetchall("SELECT * FROM friendship WHERE (user_one=?)",
-                                                            (currentUserName))
-            friendshipsWithUser2 = self.db_manager.fetchall("SELECT * FROM friendship WHERE (user_two=?)",
-                                                            (currentUserName))
-
-            for i in friendshipsWithUser1:
-                friends.append(i[2])
-            for i in friendshipsWithUser2:
-                friends.append(i[1])
-
-            return friends
-
-        # function to show the user's list of friends, and then provide the option to remove any of them or to quit
-        def show_network():
-            def print_friends():
-                print("Friends List")
-                print("-------------------------------")
-
-                friends = create_friends_list(self._current_user[1])
-
-                if friends == []:
-                    print("No friends at this time\n")
-                    return friends
-
-                for i in range(len(friends)):
-                    print(f"{i + 1}: {friends[i]}")
-
-                print("\n")
-
-                return friends
-
-            friends = print_friends()
-            while True:
-                print("Show my Network Options:")
-                print("-------------------------------")
-                print("1. Remove a friend\nq. Quit\n")
-                choice = input("Please select an option: ")
-
-                if choice == "1":
-                    numToDelete = input("Please enter the number of your friend in your friends list: ")
-                    try:
-                        int(numToDelete)
-                    except ValueError:
-                        print("Please enter the number associated with the friend in your friends list\n")
-                        continue
-
-                    numToDelete = int(numToDelete)
-                    # get actual index in friends
-                    numToDelete -= 1
-
-                    if numToDelete >= len(friends):
-                        print("Please enter a valid number\n")
-                        continue
-
-                    remove_friend(friends[numToDelete])
-                    # reprint all of friends
-                    print("\n")
-                    friends = print_friends()
-
-                elif choice == "q":
-                    break
-
-                else:
-                    print("Please select an available option\n")
-
-
-        def post_job():
-            """
-            Posts a job under the specified username
-            """
-            if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 5:
-                print("All jobs have been created. Please come back later.")
-                return
-            try:
-                print(menu_seperate) #menu
-                print("Create A Job")
-                print("-------------------------------")
-                # Capture job details
-                job_title = input("Enter the job title: \n")
-                job_description = input("Enter the job description: \n")
-                skill_name = input("Enter the required skill name: \n")
-                long_description = input("Enter a long description for the skill: \n")
-                employer = input("Enter the employer: \n")
-                location = input("Enter the location: \n")
-                salary = input("Enter the salary: \n")
-
-                # ensure that the value entered for salary is numerical, otherwise we print message and leave function
-                try:
-                    float(salary)
-                except ValueError:
-                    print("Please enter a number for salary")
-                    return
-
-                salary = float(salary)
-
-                assert job_title and job_description and skill_name and long_description and employer and location and salary, "Error: Cannot leave field Blank."
-
-                # Insert job details into jobs table
-                if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, self._current_user[0]):
-                    raise Exception("Could not create job.")
-                
-                print('Successfully Posted Job.')
-
-            except Exception as e:
-                print('Error While Posting Job:\n', e)
-           
         def _login_procedure():
             """
             UI Screen for logging in
@@ -582,7 +694,7 @@ class InCollegeAppManager:
             _acc = self.__login(username=username, password=password)
             if _acc is not None:
                 print("\nYou have successfully logged in.")
-                additional_options(_acc)
+                signed_in_menu(_acc)
             else:
                 print('\nIncorrect username / password, please try again')
 
@@ -596,127 +708,9 @@ class InCollegeAppManager:
             first_name = input("Please enter the first name of the person you are looking for:\n")
             last_name = input("Please enter the last name of the person you are looking for:\n")
             user = self._is_person_in_database(first_name, last_name)
-            print("\nLooks like they have an account!") if user else print("\nSorry, they are not part of the InCollege system yet.")
+            print("\nLooks like they have an account!") if user else print("\nThey are not part of the InCollege system yet.")
             return user if user else False
-        
-        def guest_controls():
-            while True:
-                print(menu_seperate) #menu
-                print("Guest Controls")
-                print("-------------------------------")
-                cur = 0
-                if self._current_user != None:
-                    cur = self.db_manager.fetchall("SELECT * FROM settings WHERE username=?", (self._current_user[1], ))
-                print(f"{'InCollege Email Notifications:':>31s} {'Off' if cur and cur[0][1] == 0 else 'On'}")
-                print(f"{'InCollege SMS Notifications:':>31s} {'Off' if cur and cur[0][2] == 0 else 'On'}")
-                print(f"{'InCollege Targeted Advertising:':>31s} {'Off' if cur and cur[0][3] == 0 else 'On'}")
-                if self._current_user == None:
-                    print("\nNot signed in - cannot alter settings")
-                    break
-                else:
-                    change = input("\nWould you like to change one of these settings? (y/n) ")
-                    if change == "y":
-                        print(self.menus[5]["content"])
-                        option = input("\nSelect which you would like to change: ")
-
-                        if option == "1":
-                            bool = 1 if cur[0][1] == 0 else 0
-                            self.db_manager.execute("UPDATE settings SET email_notifs=? WHERE username=?", (bool, self._current_user[1]))
-                            print("Email notifications successfully turned", "on." if bool else "off.")
-                        elif option == "2":
-                            bool = 1 if cur[0][2] == 0 else 0
-                            self.db_manager.execute("UPDATE settings SET sms_notifs=? WHERE username=?", (bool, self._current_user[1]))
-                            print("SMS notifications successfully turned", "on." if bool else "off.")
-                        elif option == "3":
-                            bool = 1 if cur[0][3] == 0 else 0
-                            self.db_manager.execute("UPDATE settings SET target_ads=? WHERE username=?", (bool, self._current_user[1]))
-                            print("Targeted Advertising successfully turned", "on." if bool else "off.")
-                        elif option != "q":
-                            print("Invalid choice. Please try again.")
-                        print()
-                    else:
-                        break
-
-        def privacy_policy():
-            while True:
-                print(menu_seperate) #menu
-                print(self.menus[6]['content'])
-
-                choice = input("Select an option: ")
-                print()
-                if choice == "1":
-                    print(menu_seperate) #menu
-                    print(self.menus[7]['content'])
-                elif choice == "2":
-                    guest_controls()
-                elif choice.lower() == "q":
-                    break
-                else:
-                    print("Invalid choice. Please try again.")
-
-        def languages_menu():
-            while True:
-                print(menu_seperate) #menu
-                print(self.menus[8]['content'])
-                print("Current language: ", end="")
-                if self._current_user == None:
-                    print("English\n\nNot signed in - cannot alter language settings")
-                    break
-                else:
-                    cur = self.db_manager.fetchall("SELECT language FROM settings WHERE username=?", (self._current_user[1], ))
-                    print(cur[0][0])
-                    changeLanguage = input("Would you like to change languages? (y/n) ")
-                    if changeLanguage != "y":
-                        break
-                    else:
-                        print(self.menus[9]['content'])
-                        choice = input("Select a language option: ")
-                        if choice == "1" or choice == "2":
-                            language = "Spanish" if choice == "2" else "English"
-                            self.db_manager.execute("UPDATE settings SET language=? WHERE username=?", (language, self._current_user[1]))
-                            print(f"Language successfully switched to {language}.")
-                        elif choice != "q":
-                            print("Invalid choice. Please try again.")
-
-        def important_InCollege_links():
-            while True:
-                print(menu_seperate) #menu
-                print(self.menus[10]['content'])
-
-                choice = input("Select an option: ")
-                print()
-                if choice == "1":
-                    print(menu_seperate) #menu
-                    print(self.menus[11]['content'])
-                elif choice == "2":
-                    print(menu_seperate) #menu
-                    print(self.menus[12]['content'])
-                elif choice == "3":
-                    print(menu_seperate) #menu
-                    print(self.menus[13]['content'])
-                elif choice == "4":
-                    print(menu_seperate) #menu
-                    print(self.menus[14]['content'])
-                elif choice == "5":
-                    privacy_policy()
-                elif choice == "6":
-                    print(menu_seperate) #menu
-                    print(self.menus[15]['content'])
-                elif choice == "7":
-                    print(menu_seperate) #menu
-                    print(self.menus[16]['content'])
-                elif choice == "8":
-                    print(menu_seperate) #menu
-                    print(self.menus[17]['content'])
-                elif choice == "9":
-                    guest_controls()
-                elif choice == "a":
-                    languages_menu()
-                elif choice.lower() == "q":
-                    break
-                else:
-                    print("Invalid choice. Please try again.")
-      
+         
         def _create_account_procedure():
             try:
                 print(menu_seperate) #menu
@@ -730,15 +724,16 @@ class InCollegeAppManager:
                 major = input("Enter your major: \n")
                 _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major)
                 if _acc is not None:
-                    print('\nSuccessfully Created Account.')
+                    print('\nYou have successfully created an account!\nLog in to start using InCollege.')
                 else:
-                    print('\nFailed At Creating Account.')
+                    print('\nThere has been an unexpected error while creating your account.')
             except Exception as e:
                 print('Error While Creating Account:\n', e)
 
-        #home screen options
+        # home screen
         while True:
-            intro()
+            print(menu_seperate) #menu
+            print(self.menus[0]["content"])
             choice = input("Select an option: ")
             if choice == "1":
                 _login_procedure()
@@ -747,58 +742,15 @@ class InCollegeAppManager:
             elif choice == "3":
                 find_user_from_home_page()
             elif choice == "4":
-                useful_links(True)
+                useful_links()
             elif choice == "5":
                 print("Video is playing")
             elif choice == "6":
                 important_InCollege_links()
-            elif choice.lower() == "q":
+            elif choice == "q":
                 self._Terminate()
             else:
                 print("Invalid choice. Please try again.")
-        
-    def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
-        """
-            Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
-        """
-        def valid_password(password):
-            """ Validates a Password based on requirements. """
-            return not self._PasswordPolicy.test(password) and len(password) < 13
-        
-        if not valid_password(password):
-            raise Exception("Invalid password. Please ensure it meets the requirements.")
-
-        if self.db_manager.fetch('SELECT COUNT(*) FROM accounts;')[0] >= 10:
-            raise Exception("All permitted accounts have been created. Please come back later.")
-
-        if self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;', (username,)):
-            raise Exception("Username already exists. Please choose another one.")
-
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        
-        self.db_manager.execute(
-            'INSERT INTO accounts (username, password, first_name, last_name, university, major) VALUES (?, ?, ?, ?, ?, ?);',
-            (username, hashed_password, first_name, last_name, university, major))
-        
-        self.db_manager.execute(
-            'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
-            (username, 1, 1, 1, "English"))
-
-        return self.__login(username=username, password=password)
- # Returns the account from Database
-
-    def __login(self, username: str, password: str):
-        user = self.db_manager.fetch('SELECT * FROM accounts WHERE username=?;',    (username,))
-        if user:
-            hashed_password = user[2].encode('utf-8')  # Encode back to bytes
-            if bcrypt.checkpw(password.encode('utf-8'), hashed_password):
-                return user
-        return None
-
-    # Updated to use db_manager
-    def _is_person_in_database(self, first_name, last_name):
-        user = self.db_manager.fetch("SELECT * FROM accounts WHERE first_name=? AND last_name =?;", (first_name, last_name))
-        return bool(user)
 
 def main():
     InCollegeAppManager().Run()
