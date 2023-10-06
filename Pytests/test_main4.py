@@ -5,10 +5,38 @@
 # Last Update: 
 
 import sqlite3
+import json
 import pytest
 import main
 from io import StringIO
+import re
+from io import StringIO
 
+# clear all tables in database
+conn = sqlite3.connect('users.db')
+cursor = conn.cursor()
+cursor.execute('''
+    DELETE FROM settings;
+    ''')
+conn.commit()
+
+conn = sqlite3.connect('users.db')
+cursor = conn.cursor()
+cursor.execute('''
+        DELETE FROM accounts;
+        ''')
+conn.commit()
+
+conn = sqlite3.connect('users.db')
+cursor = conn.cursor()
+cursor.execute('''
+        DELETE FROM jobs;
+        ''')
+conn.commit()
+conn.close()
+
+with open('./data/menus.json', 'r') as f:
+    menus = json.load(f)['menus']
 
 # function to run the inCollege program and return program output
 def runInCollege(capsys):
