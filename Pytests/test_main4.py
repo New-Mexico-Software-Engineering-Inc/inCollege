@@ -22,3 +22,19 @@ def runInCollege(capsys):
 
     # return the program's output
     return capsys.readouterr()
+
+    def test_example(monkeypatch, capsys):
+        # Below is the expected output from ///
+        expectedOut = ""
+
+        # create a StringIO object and set it as the test input
+        choiceInput = StringIO('q\n')
+
+        # Set the stdin stream as our desired input
+        monkeypatch.setattr('sys.stdin', choiceInput)
+
+        # Run the program and capture program input
+        captured = runInCollege(capsys)
+
+        # compare expected output to actual output
+        assert expectedOut in captured.out
