@@ -109,7 +109,7 @@ def test_PasswordStrength(monkeypatch, capsys):
 # updated for first and last names on 9/21/23
 # test when database is empty, and this will create 5 accounts and
 # test that each is able to log in with the created credentials
-"""
+
 def test_Create5Accounts(monkeypatch, capsys):
     # Clear accounts table to make room for 5 new accounts
     conn = sqlite3.connect('users.db')
@@ -165,7 +165,7 @@ def test_Create5Accounts(monkeypatch, capsys):
 
 
 
-
+"""
 def test_Create6thAccountFails(monkeypatch, capsys):
     # expect this message to prompt when creation fails:
     expectedCreationFailed = "Error While Creating Account:\n All permitted accounts have been created. Please come back later."
