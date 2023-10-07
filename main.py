@@ -715,13 +715,37 @@ class InCollegeAppManager:
             """
             Finds a user from the home page
             """
-            print(menu_seperate) #menu
-            print("Find An InCollege User\n-------------------------------")
-            first_name = input("Please enter the first name of the person you are looking for:\n")
-            last_name = input("Please enter the last name of the person you are looking for:\n")
-            user = self._is_person_in_database(first_name, last_name)
-            print("\nLooks like they have an account!") if user else print("\nThey are not part of the InCollege system yet.")
-            return user if user else False
+            while True:
+                print(menu_seperate)
+                print(self.menus["find_someone"])
+                choice = input("Select an option: ")
+                print()
+
+                search_by = {"1": "last name", "2": "university", "3": "major"}
+
+                if choice == "q":
+                    break
+                elif choice not in search_by:
+                    print("Invalid choice. Please try again.")
+                    continue
+                else:
+                    print(f"Searching by {search_by[choice]}.")
+                    search_for = input(f"Enter the user you wish to find's {search_by[choice]}: ")
+                    users_matching = self.db_manager.fetchall(f"SELECT username, first_name, last_name, university, major FROM accounts \
+                                                              WHERE {search_by[choice].replace(' ', '_')}=?", (search_for,))
+
+                    if len(users_matching) == 0:
+                        print(f'\nNo users found with {search_by[choice]} equal to "{search_for}".')
+                        continue
+
+                    for i in range(len(users_matching)):
+                        users_matching[i] = list(users_matching[i])
+                        users_matching[i].insert(0, i + 1)
+
+                    print(f'\nUsers found with {search_by[choice]} equal to "{search_for}":')
+                    head = ["User Num", "Username", "First Name", "Last Name", "University", "Major"]
+                    print(tabulate(users_matching, headers=head, tablefmt="grid"))
+
          
         def _create_account_procedure():
             try:
