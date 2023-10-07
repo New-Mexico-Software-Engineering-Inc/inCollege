@@ -24,9 +24,7 @@ def runInCollege(capsys):
 # function to verify that there are 3 options on Homepage, and ensure user is prompted with selection
 def test_HomepageOptions(monkeypatch, capsys):
     # Below is the expected output from the homescreen after the user exits
-    expectedOut = "\n1. Log in\n2. Create a new account\n3. Find someone you know\n"
-    expectedOut2 = "5. Play Demo Video\n"
-    expectedOut3 = "q. Quit\n\n\nSelect an option: "
+    expectedOut = "1. Log in\n2. Create a new account\n3. Find someone you know\n4. Useful Links\n5. Play Demo Video\n6. InCollege Important Links\nq. Quit"
 
     # create a StringIO object and set it as the test input 
     choiceInput = StringIO('q\n')
@@ -36,8 +34,6 @@ def test_HomepageOptions(monkeypatch, capsys):
     captured = runInCollege(capsys)
     # compare expected output to actual output
     assert expectedOut in captured.out
-    assert expectedOut2 in captured.out
-    assert expectedOut3 in captured.out
 
 
 # this test verifies that when option 2 is selected, to create an account,
@@ -45,21 +41,18 @@ def test_HomepageOptions(monkeypatch, capsys):
 # the actual success or failure of the account creation will be tested in next test
 def test_CreateAccount(monkeypatch, capsys):
     # these two prompts will be printed in a correct run
-    expected1 = "Enter unique username: \n"
-    expected2 = "Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n"
-    
+    expected = "You have successfully created an account!"
     # set input to select create account option (2), then enter username 
     # then enter password, and first and last name, then to quit after account is attempted to
     # be created (3)
-    userInput = StringIO('2\na\nbadpassword\nfirstname\nlastname\nq\n')
+    userInput = StringIO('2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nq\n')
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run program, test for exit code, and capture output
     capture = runInCollege(capsys)
 
     # verify that the two prompts are within the output
-    assert expected1 in capture.out
-    assert expected2 in capture.out
+    assert expected in capture.out
 
 
 # test that all of the presented cases of weak passwords will fail
@@ -75,6 +68,8 @@ def test_PasswordStrength(monkeypatch, capsys):
     weakPW= ["Abcde1!", "Abcdefghijk1!", "gobulls24!", "GoBulls!", "GoBulls24"]
     fNameTest = "austin"
     lNameTest = "martin"
+    University = "University"
+    Major = "CSE"
 
     userIn = ""
 
@@ -82,7 +77,7 @@ def test_PasswordStrength(monkeypatch, capsys):
     # with all 5 of these weak passwords
     # enter 2 to create account, username, weakPW1, 2, username, weakPW2, ...
     for i in range(5):
-        userIn += f"2\n{userName}\n{weakPW[i]}\n{fNameTest}\n{lNameTest}\n"
+        userIn += f"2\n{userName}\n{weakPW[i]}\n{fNameTest}\n{lNameTest}\n{University}\n{Major}\n"
 
     # exit program after testing
     userIn += "q\n"
@@ -121,28 +116,27 @@ def test_Create5Accounts(monkeypatch, capsys):
     conn.close()
 
     userList = ["a", "b", "c", "d", "e"]
-    pwList = ["GoBulls24!", "GoBulls25!", "GoBulls26!", "GoBulls27!", "GoBulls28!"]
-    fnames = ["fname1", "fname2", "fname3", "fname4", "fname5"]
-    lnames = ["lname1", "lname2", "lname3", "lname4", "lname5"]
+    pw = "!!!Goodpswd0"
+    fname = "fname"
+    lname = "lname"
+    uni = "University"
+    major = "CSE"
 
-    expectedCreation = "Successfully Created Account."
-    expectedLoginSuccess = "You have successfully logged in."
+    expectedCreation = "\nYou have successfully created an account!\nLog in to start using InCollege."
+    expectedLoginSuccess = "\nYou have successfully logged in."
 
-    # create input string to create 5 and login 5 times
-    # consisting of 2, username1, pw1, 2, username2, pw2, ... to create 5 accounts
-    # and then 1, username1, pw1, 4, 1, username2, pw2, 4, ... to sign in and then log out of all 5
+    # create input string to create 10 and login 10 times
 
     userIn = ""
     for i in range(5):
-        userIn += f"2\n{userList[i]}\n{pwList[i]}\n{fnames[i]}\n{lnames[i]}\n"
+        userIn += f"2\n{userList[i]}\n{pw}\n{fname}\n{lname}\n{uni}\n{major}\n"
 
-    # loop to verify login works correctly for all 5 following same process as above
-    # but with patterm 1, username1, pw1, q, 1, username2, pw2, q, ...
+    # loop to verify login works correctly for all 10 following same process as above
 
     for i in range(5):
-        userIn += f"1\n{userList[i]}\n{pwList[i]}\nq\n"
+        userIn += f"1\n{userList[i]}\n{pw}\nq\n"
 
-    # ends program 
+    # ends program
     userIn += "q\n"
 
     userInput = StringIO(userIn)
@@ -222,13 +216,13 @@ def test_SuccessfulLogin(monkeypatch, capsys):
     # successful login message after logging in we expect from the program
     expectedLoginSuccess = "You have successfully logged in"
     # create a StringIO object and set it as the test input:
-    # 1-login, "a"-username, "GoBulls24!"-password, q-Logout, 3-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\nq\nq\n')
+    choiceInput = StringIO('1\na\n!!!Goodpswd0\nq\nq\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
     captured = runInCollege(capsys)
     # ensure the program displayed the successful login message
+    print(captured)
     assert expectedLoginSuccess in captured.out
 
 # function to verify that the program outputs a failed login message after inputting incorrect login credentials
@@ -254,7 +248,7 @@ def test_SkillsMenu(monkeypatch, capsys):
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, 1-skill #1, 3-Skills menu, 2-skill #2, 
     # 3-Skills menu, 3-skill #3, 3-Skills menu, 4-skill #4, 3-Skills menu, 5-skill #5, q-Logout, 4-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\nq\n')
+    choiceInput = StringIO('1\na\n!!!Goodpswd0\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\nq\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -273,7 +267,7 @@ def test_QuitSkillsMenu(monkeypatch, capsys):
 
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, "q"-option to quit, q-Logout, q-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n3\nq\nq\nq\n')
+    choiceInput = StringIO('1\na\n!!!Goodpswd0\n3\nq\nq\nq\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -287,7 +281,7 @@ def test_JobSearch(monkeypatch, capsys):
     expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 1-"search for a job" option, q-Logout, q-exit
-    choiceInput = StringIO('1\na\nGoBulls24!\n1\nq\nq\n')
+    choiceInput = StringIO('1\na\n!!!Goodpswd0\n1\nq\nq\n')
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
