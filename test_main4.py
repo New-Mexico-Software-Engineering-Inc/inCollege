@@ -173,12 +173,15 @@ def test_search_by_last_name_uni_major(monkeypatch, capsys):
     # compare expected output to actual output
     assert 3 == capture.out.count(expectedOut)
 
-def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
+def test_friend_request_functionality(monkeypatch, capsys):
     # Below is the expected output
     expectedOut1 = "Friend request sent"
     expectedOut2 = "You have [1] new friend request!"
     expectedOut3 = "You have successfully added a to your network!"
     expectedOut4 = "1 | a          | fname        | lname       | University   | CSE"
+    expectedOut5 = "1 | b          | fname        | lname       | University   | CSE"
+    expectedOut6 = "1. Accept\n2. Reject\nq. Quit"
+    expectedOut7 = "Would you like to manage your requests?"
 
     # create a StringIO object and set it as the test input
     #log in as a
@@ -193,8 +196,14 @@ def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
     userIn += "7\n3\n1\ny\n1\n1\n"
     #check that a and b are friends
     userIn += "q\n1\n"
-    #log out and quit
-    userIn += 'q\nq\nq\nq\nq\nq\nq\n'
+    #log out
+    userIn += 'q\nq\n'
+    #log back in as a
+    userIn += "1\na\n!!!Goodpswd0\n"
+    #check that a is friends with b
+    userIn += "7\n1\n"
+    #end program
+    userIn += "q\nq\nq\n"
 
     choiceInput = StringIO(userIn)
 
@@ -211,6 +220,7 @@ def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
     assert expectedOut2 in capture.out
     assert expectedOut3 in capture.out
     assert expectedOut4 in capture.out
-
-
+    assert expectedOut5 in capture.out
+    assert expectedOut6 in capture.out
+    assert expectedOut7 in capture.out
 

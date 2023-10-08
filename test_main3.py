@@ -53,7 +53,7 @@ def runInCollege(capsys):
 
 def __create_user_account():
     try:
-        main.InCollegeAppManager()._create_account('a', 'GoBulls24!', 'fname', 'lname')
+        main.InCollegeAppManager()._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
     except Exception as e:
         print(e)
     
@@ -116,7 +116,7 @@ def test_Change_Guest_Controls_off(monkeypatch, capsys):
     expectedOut_3rd_iteration = "Targeted Advertising successfully turned off."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n6\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n6\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -139,7 +139,7 @@ def test_Change_Guest_Controls_on(monkeypatch, capsys):
     expectedOut_3rd_iteration = "Targeted Advertising successfully turned on."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n6\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n6\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -160,7 +160,7 @@ def test_Change_Language_to_Spanish(monkeypatch, capsys):
     expectedOut_1st_iteration = "Language successfully switched to Spanish."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n6\na\ny\n2\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n6\na\ny\n2\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -178,7 +178,7 @@ def test_Change_Language_to_English(monkeypatch, capsys):
     expectedOut_1st_iteration = "Language successfully switched to English."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n6\na\ny\n1\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n6\na\ny\n1\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -225,12 +225,13 @@ def test_Delete_Settings(monkeypatch, capsys):
     expectedOut2 = " InCollege Email Notifications: On\n   InCollege SMS Notifications: On\nInCollege Targeted Advertising: On"  # Expected user settings before deletion
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n6\n9\ny\n2\nn\nq\n7\ny\ny\n2\ne\nGoBulls24!\nfname1\nlname1\n1\na\nGoBulls24!\n6\n9\ny\n2\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n6\n9\ny\n2\nn\nq\n7\ny\ny\n2\ne\n!!!Goodpswd0\nfname1\nlname1\n1\na\n!!!Goodpswd0\n6\n9\ny\n2\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
     
     # Run the program and capture the output
     capture = runInCollege(capsys)
-    
+    print(capture)
+
     # Assert that the expected outputs are present in the captured output
     assert expectedOut1 in capture.out
     assert expectedOut2 in capture.out
@@ -239,7 +240,7 @@ def test_Useful_Links_After_Login(monkeypatch, capsys):
     __create_user_account()
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\nGoBulls24!\n5\n1\nq\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n5\n1\nq\nq\nq\nq\n")
     
     monkeypatch.setattr('sys.stdin', userInput)
 
@@ -263,6 +264,9 @@ def test_General_Links_Options(monkeypatch, capsys):
     # Run the program and capture the output
     capture = runInCollege(capsys)
     out =capture.out.lower()
+
+
+
     context = re.search(r"sign in/sign up(.*\n){2}", out)
     assert context is not None, 'Failed Searching for Sign Up.'
     out = out[context.end()::]
