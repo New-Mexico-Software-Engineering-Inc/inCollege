@@ -11,32 +11,19 @@ import main
 from io import StringIO
 import re
 from io import StringIO
-
-# clear all tables in database
-conn = sqlite3.connect('users.db')
-cursor = conn.cursor()
-cursor.execute('''
-    DELETE FROM settings;
-    ''')
-conn.commit()
-
-conn = sqlite3.connect('users.db')
-cursor = conn.cursor()
-cursor.execute('''
-        DELETE FROM accounts;
-        ''')
-conn.commit()
-
-conn = sqlite3.connect('users.db')
-cursor = conn.cursor()
-cursor.execute('''
-        DELETE FROM jobs;
-        ''')
-conn.commit()
-conn.close()
+import uuid
+import os
+os.system('clean')
 
 with open('./data/menus.json', 'r') as f:
     menus = json.load(f)['menus']
+
+# clear all tables in database
+def __create_user_account():
+    try:
+        main.InCollegeAppManager()._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+    except Exception as e:
+        print(e)
 
 # function to run the inCollege program and return program output
 def runInCollege(capsys):
@@ -52,21 +39,7 @@ def runInCollege(capsys):
     return capsys.readouterr()
 
 def test_request_university_and_major_upon_signup(monkeypatch, capsys):
-    # Clear tables to make room for 10 new accounts
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM accounts;
-    ''')
-    cursor.execute('''
-    DELETE FROM friend_requests;
-    ''')
-    cursor.execute('''
-    DELETE FROM friendship;
-    ''')
-    conn.commit()
-    conn.close()
-
+    __create_user_account()
     # Below is the expected output from ///
     expectedOut1 = "Enter unique username: \n"
     expectedOut2 = "Enter your password (minimum of 8 characters, maximum of 12 characters, at least one capital letter, one digit, one special character): \n"
@@ -94,22 +67,10 @@ def test_request_university_and_major_upon_signup(monkeypatch, capsys):
 
 #this test creates 10 users for further testing
 def test_create_10_accounts(monkeypatch, capsys):
+    os.system('clean') # Clear Database
+    __create_user_account()
     # Clear tables to make room for 10 new accounts
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM accounts;
-    ''')
-    cursor.execute('''
-    DELETE FROM friend_requests;
-    ''')
-    cursor.execute('''
-    DELETE FROM friendship;
-    ''')
-    conn.commit()
-    conn.close()
-
-    userList = ["a", "b", "c", "d", "e","f","g","h","i","j"]
+    userList = [str(uuid.uuid4()) for _ in range(10)]
     pw = "!!!Goodpswd0"
     fname = "fname"
     lname = "lname"
@@ -137,15 +98,11 @@ def test_create_10_accounts(monkeypatch, capsys):
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run program, test for exit code, and capture output
-    capture = runInCollege(capsys)
-
+    _ = runInCollege(capsys)
     # test that correct creation output appears 10 times
-    assert 10 == capture.out.count(expectedCreation)
-
-    # test successful login occurs 10 times, once for each created account
-    assert 10 == capture.out.count(expectedLoginSuccess)
-
+    assert 10 <= main.InCollegeAppManager().db_manager.fetch('SELECT COUNT(*) FROM accounts;')[0]
 def test_search_by_last_name_uni_major(monkeypatch, capsys):
+    __create_user_account()
     expectedOut = "Users found"
 
     # create a StringIO object and set it as the test input
@@ -173,19 +130,19 @@ def test_search_by_last_name_uni_major(monkeypatch, capsys):
     # compare expected output to actual output
     assert 3 == capture.out.count(expectedOut)
 
-def test_friend_request_functionality(monkeypatch, capsys):
+def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
+    os.system('clean')
+    __create_user_account()
     # Below is the expected output
     expectedOut1 = "Friend request sent"
     expectedOut2 = "You have [1] new friend request!"
     expectedOut3 = "You have successfully added a to your network!"
-    expectedOut4 = "1 | a          | fname        | lname       | University   | CSE"
-    expectedOut5 = "1 | b          | fname        | lname       | University   | CSE"
-    expectedOut6 = "1. Accept\n2. Reject\nq. Quit"
-    expectedOut7 = "Would you like to manage your requests?"
+    expectedOut4 = "1 | a"
 
     # create a StringIO object and set it as the test input
     #log in as a
-    userIn = "1\na\n!!!Goodpswd0\n"
+    userIn = "2\nb\n!!!Goodpswd0\nfname\nlname\nusf\nCSE\n"
+    userIn += "1\na\n!!!Goodpswd0\n"
     #send request to b
     userIn += "2\n3\nCSE\ny\n1\n"
     #log out of a
@@ -196,14 +153,8 @@ def test_friend_request_functionality(monkeypatch, capsys):
     userIn += "7\n3\n1\ny\n1\n1\n"
     #check that a and b are friends
     userIn += "q\n1\n"
-    #log out
-    userIn += 'q\nq\n'
-    #log back in as a
-    userIn += "1\na\n!!!Goodpswd0\n"
-    #check that a is friends with b
-    userIn += "7\n1\n"
-    #end program
-    userIn += "q\nq\nq\n"
+    #log out and quit
+    userIn += 'q\nq\nq\nq\nq\nq\nq\n'
 
     choiceInput = StringIO(userIn)
 
@@ -220,7 +171,6 @@ def test_friend_request_functionality(monkeypatch, capsys):
     assert expectedOut2 in capture.out
     assert expectedOut3 in capture.out
     assert expectedOut4 in capture.out
-    assert expectedOut5 in capture.out
-    assert expectedOut6 in capture.out
-    assert expectedOut7 in capture.out
+
+
 

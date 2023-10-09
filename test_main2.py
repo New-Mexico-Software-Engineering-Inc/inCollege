@@ -8,6 +8,8 @@ import sqlite3
 import pytest
 import main
 from io import StringIO
+import os
+os.system('clean')
 
 
 # function to run the inCollege program and return program output
