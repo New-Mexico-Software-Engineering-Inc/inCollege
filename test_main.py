@@ -7,6 +7,7 @@ import sqlite3
 import pytest
 import main
 from io import StringIO
+import uuid
 import os
 os.system('clean')
 
@@ -47,7 +48,8 @@ def test_CreateAccount(monkeypatch, capsys):
     # set input to select create account option (2), then enter username 
     # then enter password, and first and last name, then to quit after account is attempted to
     # be created (3)
-    userInput = StringIO('2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nq\n')
+    uname = str(uuid.uuid4())
+    userInput = StringIO(f'2\n{uname}\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nq\n')
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run program, test for exit code, and capture output
