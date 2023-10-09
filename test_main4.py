@@ -2,7 +2,7 @@
 # The functions use monkeypatch to mock input and capsys to capture output
 # Created by: Herbert J Keels,
 # Date created: 10/06/2023
-# Last Update: 
+# Last Update: 10/08/2023
 
 import sqlite3
 import json
@@ -12,31 +12,17 @@ from io import StringIO
 import re
 from io import StringIO
 
-# clear all tables in database
-conn = sqlite3.connect('users.db')
-cursor = conn.cursor()
-cursor.execute('''
-    DELETE FROM settings;
-    ''')
-conn.commit()
-
-conn = sqlite3.connect('users.db')
-cursor = conn.cursor()
-cursor.execute('''
-        DELETE FROM accounts;
-        ''')
-conn.commit()
-
-conn = sqlite3.connect('users.db')
-cursor = conn.cursor()
-cursor.execute('''
-        DELETE FROM jobs;
-        ''')
-conn.commit()
-conn.close()
-
 with open('./data/menus.json', 'r') as f:
     menus = json.load(f)['menus']
+
+def clearAccounts():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    DELETE FROM accounts;
+    ''')
+    conn.commit()
+    conn.close()
 
 # function to run the inCollege program and return program output
 def runInCollege(capsys):
@@ -53,19 +39,7 @@ def runInCollege(capsys):
 
 def test_request_university_and_major_upon_signup(monkeypatch, capsys):
     # Clear tables to make room for 10 new accounts
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM accounts;
-    ''')
-    cursor.execute('''
-    DELETE FROM friend_requests;
-    ''')
-    cursor.execute('''
-    DELETE FROM friendship;
-    ''')
-    conn.commit()
-    conn.close()
+    clearAccounts()
 
     # Below is the expected output from ///
     expectedOut1 = "Enter unique username: \n"
@@ -95,19 +69,7 @@ def test_request_university_and_major_upon_signup(monkeypatch, capsys):
 #this test creates 10 users for further testing
 def test_create_10_accounts(monkeypatch, capsys):
     # Clear tables to make room for 10 new accounts
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM accounts;
-    ''')
-    cursor.execute('''
-    DELETE FROM friend_requests;
-    ''')
-    cursor.execute('''
-    DELETE FROM friendship;
-    ''')
-    conn.commit()
-    conn.close()
+    clearAccounts()
 
     userList = ["a", "b", "c", "d", "e","f","g","h","i","j"]
     pw = "!!!Goodpswd0"
@@ -175,7 +137,7 @@ def test_search_by_last_name_uni_major(monkeypatch, capsys):
 
 def test_friend_request_functionality(monkeypatch, capsys):
     # Below is the expected output
-    expectedOut1 = "Friend request sent"
+    expectedOut1 = "Friend request sent to b successfully!"
     expectedOut2 = "You have [1] new friend request!"
     expectedOut3 = "You have successfully added a to your network!"
     expectedOut4 = "1 | a          | fname        | lname       | University   | CSE"
