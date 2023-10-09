@@ -2,7 +2,7 @@
 # The functions use monkeypatch to mock input and capsys to capture output
 # Created by: Herbert J Keels,
 # Date created: 10/06/2023
-# Last Update: 
+# Last Update: 10/08/2023
 
 import sqlite3
 import json
@@ -39,6 +39,7 @@ def runInCollege(capsys):
     return capsys.readouterr()
 
 def test_request_university_and_major_upon_signup(monkeypatch, capsys):
+    os.system('clean')
     __create_user_account()
     # Below is the expected output from ///
     expectedOut1 = "Enter unique username: \n"
@@ -134,7 +135,7 @@ def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
     os.system('clean')
     __create_user_account()
     # Below is the expected output
-    expectedOut1 = "Friend request sent"
+    expectedOut1 = "Friend request sent to b successfully!"
     expectedOut2 = "You have [1] new friend request!"
     expectedOut3 = "You have successfully added a to your network!"
     expectedOut4 = "1 | a"
