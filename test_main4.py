@@ -18,6 +18,15 @@ os.system('clean')
 with open('./data/menus.json', 'r') as f:
     menus = json.load(f)['menus']
 
+def clear_accounts():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    DELETE FROM accounts;
+    ''')
+    conn.commit()
+    conn.close()
+
 # clear all tables in database
 def __create_user_account():
     try:
@@ -102,6 +111,7 @@ def test_create_10_accounts(monkeypatch, capsys):
     _ = runInCollege(capsys)
     # test that correct creation output appears 10 times
     assert 10 <= main.InCollegeAppManager().db_manager.fetch('SELECT COUNT(*) FROM accounts;')[0]
+
 def test_search_by_last_name_uni_major(monkeypatch, capsys):
     __create_user_account()
     expectedOut = "Users found"
@@ -132,8 +142,7 @@ def test_search_by_last_name_uni_major(monkeypatch, capsys):
     assert 3 == capture.out.count(expectedOut)
 
 def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
-    os.system('clean')
-    __create_user_account()
+    clear_accounts()
     # Below is the expected output
     expectedOut1 = "Friend request sent to b successfully!"
     expectedOut2 = "You have [1] new friend request!"
@@ -143,7 +152,7 @@ def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
     # create a StringIO object and set it as the test input
     #log in as a
     userIn = "2\nb\n!!!Goodpswd0\nfname\nlname\nusf\nCSE\n"
-    userIn += "1\na\n!!!Goodpswd0\n"
+    userIn += "2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n"
     #send request to b
     userIn += "2\n3\nCSE\ny\n1\n"
     #log out of a

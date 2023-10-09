@@ -10,6 +10,15 @@ from io import StringIO
 import os
 os.system('clean')
 
+def clear_accounts():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    DELETE FROM accounts;
+    ''')
+    conn.commit()
+    conn.close()
+
 # function to run the inCollege program and return program output
 def runInCollege(capsys):
     # Run the program, and collect the system exit code
@@ -42,6 +51,7 @@ def test_HomepageOptions(monkeypatch, capsys):
 # that the program prompts the user to enter a username and password
 # the actual success or failure of the account creation will be tested in next test
 def test_CreateAccount(monkeypatch, capsys):
+    clear_accounts()
     # these two prompts will be printed in a correct run
     expected = "You have successfully created an account!"
     # set input to select create account option (2), then enter username 
@@ -60,11 +70,9 @@ def test_CreateAccount(monkeypatch, capsys):
 # test that all of the presented cases of weak passwords will fail
 # to create an account - passwords must be minimum of 8 chars, max of 12 chars,
 # contain at least 1 capital letter, digit, and special character
-# !!! this test must be ran before max users reached, otherwise a different   !!!
-# !!! error message will be printed relaying that max accounts have been made !!!
 def test_PasswordStrength(monkeypatch, capsys):
+    clear_accounts()
     userName = 'a'
-
     # the passwords are all fine except for the one specified flaw:
     # too short, too long, no capital, no digit, no special char
     weakPW= ["Abcde1!", "Abcdefghijk1!", "gobulls24!", "GoBulls!", "GoBulls24"]
@@ -109,13 +117,7 @@ def test_PasswordStrength(monkeypatch, capsys):
 
 def test_Create5Accounts(monkeypatch, capsys):
     # Clear accounts table to make room for 5 new accounts
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-    DELETE FROM accounts;
-    ''')
-    conn.commit()
-    conn.close()
+    clear_accounts()
 
     userList = ["a", "b", "c", "d", "e"]
     pw = "!!!Goodpswd0"
@@ -158,8 +160,6 @@ def test_Create5Accounts(monkeypatch, capsys):
 # to create a 6th account does not result in a successful creation
 # !!! test must be done after test_create5Accounts so that all !!!
 # !!! 5 available user accounts have already been made         !!!
-
-
 
 """
 def test_Create6thAccountFails(monkeypatch, capsys):
@@ -215,10 +215,12 @@ def test_LoginLimit(monkeypatch, capsys):
 
 # function to verify that the program outputs a successful login message after logging in
 def test_SuccessfulLogin(monkeypatch, capsys):
+    clear_accounts()
+    userIn = "2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\nq\nq\n"
     # successful login message after logging in we expect from the program
     expectedLoginSuccess = "You have successfully logged in"
     # create a StringIO object and set it as the test input:
-    choiceInput = StringIO('1\na\n!!!Goodpswd0\nq\nq\n')
+    choiceInput = StringIO(userIn)
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -244,13 +246,13 @@ def test_FailedLogin(monkeypatch, capsys):
 
 # function to verify that the skills menu has 5 made up skills
 def test_SkillsMenu(monkeypatch, capsys):
+    clear_accounts()
     # array to compare program output to help ensure that the skills menu has 5 made up skills
     expectedFiveSkills = ["Skill 1", "Skill 2", "Skill 3", "Skill 4", "Skill 5"]
-
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, 1-skill #1, 3-Skills menu, 2-skill #2, 
     # 3-Skills menu, 3-skill #3, 3-Skills menu, 4-skill #4, 3-Skills menu, 5-skill #5, q-Logout, 4-exit
-    choiceInput = StringIO('1\na\n!!!Goodpswd0\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\nq\n')
+    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\nq\n")
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -266,10 +268,9 @@ def test_SkillsMenu(monkeypatch, capsys):
 def test_QuitSkillsMenu(monkeypatch, capsys):
     # the expected output when "q" is selected; verify that the program is sent back to the login menu
     expectedQuitOutput = "\nq: Quit\n\nPlease Select a Skill:"
-
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, "q"-option to quit, q-Logout, q-exit
-    choiceInput = StringIO('1\na\n!!!Goodpswd0\n3\nq\nq\nq\n')
+    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n3\nq\nq\nq\n")
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -283,13 +284,15 @@ def test_JobSearch(monkeypatch, capsys):
     expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 1-"search for a job" option, q-Logout, q-exit
-    choiceInput = StringIO('1\na\n!!!Goodpswd0\n1\nq\nq\n')
+    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n1\nq\nq\n")
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
     captured = runInCollege(capsys)
     # ensure the program displayed the "search for a job" option in the login menu and displayed "Under Construction" when selected
     assert expectedOut in captured.out
+
+    clear_accounts()
 
 
 """
