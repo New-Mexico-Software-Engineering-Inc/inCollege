@@ -552,6 +552,7 @@ class InCollegeAppManager:
 
                 friends_list = friendships_with_user1 + friendships_with_user2
 
+                # inserts number to front of the list
                 for i in range(len(friends_list)):
                     friends_list[i] = list(friends_list[i])
                     friends_list[i].insert(0, i+1)
