@@ -82,6 +82,24 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS profiles (
+            username TEXT PRIMARY KEY,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            title TEXT NOT NULL,
+            major TEXT NOT NULL,
+            university TEXT NOT NULL,
+            about TEXT NOT NULL,
+            pastJob1 TEXT NOT NULL,
+            pastJob2 TEXT NOT NULL,
+            pastJob3 TEXT NOT NULL,
+            education TEXT NOT NULL,
+            posted TEXT NOT NULL,
+            FOREIGN KEY (username) REFERENCES accounts(username) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS friend_requests (
             request_id INTEGER PRIMARY KEY AUTOINCREMENT,
             sender TEXT NOT NULL,
@@ -170,6 +188,10 @@ class InCollegeAppManager:
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
             (username, 1, 1, 1, "English"))
+
+        self.db_manager.execute('INSERT INTO profiles (username, first_name, last_name, title, major, university, about, pastJob1,\
+                                pastJob2, pastJob3, education, posted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                                (username, first_name, last_name, "n/a", major, university, "n/a", "n/a", "n/a", "n/a", "n/a", "no"))
 
         # Returns the account from Database
         return self.__login(username=username, password=password)
@@ -556,6 +578,11 @@ class InCollegeAppManager:
                 for i in range(len(friends_list)):
                     friends_list[i] = list(friends_list[i])
                     friends_list[i].insert(0, i+1)
+                    profile_status = self.db_manager.fetch('SELECT posted FROM profiles WHERE (username=?)', (friends_list[i][1],))
+                    if profile_status[0] == "yes":
+                        friends_list[i].append("View Profile")
+                    else:
+                        friends_list[i].append("No Profile Posted")
 
                 return friends_list
 
@@ -565,7 +592,7 @@ class InCollegeAppManager:
                 if friends:
                     print("\nFriends List")
                     print("-------------------------------")
-                    head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major"]
+                    head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major", "Profile"]
                     print(tabulate(friends, headers=head, tablefmt="grid"), "\n")
 
                 return friends
@@ -581,6 +608,34 @@ class InCollegeAppManager:
                         friends = print_friends()
                         if not friends:
                             print("\nNo friends at this time.")
+                            continue
+                        print("\nFriends List Options")
+                        print("-------------------------------")
+                        print("1. View a Friend's Profile\nq. Quit\n")
+                        userChoice = input("Please select an option: ")
+                        if (userChoice == 'q'):
+                            continue
+                        elif (userChoice == '1'):
+                            friendNum = input("Enter the number of the friend whose profile you wish to view: ")
+                            try:
+                                friendNum = int(friendNum)
+                            except ValueError:
+                                print("\nPlease enter the number associated with the friend in your network.\n")
+                                continue
+
+                            # get actual index in friends
+                            friendNum -= 1
+
+                            if friendNum >= len(friends):
+                                print("\nPlease enter the number associated with the friend in your network.\n")
+                                continue
+
+                            if (friends[friendNum][6] == "View Profile"):
+                                print("")
+                                printProfile(friends[friendNum][1])
+                            else:
+                                print(f"\n{friends[friendNum][1]} does not currently have a posted profile\n")
+
                     elif choice == "2":
                         friends = print_friends()
                         if not friends:
@@ -616,6 +671,10 @@ class InCollegeAppManager:
                         break
                     else:
                         print("Invalid choice. Please try again.")
+
+            # ******************** Austin will finish **************************
+            def printProfile(username):
+                print(f"Will print {username}'s profile soon\n")
 
             def search_job():
                 print("\nUnder Construction")
