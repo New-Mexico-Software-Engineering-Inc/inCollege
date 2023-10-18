@@ -630,6 +630,8 @@ class InCollegeAppManager:
                                 print("\nPlease enter the number associated with the friend in your network.\n")
                                 continue
 
+                            #alter_profile1("b")
+                            #alter_profile2("c")
                             if (friends[friendNum][6] == "View Profile"):
                                 print("")
                                 printProfile(friends[friendNum][1])
@@ -672,9 +674,54 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
-            # ******************** Austin will finish **************************
+            def alter_profile1(username):
+                title = "Senior Pursuing Computer Science"
+                about = "I like cats, and I like to kayak in my spare time."
+                pj1 = "Title:\nManager\nEmployer:\nAMC\nStart Date:\n2018\nEnd Date:\nActive\nDescription:\nBlahBlahBlah\n"
+                pj2 = "Title:\nCrew\nEmployer:\nCat\nStart Date:\n2019\nEnd Date:\nActive\nDescription:\nBlah2Blah2Blah2\n"
+                pj3 = "Title:\nSupervisor\nEmployer:\nDog\nStart Date:\n2020\nEnd Date:\nActive\nDescription:\nBlah3Blah3Blah3\n"
+                edu = "School Name:\nUSF\nDegree:\nComputer Science\nYears Attended:\n2022-2023\n"
+                self.db_manager.execute(f'''
+                            UPDATE profiles SET title = ?, about = ?, pastJob1 = ?, pastJob2 = ?, pastJob3 = ?, education = ?, posted = "yes" WHERE username = ?               
+                ''', (title, about, pj1, pj2, pj3, edu, username))
+
+
+            def alter_profile2(username):
+                title = "Junior Pursuing Computer Science"
+                about = "I like dogs, and I like to play video games in my spare time."
+                pj1 = "Title:\nA\nEmployer:\nB\nStart Date:\n2018\nEnd Date:\nActive\nDescription:\nBlahBlahBlah\n"
+                edu = "School Name:\nUSF\nDegree:\nComputer Science\nYears Attended:\n2022-2023\n"
+                self.db_manager.execute(f'''
+                            UPDATE profiles SET title = ?, about = ?, pastJob1 = ?, education = ?, posted = "yes" WHERE username = ?               
+                ''', (title, about, pj1, edu, username))
+
             def printProfile(username):
-                print(f"Will print {username}'s profile soon\n")
+                profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
+                                                       pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
+                if profileContent[10] != "yes":
+                    return
+                    # this profile is not posted
+
+                print(f"\n{profileContent[0]} {profileContent[1]}'s Profile")
+                print("-------------------------------")
+                print(f"Username:\n----\n{username}\n")
+                print(f"Title:\n----\n{profileContent[2]}\n")
+                print(f"Major:\n----\n{profileContent[3]}\n")
+                print(f"University:\n----\n{profileContent[4]}\n")
+                print(f"About {profileContent[0]} {profileContent[1]}:\n----\n{profileContent[5]}\n")
+
+                if profileContent[6] != "n/a":
+                    print(f"Job 1:\n----\n{profileContent[6]}\n")
+
+                if profileContent[7] != "n/a":
+                    print(f"Job 2:\n----\n{profileContent[7]}\n")
+
+                if profileContent[8] != "n/a":
+                    print(f"Job 3:\n----\n{profileContent[8]}\n")
+
+                if profileContent[9] != "n/a":
+                    print(f"Education:\n----\n{profileContent[9]}\n\n")
+
 
             def search_job():
                 print("\nUnder Construction")
