@@ -722,6 +722,12 @@ class InCollegeAppManager:
                 if profileContent[9] != "n/a":
                     print(f"Education:\n----\n{profileContent[9]}\n\n")
 
+            def myProfileOptions(username):
+                print("My Profile Options\n-------------------------------")
+                profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
+                                                                       pastJob3, education, posted FROM profiles WHERE (username=?)',
+                                                       (username,))
+                # check if posted or not and continue from there
 
             def search_job():
                 print("\nUnder Construction")
