@@ -637,6 +637,9 @@ class InCollegeAppManager:
                                 printProfile(friends[friendNum][1])
                             else:
                                 print(f"\n{friends[friendNum][1]} does not currently have a posted profile\n")
+                        else:
+                            print("Invalid choice. Returning to Show my network screen.")
+
 
                     elif choice == "2":
                         friends = print_friends()
@@ -702,6 +705,7 @@ class InCollegeAppManager:
                     return
                     # this profile is not posted
 
+                print(menu_seperate)
                 print(f"\n{profileContent[0]} {profileContent[1]}'s Profile")
                 print("-------------------------------")
                 print(f"Username:\n----\n{username}\n")
@@ -723,11 +727,45 @@ class InCollegeAppManager:
                     print(f"Education:\n----\n{profileContent[9]}\n\n")
 
             def myProfileOptions(username):
-                print("My Profile Options\n-------------------------------")
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
                                                                        pastJob3, education, posted FROM profiles WHERE (username=?)',
                                                        (username,))
-                # check if posted or not and continue from there
+                # profile is not posted, so they have the option to create a profile and are asked if they want to post it there
+                if profileContent[10] != "yes":
+                    while True:
+                        print(menu_seperate)
+                        print("My Profile Options\n-------------------------------")
+                        print("1. Create a Profile\nq. Quit\n")
+                        userChoice = input("\nPlease enter a provided option: ")
+
+                        if userChoice == "q":
+                            break
+                        elif userChoice == "1":
+                            # here we will call the create account function
+                            print("\nCreate a profile will be available soon\n")
+                        else:
+                            print("Invalid choice. Please try again.")
+
+
+                # profile is displayed, so they have the option to update it or view their profile
+                elif profileContent[10] == "yes":
+                    while True:
+                        print(menu_seperate)
+                        print("My Profile Options\n-------------------------------")
+                        print("1. View my Profile\n2. Update my Profile\nq. Quit\n")
+                        userChoice = input("\nPlease enter a provided option: ")
+
+                        if userChoice == "q":
+                            break
+                        elif userChoice == "1":
+                            printProfile(username)
+                        elif userChoice == "2":
+                            # here we will call the update account function
+                            print("\nUpdating your profile will be available soon\n")
+                        else:
+                            print("Invalid choice. Please try again.")
+
+
 
             def search_job():
                 print("\nUnder Construction")
@@ -799,6 +837,8 @@ class InCollegeAppManager:
                 if option in options: 
                     options[option]()
                 elif option == '8':
+                    myProfileOptions(self._current_user[1])
+                elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
