@@ -741,8 +741,7 @@ class InCollegeAppManager:
                         if userChoice == "q":
                             break
                         elif userChoice == "1":
-                            # here we will call the create account function
-                            print("\nCreate a profile will be available soon\n")
+                            createProfile(self, username)
                         else:
                             print("Invalid choice. Please try again.")
 
@@ -760,8 +759,7 @@ class InCollegeAppManager:
                         elif userChoice == "1":
                             printProfile(username)
                         elif userChoice == "2":
-                            # here we will call the update account function
-                            print("\nUpdating your profile will be available soon\n")
+                            updateProfile(self,username)
                         else:
                             print("Invalid choice. Please try again.")
 
@@ -769,6 +767,92 @@ class InCollegeAppManager:
 
             def search_job():
                 print("\nUnder Construction")
+                
+            def createProfile(self, username):
+                """
+                Allows the user to create their profile and save it in the database.
+                """
+                title = input("Enter your title (e.g. '3rd year Computer Science student'): ")
+                major = input("Enter your major: ").title()
+                university = input("Enter your university name: ").title()
+                about = input("Enter a paragraph about yourself: ")
+    
+                # Experience Section
+                pastJob1 = input("Enter job title for past job 1 (or press Enter to skip): ").title() or "n/a"
+                pastJob2 = input("Enter job title for past job 2 (or press Enter to skip): ").title() or "n/a"
+                pastJob3 = input("Enter job title for past job 3 (or press Enter to skip): ").title() or "n/a"
+
+                # Education Section
+                school_name = input("Enter school name: ")
+                degree = input("Enter degree: ")
+                years_attended = input("Enter years attended: ")
+
+            # Save profile in the database
+                self.db_manager.execute('''
+                INSERT OR REPLACE INTO profiles (username, title, major, university, about,
+                                            pastJob1, pastJob2, pastJob3, education, posted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                ''', (username, title, major, university, about, pastJob1, pastJob2, pastJob3,
+                json.dumps({'school_name': school_name, 'degree': degree, 'years_attended': years_attended}),
+                'no'))
+
+                print("Profile saved successfully!")
+
+                # Ask user if they want to post their profile
+                post_profile = input("Do you want to post your profile? (yes/no): ").lower()
+                if post_profile == "yes":
+                    self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
+                    print("Profile posted successfully!")
+                    updateProfile(self,username)
+                else:
+                    print("Profile not posted.")
+
+            def updateProfile(self, username):
+                print(menu_seperate)
+                """
+                Allows the user to update their profile after it has been posted.
+                """
+                print("Select the number for the part of your profile you want to update:")
+                print("1. Title")
+                print("2. Major")
+                print("3. University")
+                print("4. About")
+                print("5. Past Jobs")
+                print("6. Education")
+                print("7. Exit")
+
+                choice = input("Enter your choice: ")
+
+                if choice == "1":
+                    new_title = input("Enter your new title: ")
+                    self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (new_title, username))
+                elif choice == "2":
+                    new_major = input("Enter your new major: ").title()
+                    self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (new_major, username))
+                elif choice == "3":
+                    new_university = input("Enter your new university name: ").title()
+                    self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (new_university, username))
+                elif choice == "4":
+                    new_about = input("Enter your new About section: ")
+                    self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (new_about, username))
+                elif choice == "5":
+                    new_past_job = input("Enter your new past job title: ").title() or "n/a"
+                    job_number = input("Enter the job number to update (1, 2, or 3): ")
+                    column_name = f"pastJob{job_number}"
+                    self.db_manager.execute(f"UPDATE profiles SET {column_name}=? WHERE username=?", (new_past_job, username))
+                elif choice == "6":
+                    new_school_name = input("Enter your new school name: ")
+                    new_degree = input("Enter your new degree: ")
+                    new_years_attended = input("Enter your new years attended: ")
+                    new_education = json.dumps({'school_name': new_school_name, 'degree': new_degree,
+                                         'years_attended': new_years_attended})
+                    self.db_manager.execute("UPDATE profiles SET education=? WHERE username=?", (new_education, username))
+                elif choice == "7":
+                    print("Exiting profile update.")
+                else:
+                    print("Invalid choice. Please try again.")
+
+                print("Profile updated successfully!")
 
             def delete_this_account():
                 print(menu_seperate) #menu
