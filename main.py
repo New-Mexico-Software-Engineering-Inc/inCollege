@@ -811,7 +811,7 @@ class InCollegeAppManager:
                 if post_profile == "yes":
                     self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
                     print("Profile posted successfully!")
-                    updateProfile(self,username)
+                    myProfileOptions(username)
                 else:
                     print("Profile not posted.")
 
@@ -827,7 +827,7 @@ class InCollegeAppManager:
                 print("4. About")
                 print("5. Past Jobs")
                 print("6. Education")
-                print("7. Exit")
+                print("q. Exit\n")
 
                 choice = input("Enter your choice: ")
 
@@ -852,7 +852,7 @@ class InCollegeAppManager:
                     new_years_attended = input("Enter your new years attended: ")
                     new_education = json.dumps({'years_attended': new_years_attended})
                     self.db_manager.execute("UPDATE profiles SET education=? WHERE username=?", (new_education, username))
-                elif choice == "7":
+                elif choice == "q":
                     print("Exiting profile update.")
                 else:
                     print("Invalid choice. Please try again.")
