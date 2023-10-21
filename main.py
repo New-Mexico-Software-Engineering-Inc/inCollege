@@ -699,13 +699,14 @@ class InCollegeAppManager:
                 ''', (title, about, pj1, edu, username))
 
             def printProfile(username):
+                print(menu_seperate)
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
                                                        pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
                 if profileContent[10] != "yes":
                     return
                     # this profile is not posted
-
-                print(menu_seperate)
+                
+               # print(menu_separate)
                 print(f"\n{profileContent[0]} {profileContent[1]}'s Profile")
                 print("-------------------------------")
                 print(f"Username:\n----\n{username}\n")
@@ -714,17 +715,15 @@ class InCollegeAppManager:
                 print(f"University:\n----\n{profileContent[4]}\n")
                 print(f"About {profileContent[0]} {profileContent[1]}:\n----\n{profileContent[5]}\n")
 
-                if profileContent[6] != "n/a":
+                if profileContent[6] != "n/a" and profileContent[6] != "\n":
                     print(f"Job 1:\n----\n{profileContent[6]}\n")
 
-                if profileContent[7] != "n/a":
+                if profileContent[7] != "n/a" and profileContent[7] != "\n":
                     print(f"Job 2:\n----\n{profileContent[7]}\n")
-
-                if profileContent[8] != "n/a":
+                    
+                if profileContent[8] != "n/a" and profileContent[8] != "\n":
                     print(f"Job 3:\n----\n{profileContent[8]}\n")
-
-                if profileContent[9] != "n/a":
-                    print(f"Education:\n----\n{profileContent[9]}\n\n")
+                                
 
             def myProfileOptions(username):
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
@@ -732,7 +731,7 @@ class InCollegeAppManager:
                                                        (username,))
                 # profile is not posted, so they have the option to create a profile and are asked if they want to post it there
                 if profileContent[10] != "yes":
-                    while True:
+                    while True and profileContent[10] != "yes":
                         print(menu_seperate)
                         print("My Profile Options\n-------------------------------")
                         print("1. Create a Profile\nq. Quit\n")
@@ -742,6 +741,7 @@ class InCollegeAppManager:
                             break
                         elif userChoice == "1":
                             createProfile(self, username)
+                            break
                         else:
                             print("Invalid choice. Please try again.")
 
@@ -773,18 +773,21 @@ class InCollegeAppManager:
                 Allows the user to create their profile and save it in the database.
                 """
                 title = input("Enter your title (e.g. '3rd year Computer Science student'): ")
-                major = input("Enter your major: ").title()
-                university = input("Enter your university name: ").title()
+                major = input("Enter your major: ")
+                university = input("Enter your university name: ")
                 about = input("Enter a paragraph about yourself: ")
     
                 # Experience Section
-                pastJob1 = input("Enter job title for past job 1 (or press Enter to skip): ").title() or "n/a"
-                pastJob2 = input("Enter job title for past job 2 (or press Enter to skip): ").title() or "n/a"
-                pastJob3 = input("Enter job title for past job 3 (or press Enter to skip): ").title() or "n/a"
-
+                pastJob1 = input("Enter job title for past job 1 (or press Enter to skip): ")
+                pastJob2 = input("Enter job title for past job 2 (or press Enter to skip): ")
+                pastJob3 = input("Enter job title for past job 3 (or press Enter to skip): ")
+                if(pastJob1 == ''):
+                    pastJob1="n/a"
+                if(len(pastJob2) == '' ):
+                    pastJob2="n/a"
+                if(pastJob3 == '\n'):
+                    pastJob3="n/a"
                 # Education Section
-                school_name = input("Enter school name: ")
-                degree = input("Enter degree: ")
                 years_attended = input("Enter years attended: ")
 
             # Save profile in the database
@@ -793,9 +796,15 @@ class InCollegeAppManager:
                                             pastJob1, pastJob2, pastJob3, education, posted)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 ''', (username, title, major, university, about, pastJob1, pastJob2, pastJob3,
-                json.dumps({'school_name': school_name, 'degree': degree, 'years_attended': years_attended}),
+                json.dumps({'years_attended': years_attended}),
                 'no'))
-
+                self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (about, username))
+                self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (title, username))
+                self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (major, username))
+                self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (university, username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob1=? WHERE username=?", (pastJob1, username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob2=? WHERE username=?", (pastJob2, username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob3=? WHERE username=?", (pastJob3, username))
                 print("Profile saved successfully!")
 
                 # Ask user if they want to post their profile
@@ -827,25 +836,22 @@ class InCollegeAppManager:
                     new_title = input("Enter your new title: ")
                     self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (new_title, username))
                 elif choice == "2":
-                    new_major = input("Enter your new major: ").title()
+                    new_major = input("Enter your new major: ")
                     self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (new_major, username))
                 elif choice == "3":
-                    new_university = input("Enter your new university name: ").title()
+                    new_university = input("Enter your new university name: ")
                     self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (new_university, username))
                 elif choice == "4":
                     new_about = input("Enter your new About section: ")
                     self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (new_about, username))
                 elif choice == "5":
-                    new_past_job = input("Enter your new past job title: ").title() or "n/a"
+                    new_past_job = input("Enter your new past job title: ") or "n/a"
                     job_number = input("Enter the job number to update (1, 2, or 3): ")
                     column_name = f"pastJob{job_number}"
                     self.db_manager.execute(f"UPDATE profiles SET {column_name}=? WHERE username=?", (new_past_job, username))
                 elif choice == "6":
-                    new_school_name = input("Enter your new school name: ")
-                    new_degree = input("Enter your new degree: ")
                     new_years_attended = input("Enter your new years attended: ")
-                    new_education = json.dumps({'school_name': new_school_name, 'degree': new_degree,
-                                         'years_attended': new_years_attended})
+                    new_education = json.dumps({'years_attended': new_years_attended})
                     self.db_manager.execute("UPDATE profiles SET education=? WHERE username=?", (new_education, username))
                 elif choice == "7":
                     print("Exiting profile update.")
