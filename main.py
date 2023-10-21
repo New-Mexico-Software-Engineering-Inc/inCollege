@@ -723,6 +723,8 @@ class InCollegeAppManager:
                     
                 if profileContent[8] != "n/a" and profileContent[8] != "\n":
                     print(f"Job 3:\n----\n{profileContent[8]}\n")
+
+                print(f"Education:\n----\n{profileContent[9]}")
                                 
 
             def myProfileOptions(username):
@@ -855,13 +857,31 @@ class InCollegeAppManager:
                     new_about = input("Enter your new About section: ")
                     self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (new_about, username))
                 elif choice == "5":
-                    new_past_job = input("Enter your new past job title: ") or "n/a"
                     job_number = input("Enter the job number to update (1, 2, or 3): ")
                     column_name = f"pastJob{job_number}"
+                    new_past_job = ""
+                    job_title = input(f"Enter job title for past job {job_number}: ")
+                    employer = input("Enter employer: ")
+                    date_started = input("Enter date started (e.g., MM/YYYY): ")
+                    date_ended = input("Enter date ended (e.g., MM/YYYY): ")
+                    location = input("Enter location: ")
+                    job_description = input("Enter job description: ")
+                    new_past_job = f"Title:\n{job_title}\n"
+                    new_past_job += f"Employer:\n{employer}\n"
+                    new_past_job += f"Date Started:\n{date_started}\n"
+                    new_past_job += f"Date Ended:\n{date_ended}\n"
+                    new_past_job += f"Location:\n{location}\n"
+                    new_past_job += f"Job Description:\n{job_description}\n"
                     self.db_manager.execute(f"UPDATE profiles SET {column_name}=? WHERE username=?", (new_past_job, username))
                 elif choice == "6":
-                    new_years_attended = input("Enter your new years attended: ")
-                    new_education = json.dumps({'years_attended': new_years_attended})
+                    new_education = ""
+                    print("Enter New Education Information Below:")
+                    school_name = input("Enter school name: ")
+                    degree = input("Enter degree: ")
+                    years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
+                    new_education += f"School Name:\n{school_name}\n"
+                    new_education += f"Degree:\n{degree}\n"
+                    new_education += f"Years Attended:\n{years_attended}\n"
                     self.db_manager.execute("UPDATE profiles SET education=? WHERE username=?", (new_education, username))
                 elif choice == "q":
                     print("Exiting profile update.")
