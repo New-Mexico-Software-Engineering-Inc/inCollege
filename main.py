@@ -630,8 +630,6 @@ class InCollegeAppManager:
                                 print("\nPlease enter the number associated with the friend in your network.\n")
                                 continue
 
-                            #alter_profile1("b")
-                            #alter_profile2("c")
                             if (friends[friendNum][6] == "View Profile"):
                                 print("")
                                 printProfile(friends[friendNum][1])
@@ -677,26 +675,6 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
-            def alter_profile1(username):
-                title = "Senior Pursuing Computer Science"
-                about = "I like cats, and I like to kayak in my spare time."
-                pj1 = "Title:\nManager\nEmployer:\nAMC\nStart Date:\n2018\nEnd Date:\nActive\nDescription:\nBlahBlahBlah\n"
-                pj2 = "Title:\nCrew\nEmployer:\nCat\nStart Date:\n2019\nEnd Date:\nActive\nDescription:\nBlah2Blah2Blah2\n"
-                pj3 = "Title:\nSupervisor\nEmployer:\nDog\nStart Date:\n2020\nEnd Date:\nActive\nDescription:\nBlah3Blah3Blah3\n"
-                edu = "School Name:\nUSF\nDegree:\nComputer Science\nYears Attended:\n2022-2023\n"
-                self.db_manager.execute(f'''
-                            UPDATE profiles SET title = ?, about = ?, pastJob1 = ?, pastJob2 = ?, pastJob3 = ?, education = ?, posted = "yes" WHERE username = ?               
-                ''', (title, about, pj1, pj2, pj3, edu, username))
-
-
-            def alter_profile2(username):
-                title = "Junior Pursuing Computer Science"
-                about = "I like dogs, and I like to play video games in my spare time."
-                pj1 = "Title:\nA\nEmployer:\nB\nStart Date:\n2018\nEnd Date:\nActive\nDescription:\nBlahBlahBlah\n"
-                edu = "School Name:\nUSF\nDegree:\nComputer Science\nYears Attended:\n2022-2023\n"
-                self.db_manager.execute(f'''
-                            UPDATE profiles SET title = ?, about = ?, pastJob1 = ?, education = ?, posted = "yes" WHERE username = ?               
-                ''', (title, about, pj1, edu, username))
 
             def printProfile(username):
                 print(menu_seperate)
@@ -736,20 +714,24 @@ class InCollegeAppManager:
                     while True and profileContent[10] != "yes":
                         print(menu_seperate)
                         print("My Profile Options\n-------------------------------")
-                        print("1. Create a Profile\nq. Quit\n")
+                        print("1. Create a Profile\n2. Post my Profile\nq. Quit\n")
                         userChoice = input("\nPlease enter a provided option: ")
 
                         if userChoice == "q":
                             break
                         elif userChoice == "1":
                             createProfile(self, username)
+
+                        elif userChoice == "2":
+                            self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
+                            print("Your profile has been posted!\n")
                             break
                         else:
                             print("Invalid choice. Please try again.")
 
 
                 # profile is displayed, so they have the option to update it or view their profile
-                elif profileContent[10] == "yes":
+                if profileContent[10] == "yes":
                     while True:
                         print(menu_seperate)
                         print("My Profile Options\n-------------------------------")
@@ -775,8 +757,11 @@ class InCollegeAppManager:
                 Allows the user to create their profile and save it in the database.
                 """
                 title = input("Enter your title (e.g. '3rd year Computer Science student'): ")
+                title = title.title()
                 major = input("Enter your major: ")
+                major = major.title()
                 university = input("Enter your university name: ")
+                university = university.title()
                 about = input("Enter a paragraph about yourself: ")
     
                 # Experience Section
@@ -786,10 +771,13 @@ class InCollegeAppManager:
                     job_title = input(f"Enter job title for past job {i + 1} (or press Enter to skip): ")
                     if not job_title:
                         break
+                    job_title = job_title.title()
                     employer = input("Enter employer: ")
+                    employer = employer.title()
                     date_started = input("Enter date started (e.g., MM/YYYY): ")
                     date_ended = input("Enter date ended (e.g., MM/YYYY): ")
                     location = input("Enter location: ")
+                    location = location.title()
                     job_description = input("Enter job description: ")
                     past_jobs[i] = f"Title:\n{job_title}\n"
                     past_jobs[i] += f"Employer:\n{employer}\n"
@@ -801,7 +789,9 @@ class InCollegeAppManager:
                 # Collect education information
                 print("Enter Education Information Below:")
                 school_name = input("Enter school name: ")
+                school_name = school_name.title()
                 degree = input("Enter degree: ")
+                degree = degree.title()
                 years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
 
                 education = ""
@@ -846,12 +836,15 @@ class InCollegeAppManager:
 
                 if choice == "1":
                     new_title = input("Enter your new title: ")
+                    new_title = new_title.title()
                     self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (new_title, username))
                 elif choice == "2":
                     new_major = input("Enter your new major: ")
+                    new_major = new_major.title()
                     self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (new_major, username))
                 elif choice == "3":
                     new_university = input("Enter your new university name: ")
+                    new_university = new_university.title()
                     self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (new_university, username))
                 elif choice == "4":
                     new_about = input("Enter your new About section: ")
@@ -861,10 +854,13 @@ class InCollegeAppManager:
                     column_name = f"pastJob{job_number}"
                     new_past_job = ""
                     job_title = input(f"Enter job title for past job {job_number}: ")
+                    job_title = job_title.title()
                     employer = input("Enter employer: ")
+                    employer = employer.title()
                     date_started = input("Enter date started (e.g., MM/YYYY): ")
                     date_ended = input("Enter date ended (e.g., MM/YYYY): ")
                     location = input("Enter location: ")
+                    location = location.title()
                     job_description = input("Enter job description: ")
                     new_past_job = f"Title:\n{job_title}\n"
                     new_past_job += f"Employer:\n{employer}\n"
@@ -877,7 +873,9 @@ class InCollegeAppManager:
                     new_education = ""
                     print("Enter New Education Information Below:")
                     school_name = input("Enter school name: ")
+                    school_name = school_name.title()
                     degree = input("Enter degree: ")
+                    degree = degree.title()
                     years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
                     new_education += f"School Name:\n{school_name}\n"
                     new_education += f"Degree:\n{degree}\n"
