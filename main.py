@@ -82,6 +82,24 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS profiles (
+            username TEXT PRIMARY KEY,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            title TEXT NOT NULL,
+            major TEXT NOT NULL,
+            university TEXT NOT NULL,
+            about TEXT NOT NULL,
+            pastJob1 TEXT NOT NULL,
+            pastJob2 TEXT NOT NULL,
+            pastJob3 TEXT NOT NULL,
+            education TEXT NOT NULL,
+            posted TEXT NOT NULL,
+            FOREIGN KEY (username) REFERENCES accounts(username) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS friend_requests (
             request_id INTEGER PRIMARY KEY AUTOINCREMENT,
             sender TEXT NOT NULL,
@@ -170,6 +188,10 @@ class InCollegeAppManager:
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
             (username, 1, 1, 1, "English"))
+
+        self.db_manager.execute('INSERT INTO profiles (username, first_name, last_name, title, major, university, about, pastJob1,\
+                                pastJob2, pastJob3, education, posted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+                                (username, first_name, last_name, "n/a", major, university, "n/a", "n/a", "n/a", "n/a", "n/a", "no"))
 
         # Returns the account from Database
         return self.__login(username=username, password=password)
@@ -552,9 +574,15 @@ class InCollegeAppManager:
 
                 friends_list = friendships_with_user1 + friendships_with_user2
 
+                # inserts number to front of the list
                 for i in range(len(friends_list)):
                     friends_list[i] = list(friends_list[i])
                     friends_list[i].insert(0, i+1)
+                    profile_status = self.db_manager.fetch('SELECT posted FROM profiles WHERE (username=?)', (friends_list[i][1],))
+                    if profile_status[0] == "yes":
+                        friends_list[i].append("View Profile")
+                    else:
+                        friends_list[i].append("No Profile Posted")
 
                 return friends_list
 
@@ -564,7 +592,7 @@ class InCollegeAppManager:
                 if friends:
                     print("\nFriends List")
                     print("-------------------------------")
-                    head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major"]
+                    head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major", "Profile"]
                     print(tabulate(friends, headers=head, tablefmt="grid"), "\n")
 
                 return friends
@@ -580,6 +608,37 @@ class InCollegeAppManager:
                         friends = print_friends()
                         if not friends:
                             print("\nNo friends at this time.")
+                            continue
+                        print("\nFriends List Options")
+                        print("-------------------------------")
+                        print("1. View a Friend's Profile\nq. Quit\n")
+                        userChoice = input("Please select an option: ")
+                        if (userChoice == 'q'):
+                            continue
+                        elif (userChoice == '1'):
+                            friendNum = input("Enter the number of the friend whose profile you wish to view: ")
+                            try:
+                                friendNum = int(friendNum)
+                            except ValueError:
+                                print("\nPlease enter the number associated with the friend in your network.\n")
+                                continue
+
+                            # get actual index in friends
+                            friendNum -= 1
+
+                            if friendNum >= len(friends):
+                                print("\nPlease enter the number associated with the friend in your network.\n")
+                                continue
+
+                            if (friends[friendNum][6] == "View Profile"):
+                                print("")
+                                printProfile(friends[friendNum][1])
+                            else:
+                                print(f"\n{friends[friendNum][1]} does not currently have a posted profile\n")
+                        else:
+                            print("Invalid choice. Returning to Show my network screen.")
+
+
                     elif choice == "2":
                         friends = print_friends()
                         if not friends:
@@ -616,8 +675,218 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
+
+            def printProfile(username):
+                print(menu_seperate)
+                profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
+                                                       pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
+                if profileContent[10] != "yes":
+                    return
+                    # this profile is not posted
+                
+               # print(menu_separate)
+                print(f"\n{profileContent[0]} {profileContent[1]}'s Profile")
+                print("-------------------------------")
+                print(f"Username:\n----\n{username}\n")
+                print(f"Title:\n----\n{profileContent[2]}\n")
+                print(f"Major:\n----\n{profileContent[3]}\n")
+                print(f"University:\n----\n{profileContent[4]}\n")
+                print(f"About {profileContent[0]} {profileContent[1]}:\n----\n{profileContent[5]}\n")
+
+                if profileContent[6] != "n/a" and profileContent[6] != "\n":
+                    print(f"Job 1:\n----\n{profileContent[6]}\n")
+
+                if profileContent[7] != "n/a" and profileContent[7] != "\n":
+                    print(f"Job 2:\n----\n{profileContent[7]}\n")
+                    
+                if profileContent[8] != "n/a" and profileContent[8] != "\n":
+                    print(f"Job 3:\n----\n{profileContent[8]}\n")
+
+                print(f"Education:\n----\n{profileContent[9]}")
+                                
+
+            def myProfileOptions(username):
+                profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
+                                                                       pastJob3, education, posted FROM profiles WHERE (username=?)',
+                                                       (username,))
+                # profile is not posted, so they have the option to create a profile and are asked if they want to post it there
+                if profileContent[10] != "yes":
+                    while True and profileContent[10] != "yes":
+                        print(menu_seperate)
+                        print("My Profile Options\n-------------------------------")
+                        print("1. Create a Profile\n2. Post my Profile\nq. Quit\n")
+                        userChoice = input("\nPlease enter a provided option: ")
+
+                        if userChoice == "q":
+                            break
+                        elif userChoice == "1":
+                            createProfile(self, username)
+
+                        elif userChoice == "2":
+                            self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
+                            print("Your profile has been posted!\n")
+                            break
+                        else:
+                            print("Invalid choice. Please try again.")
+
+
+                # profile is displayed, so they have the option to update it or view their profile
+                if profileContent[10] == "yes":
+                    while True:
+                        print(menu_seperate)
+                        print("My Profile Options\n-------------------------------")
+                        print("1. View my Profile\n2. Update my Profile\nq. Quit\n")
+                        userChoice = input("\nPlease enter a provided option: ")
+
+                        if userChoice == "q":
+                            break
+                        elif userChoice == "1":
+                            printProfile(username)
+                        elif userChoice == "2":
+                            updateProfile(self,username)
+                        else:
+                            print("Invalid choice. Please try again.")
+
+
+
             def search_job():
                 print("\nUnder Construction")
+                
+            def createProfile(self, username):
+                """
+                Allows the user to create their profile and save it in the database.
+                """
+                title = input("Enter your title (e.g. '3rd year Computer Science student'): ")
+                title = title.title()
+                major = input("Enter your major: ")
+                major = major.title()
+                university = input("Enter your university name: ")
+                university = university.title()
+                about = input("Enter a paragraph about yourself: ")
+    
+                # Experience Section
+                # Collect information for up to three past jobs
+                past_jobs = ["n/a", "n/a", "n/a"]
+                for i in range(3):
+                    job_title = input(f"Enter job title for past job {i + 1} (or press Enter to skip): ")
+                    if not job_title:
+                        break
+                    job_title = job_title.title()
+                    employer = input("Enter employer: ")
+                    employer = employer.title()
+                    date_started = input("Enter date started (e.g., MM/YYYY): ")
+                    date_ended = input("Enter date ended (e.g., MM/YYYY): ")
+                    location = input("Enter location: ")
+                    location = location.title()
+                    job_description = input("Enter job description: ")
+                    past_jobs[i] = f"Title:\n{job_title}\n"
+                    past_jobs[i] += f"Employer:\n{employer}\n"
+                    past_jobs[i] += f"Date Started:\n{date_started}\n"
+                    past_jobs[i] += f"Date Ended:\n{date_ended}\n"
+                    past_jobs[i] += f"Location:\n{location}\n"
+                    past_jobs[i] += f"Job Description:\n{job_description}\n"
+
+                # Collect education information
+                print("Enter Education Information Below:")
+                school_name = input("Enter school name: ")
+                school_name = school_name.title()
+                degree = input("Enter degree: ")
+                degree = degree.title()
+                years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
+
+                education = ""
+                education += f"School Name:\n{school_name}\n"
+                education += f"Degree:\n{degree}\n"
+                education += f"Years Attended:\n{years_attended}\n"
+
+                self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (about, username))
+                self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (title, username))
+                self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (major, username))
+                self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (university, username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob1=? WHERE username=?", (past_jobs[0], username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob2=? WHERE username=?", (past_jobs[1], username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob3=? WHERE username=?", (past_jobs[2], username))
+                self.db_manager.execute(f"UPDATE profiles SET education=? WHERE username=?", (education, username))
+                print("Profile saved successfully!")
+
+                # Ask user if they want to post their profile
+                post_profile = input("Do you want to post your profile? (yes/no): ").lower()
+                if post_profile == "yes":
+                    self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
+                    print("Profile posted successfully!")
+                    myProfileOptions(username)
+                else:
+                    print("Profile not posted.")
+
+            def updateProfile(self, username):
+                print(menu_seperate)
+                """
+                Allows the user to update their profile after it has been posted.
+                """
+                print("Select the number for the part of your profile you want to update:")
+                print("1. Title")
+                print("2. Major")
+                print("3. University")
+                print("4. About")
+                print("5. Past Jobs")
+                print("6. Education")
+                print("q. Exit\n")
+
+                choice = input("Enter your choice: ")
+
+                if choice == "1":
+                    new_title = input("Enter your new title: ")
+                    new_title = new_title.title()
+                    self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (new_title, username))
+                elif choice == "2":
+                    new_major = input("Enter your new major: ")
+                    new_major = new_major.title()
+                    self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (new_major, username))
+                elif choice == "3":
+                    new_university = input("Enter your new university name: ")
+                    new_university = new_university.title()
+                    self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (new_university, username))
+                elif choice == "4":
+                    new_about = input("Enter your new About section: ")
+                    self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (new_about, username))
+                elif choice == "5":
+                    job_number = input("Enter the job number to update (1, 2, or 3): ")
+                    column_name = f"pastJob{job_number}"
+                    new_past_job = ""
+                    job_title = input(f"Enter job title for past job {job_number}: ")
+                    job_title = job_title.title()
+                    employer = input("Enter employer: ")
+                    employer = employer.title()
+                    date_started = input("Enter date started (e.g., MM/YYYY): ")
+                    date_ended = input("Enter date ended (e.g., MM/YYYY): ")
+                    location = input("Enter location: ")
+                    location = location.title()
+                    job_description = input("Enter job description: ")
+                    new_past_job = f"Title:\n{job_title}\n"
+                    new_past_job += f"Employer:\n{employer}\n"
+                    new_past_job += f"Date Started:\n{date_started}\n"
+                    new_past_job += f"Date Ended:\n{date_ended}\n"
+                    new_past_job += f"Location:\n{location}\n"
+                    new_past_job += f"Job Description:\n{job_description}\n"
+                    self.db_manager.execute(f"UPDATE profiles SET {column_name}=? WHERE username=?", (new_past_job, username))
+                elif choice == "6":
+                    new_education = ""
+                    print("Enter New Education Information Below:")
+                    school_name = input("Enter school name: ")
+                    school_name = school_name.title()
+                    degree = input("Enter degree: ")
+                    degree = degree.title()
+                    years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
+                    new_education += f"School Name:\n{school_name}\n"
+                    new_education += f"Degree:\n{degree}\n"
+                    new_education += f"Years Attended:\n{years_attended}\n"
+                    self.db_manager.execute("UPDATE profiles SET education=? WHERE username=?", (new_education, username))
+                elif choice == "q":
+                    print("Exiting profile update.")
+                else:
+                    print("Invalid choice. Please try again.")
+
+                print("Profile updated successfully!")
 
             def delete_this_account():
                 print(menu_seperate) #menu
@@ -686,6 +955,8 @@ class InCollegeAppManager:
                 if option in options: 
                     options[option]()
                 elif option == '8':
+                    myProfileOptions(self._current_user[1])
+                elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
