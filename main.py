@@ -779,7 +779,7 @@ class InCollegeAppManager:
     
                 # Experience Section
                 # Collect information for up to three past jobs
-                past_jobs = []
+                past_jobs = ["n/a", "n/a", "n/a"]
                 for i in range(3):
                     job_title = input(f"Enter job title for past job {i + 1} (or press Enter to skip): ")
                     if not job_title:
@@ -789,21 +789,32 @@ class InCollegeAppManager:
                     date_ended = input("Enter date ended (e.g., MM/YYYY): ")
                     location = input("Enter location: ")
                     job_description = input("Enter job description: ")
-                    past_jobs.append((job_title, employer, date_started, date_ended, location, job_description))
+                    past_jobs[i] = f"Title:\n{job_title}\n"
+                    past_jobs[i] += f"Employer:\n{employer}\n"
+                    past_jobs[i] += f"Date Started:\n{date_started}\n"
+                    past_jobs[i] += f"Date Ended:\n{date_ended}\n"
+                    past_jobs[i] += f"Location:\n{location}\n"
+                    past_jobs[i] += f"Job Description:\n{job_description}\n"
 
                 # Collect education information
+                print("Enter Education Information Below:")
                 school_name = input("Enter school name: ")
                 degree = input("Enter degree: ")
                 years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
 
+                education = ""
+                education += f"School Name:\n{school_name}\n"
+                education += f"Degree:\n{degree}\n"
+                education += f"Years Attended:\n{years_attended}\n"
 
                 self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (about, username))
                 self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (title, username))
                 self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (major, username))
                 self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (university, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob1=? WHERE username=?", (pastJob1, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob2=? WHERE username=?", (pastJob2, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob3=? WHERE username=?", (pastJob3, username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob1=? WHERE username=?", (past_jobs[0], username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob2=? WHERE username=?", (past_jobs[1], username))
+                self.db_manager.execute(f"UPDATE profiles SET pastJob3=? WHERE username=?", (past_jobs[2], username))
+                self.db_manager.execute(f"UPDATE profiles SET education=? WHERE username=?", (education, username))
                 print("Profile saved successfully!")
 
                 # Ask user if they want to post their profile
