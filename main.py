@@ -139,7 +139,7 @@ class InCollegeAppManager:
             posted_by INTEGER,
             user_first_name TEXT NOT NULL,
             user_last_name TEXT NOT NULL,
-            FOREIGN KEY (posted_by) REFERENCES accounts(user_id)
+            FOREIGN KEY (posted_by) REFERENCES accounts(user_id) ON DELETE CASCADE
         );
         ''')
         self.db_manager.commit()
@@ -707,8 +707,7 @@ class InCollegeAppManager:
 
             def myProfileOptions(username):
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
-                                                                       pastJob3, education, posted FROM profiles WHERE (username=?)',
-                                                       (username,))
+                                                            pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
                 # profile is not posted, so they have the option to create a profile and are asked if they want to post it there
                 if profileContent[10] != "yes":
                     while True and profileContent[10] != "yes":
@@ -721,6 +720,8 @@ class InCollegeAppManager:
                             break
                         elif userChoice == "1":
                             createProfile(self, username)
+                            profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
+                                                                       pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
 
                         elif userChoice == "2":
                             self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
@@ -798,15 +799,9 @@ class InCollegeAppManager:
                 education += f"School Name:\n{school_name}\n"
                 education += f"Degree:\n{degree}\n"
                 education += f"Years Attended:\n{years_attended}\n"
-
-                self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (about, username))
-                self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (title, username))
-                self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (major, username))
-                self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (university, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob1=? WHERE username=?", (past_jobs[0], username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob2=? WHERE username=?", (past_jobs[1], username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob3=? WHERE username=?", (past_jobs[2], username))
-                self.db_manager.execute(f"UPDATE profiles SET education=? WHERE username=?", (education, username))
+            
+                self.db_manager.execute("UPDATE profiles SET about=?, title=?, major=?, university=?, pastJob1=?, pastJob2=?, pastJob3=?, education=? \
+                                        WHERE username=?", (about, title, major, university, past_jobs[0], past_jobs[1], past_jobs[2], education, username))
                 print("Profile saved successfully!")
 
                 # Ask user if they want to post their profile
@@ -814,7 +809,6 @@ class InCollegeAppManager:
                 if post_profile == "yes":
                     self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
                     print("Profile posted successfully!")
-                    myProfileOptions(username)
                 else:
                     print("Profile not posted.")
 

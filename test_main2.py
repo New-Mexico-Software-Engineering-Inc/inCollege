@@ -12,8 +12,10 @@ import os
 os.system('clean')
 
 def clear_accounts():
-    conn = sqlite3.connect('users.db')
+    main.InCollegeAppManager("test.db")
+    conn = sqlite3.connect("test.db")
     cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON;")
     cursor.execute('''
     DELETE FROM accounts;
     ''')
@@ -24,7 +26,7 @@ def clear_accounts():
 def runInCollege(capsys):
     # Run the program, and collect the system exit code
     with pytest.raises(SystemExit) as e:
-        main.InCollegeAppManager().Run()
+        main.InCollegeAppManager("test.db").Run()
 
     # verify the exit code is 0
     assert e.type == SystemExit
@@ -32,7 +34,6 @@ def runInCollege(capsys):
 
     # return the program's output
     return capsys.readouterr()
-
 
 # function to test that first and last names are asked for when creating an account
 def test_asksForNames(monkeypatch, capsys):
@@ -135,7 +136,7 @@ def test_DeleteSuccess(monkeypatch, capsys):
 
     # this input will prompt the deletion of an account
     # 1 - login, enter credentials, 7 - delete account, verify with y twice
-    userIn += "2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n8\ny\ny\n"
+    userIn += "2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n9\ny\ny\n"
 
     # now we attempt to login with the same credentials
     userIn += "1\na\n!!!Goodpswd0\n"
@@ -178,15 +179,6 @@ def test_FindUsersOnceLoggedIn(monkeypatch, capsys):
 # test that we can create up to 5 jobs
 def test_Post5Jobs(monkeypatch, capsys):
     clear_accounts()
-    # first, we must clear the database for jobs so that we can verify we are able to make up to 5
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        DELETE FROM jobs;
-        ''')
-    conn.commit()
-    conn.close()
-
 
     # we expect to see that the job was successfully posted 5 times when we try to post 5 jobs
     expectedOut = "Successfully Posted Job."
@@ -227,7 +219,7 @@ def test_Post5Jobs(monkeypatch, capsys):
 # test that trying to post a 6th job fails
 # !!!!!! this test must be ran after test_Post5Jobs to ensure that 5 jobs are already posted !!!!!!
 def test_Post6thJobFails(monkeypatch, capsys):
-    clear_accounts()
+    # clear_accounts()
     # for a failed job posting, we expect to see the following error occur
     expectedOut = 'All jobs have been created. Please come back later.'
 
@@ -274,14 +266,6 @@ def test_ReturnMain(monkeypatch, capsys):
 # test for checking job posting asks for all parametrs
 def test_PostJob(monkeypatch, capsys):
     clear_accounts()
-    # first, we must clear the database for jobs so that we can verify we are able to make up to 5
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        DELETE FROM jobs;
-        ''')
-    conn.commit()
-    conn.close()
 
     # the list below holds all values to create a job
     jobEntries = ['title', 'desc', 'skill', 'long desc', 'employer', 'location', 200.0]

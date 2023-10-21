@@ -12,8 +12,10 @@ import os
 os.system('clean')
 
 def clear_accounts():
-    conn = sqlite3.connect('users.db')
+    main.InCollegeAppManager("test.db")
+    conn = sqlite3.connect("test.db")
     cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON;")
     cursor.execute('''
     DELETE FROM accounts;
     ''')
@@ -24,7 +26,7 @@ def clear_accounts():
 def runInCollege(capsys):
     # Run the program, and collect the system exit code
     with pytest.raises(SystemExit) as e:
-        main.InCollegeAppManager().Run()
+        main.InCollegeAppManager("test.db").Run()
 
     # verify the exit code is 0
     assert e.type == SystemExit
