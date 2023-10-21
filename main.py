@@ -778,26 +778,25 @@ class InCollegeAppManager:
                 about = input("Enter a paragraph about yourself: ")
     
                 # Experience Section
-                pastJob1 = input("Enter job title for past job 1 (or press Enter to skip): ")
-                pastJob2 = input("Enter job title for past job 2 (or press Enter to skip): ")
-                pastJob3 = input("Enter job title for past job 3 (or press Enter to skip): ")
-                if(pastJob1 == ''):
-                    pastJob1="n/a"
-                if(len(pastJob2) == '' ):
-                    pastJob2="n/a"
-                if(pastJob3 == '\n'):
-                    pastJob3="n/a"
-                # Education Section
-                years_attended = input("Enter years attended: ")
+                # Collect information for up to three past jobs
+                past_jobs = []
+                for i in range(3):
+                    job_title = input(f"Enter job title for past job {i + 1} (or press Enter to skip): ")
+                    if not job_title:
+                        break
+                    employer = input("Enter employer: ")
+                    date_started = input("Enter date started (e.g., MM/YYYY): ")
+                    date_ended = input("Enter date ended (e.g., MM/YYYY): ")
+                    location = input("Enter location: ")
+                    job_description = input("Enter job description: ")
+                    past_jobs.append((job_title, employer, date_started, date_ended, location, job_description))
 
-            # Save profile in the database
-                self.db_manager.execute('''
-                INSERT OR REPLACE INTO profiles (username, title, major, university, about,
-                                            pastJob1, pastJob2, pastJob3, education, posted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                ''', (username, title, major, university, about, pastJob1, pastJob2, pastJob3,
-                json.dumps({'years_attended': years_attended}),
-                'no'))
+                # Collect education information
+                school_name = input("Enter school name: ")
+                degree = input("Enter degree: ")
+                years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
+
+
                 self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (about, username))
                 self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (title, username))
                 self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (major, username))
