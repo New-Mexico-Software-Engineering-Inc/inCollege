@@ -133,3 +133,47 @@ def test_update_profile(monkeypatch, capsys):
     assert expectedOut1 in capture.out
     assert 6 == capture.out.count(expectedOut2)
     assert expectedOut3 in capture.out
+
+def test_view_friend_profile(monkeypatch, capsys):
+    #clear accounts
+    clear_accounts()
+    #create three accounts
+    main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+    main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+    main.InCollegeAppManager("test.db")._create_account('c', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+    main.InCollegeAppManager("test.db")._create_account('d', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+
+    input = ''
+    #b creates a profile and sends a friend request to a
+    #log in as b
+    input+='1\na\n!!!Goodpswd0\n'
+    #create profile
+    input+='8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\nHello!\n\n"Alonso High School\nHigh School Diploma\n2016-2020\nyes\nq\n'
+    #send friend request
+    input+='2\n3\nMajor\ny\n1\n'
+    #log out
+    input+='q\nq\n'
+
+    #c only creates a profile
+    #log in as c
+    input += '1\na\n!!!Goodpswd0\n'
+    #create profile
+    input += '8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\nHello!\n\n"Alonso High School\nHigh School Diploma\n2016-2020\nyes\nq\n'
+    #log out
+
+    #d only sends a friend request to a
+    #log in as d
+    #send friend request
+
+    #a accepts all requests, and atempts to view all profiles
+    #log in as a
+    #accept friend requests
+    #view friends
+
+
+    input+='q\nq\nq\nq\nq\nq\nq\nq\nq\n'
+
+    #assert that
+    #b has a profile
+    #c does not
+    #d can not be viewed
