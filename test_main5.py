@@ -135,45 +135,56 @@ def test_update_profile(monkeypatch, capsys):
     assert expectedOut3 in capture.out
 
 def test_view_friend_profile(monkeypatch, capsys):
+
+    expectedOut1 = 'View Profile'
+    expectedOut2 = 'No Profile Posted'
+
+
     #clear accounts
     clear_accounts()
-    #create three accounts
-    main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
-    main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
-    main.InCollegeAppManager("test.db")._create_account('c', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
-    main.InCollegeAppManager("test.db")._create_account('d', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
 
     input = ''
+    #create three accounts
+    input+= '2\na\n!!!Goodpswd0\na\na\na\na\n'
+    input +='2\nb\n!!!Goodpswd0\nb\nb\nb\nb\n'
+    input +='2\nc\n!!!Goodpswd0\nc\nc\nc\nc\n'
+
     #b creates a profile and sends a friend request to a
     #log in as b
-    input+='1\na\n!!!Goodpswd0\n'
+    input+='1\nb\n!!!Goodpswd0\n'
     #create profile
     input+='8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\nHello!\n\n"Alonso High School\nHigh School Diploma\n2016-2020\nyes\nq\n'
     #send friend request
-    input+='2\n3\nMajor\ny\n1\n'
+    input+='2\n1\na\ny\n1\n'
     #log out
     input+='q\nq\n'
 
-    #c only creates a profile
+    #c only sends a friend request to a
     #log in as c
-    input += '1\na\n!!!Goodpswd0\n'
-    #create profile
-    input += '8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\nHello!\n\n"Alonso High School\nHigh School Diploma\n2016-2020\nyes\nq\n'
-    #log out
-
-    #d only sends a friend request to a
-    #log in as d
+    input += '1\nc\n!!!Goodpswd0\n'
     #send friend request
+    input += '2\n1\na\ny\n1\n'
+    #log out
+    input += 'q\nq\n'
 
     #a accepts all requests, and atempts to view all profiles
     #log in as a
+    input += '1\na\n!!!Goodpswd0\n'
     #accept friend requests
+    input += '7\n3\n1\ny\n1\n1\n1\ny\n1\n1\nq\n'
     #view friends
+    input += '1\n1\n'
 
-
+    #quit
     input+='q\nq\nq\nq\nq\nq\nq\nq\nq\n'
 
-    #assert that
+    choiceInput = StringIO(input)
+    monkeypatch.setattr('sys.stdin', choiceInput)
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+    #assert that (assert once)
     #b has a profile
+    assert expectedOut1 in capture.out
     #c does not
-    #d can not be viewed
+    assert expectedOut2 in capture.out
