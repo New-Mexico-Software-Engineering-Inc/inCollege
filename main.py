@@ -6,6 +6,7 @@ import bcrypt
 from password_strength import PasswordPolicy
 from tabulate import tabulate
 
+__DEBUG__ = 1
 menu_seperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
 
 class DatabaseManager:
@@ -29,7 +30,7 @@ class DatabaseManager:
 
     def fetchall(self, query, params=()):
         self.cursor.execute(query, params)
-        return self.cursor.fetchall()
+        return self.cursor.fetchall() 
 
     def close(self):
         self.conn.close()
@@ -43,9 +44,22 @@ class DatabaseManager:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''',
             (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
         return True
+    
+    def user_apply_job(self, user_id, job_id,):
+        user = self.fetch('SELECT * FROM accounts WHERE user_id=?;', (user_id,))
+        assert user is not None, "Could not find user"
+        job = self.fetch('SELECT * FROM jobs WHERE job_id=?;', (job_id,))
+        assert job is not None, "Could not find job"
+
+        self.execute('''
+            INSERT INTO applications (applicant, job_id)
+            VALUES (?, ?);
+            ''',
+            (user_id, job_id))
+        return True
 
 class InCollegeAppManager:
-    def __init__(self, data_file="users.db"):
+    def __init__(self, data_file="users.db", DEBUG=False):
         self.db_manager = DatabaseManager(data_file)
         self.setup_database()
         self._PasswordPolicy = PasswordPolicy.from_names(
@@ -54,6 +68,63 @@ class InCollegeAppManager:
         self._current_user = None
         with open('./data/menus.json', 'r') as f:
             self.menus = json.load(f)['menus']
+
+        if DEBUG:
+            self.InitDebugData()
+
+    def InitDebugData(self):
+        # For the accounts table
+        pw = bcrypt.hashpw("p1".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
+            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1");
+        ''', (pw,))
+        
+        
+        # For the settings table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO settings (username, email_notifs, sms_notifs, target_ads, language)
+            VALUES ("test_user1", 1, 0, 1, "English");
+        ''')
+        
+        # For the profiles table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO profiles (username, first_name, last_name, title, major, university, about, pastJob1, pastJob2, pastJob3, education, posted)
+            VALUES ("test_user1", "John", "Doe", "Software Developer", "Major1", "University1", "About me...", "Past Job 1", "Past Job 2", "Past Job 3", "My Education", "Last Posted");
+        ''')
+        
+        # For the skills table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO skills (skill_name, long_description)
+            VALUES ("Python", "A high-level programming language.");
+        ''')
+
+        # For the jobs table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by, user_first_name, user_last_name)
+            VALUES ("Python", "A high-level programming language.", "Python Developer", "Develop in Python", "Company1", "Location1", 60000, 1, "John", "Doe");
+        ''')
+
+        # For the friend_requests table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO friend_requests (sender, receiver)
+            VALUES ("test_user1", "test_user2");
+        ''')
+        
+        # For the friendship table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO friendship (user_one, user_two)
+            VALUES ("test_user1", "test_user2");
+        ''')
+        
+        # For the job_applications table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO job_applications (applicant, job_id)
+            VALUES (1, 1);
+        ''')
+
+        # Commit changes
+        self.db_manager.commit()
         
     def setup_database(self):
         self.db_manager.execute("PRAGMA foreign_keys=ON;")
@@ -140,6 +211,16 @@ class InCollegeAppManager:
             user_first_name TEXT NOT NULL,
             user_last_name TEXT NOT NULL,
             FOREIGN KEY (posted_by) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS job_applications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            applicant INTEGER NOT NULL,
+            job_id INTEGER NOT NULL,
+            FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
         );
         ''')
         self.db_manager.commit()
@@ -542,6 +623,15 @@ class InCollegeAppManager:
                 else:
                     self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
                     print(f"\nFriend request sent to {receiver} successfully!")
+            # Function for allowing users to apply for jobs
+            def apply_for_job(user, job):
+                assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",(user, job)))[0][0], 'Job does not exist.'
+                #appl_exists  
+                assert not self.db_manager.fetchall("SELECT COUNT(*) FROM applications WHERE (applicant=? AND job_id=?)",
+                                        (user, job)), "Cannot apply more than once for a job."
+                
+                self.db_manager.user_apply_job(user, job)
+
 
             # function to add a friendship between the usernames passed as arguments so long as one does not already exist
             def add_friend(friendA, friendB):
@@ -675,7 +765,7 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
-
+            # function to print a user's profile 
             def printProfile(username):
                 print(menu_seperate)
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
@@ -704,7 +794,7 @@ class InCollegeAppManager:
 
                 print(f"Education:\n----\n{profileContent[9]}")
                                 
-
+            # function to modify profile's options
             def myProfileOptions(username):
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
                                                             pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
@@ -748,10 +838,13 @@ class InCollegeAppManager:
                         else:
                             print("Invalid choice. Please try again.")
 
-
-
             def search_job():
-                print("\nUnder Construction")
+                def find_jobs_by_title(job_title):
+                    return self.db_manager.fetchall("SELECT * FROM jobs where job_title LIKE ?;", ("%"+job_title+"%",))
+                job = input("Enter a Job Title to Search for: ")
+                display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                jobs = find_jobs_by_title(job)
+                print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                 
             def createProfile(self, username):
                 """
@@ -902,7 +995,7 @@ class InCollegeAppManager:
                 """
                 Posts a job under the specified username
                 """
-                if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 5:
+                if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 10:
                     print("All jobs have been created. Please come back later.")
                     return
                 try:
@@ -1053,7 +1146,7 @@ class InCollegeAppManager:
                 print("Invalid choice. Please try again.")
 
 def main():
-    InCollegeAppManager().Run()
+    InCollegeAppManager(DEBUG=__DEBUG__).Run()
 
 if __name__ == '__main__':
     main()
