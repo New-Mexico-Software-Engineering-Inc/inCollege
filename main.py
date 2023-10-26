@@ -32,6 +32,11 @@ class DatabaseManager:
         self.cursor.execute(query, params)
         return self.cursor.fetchall() 
 
+    def find_jobs_by_title(self, job_title):
+        return self.fetchall("SELECT * FROM jobs where job_title LIKE ?;", ("%"+job_title+"%",))
+    
+    def find_jobs_by_id(self, job_id):
+        return self.fetchall("SELECT * FROM jobs where job_id=?;", (job_id,))
     def close(self):
         self.conn.close()
     
@@ -52,7 +57,7 @@ class DatabaseManager:
         assert job is not None, "Could not find job"
 
         self.execute('''
-            INSERT INTO applications (applicant, job_id)
+            INSERT INTO job_applications (applicant, job_id)
             VALUES (?, ?);
             ''',
             (user_id, job_id))
@@ -624,13 +629,21 @@ class InCollegeAppManager:
                     self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
                     print(f"\nFriend request sent to {receiver} successfully!")
             # Function for allowing users to apply for jobs
-            def apply_for_job(user, job):
-                assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",(user, job)))[0][0], 'Job does not exist.'
-                #appl_exists  
-                assert not self.db_manager.fetchall("SELECT COUNT(*) FROM applications WHERE (applicant=? AND job_id=?)",
-                                        (user, job)), "Cannot apply more than once for a job."
-                
-                self.db_manager.user_apply_job(user, job)
+            def apply_for_job():
+                print("Apply For A Job")
+                print(menu_seperate)
+                try:
+                    user = self._current_user[0]
+                    job = int(input("Enter the job ID: "))
+                    assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
+                    #appl_exists  
+                    assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
+                                            (user, job))[0][0], "Cannot apply more than once for  a job."
+
+                    self.db_manager.user_apply_job(user, job)
+                    print("Successfully Applied for the job.")
+                except Exception as e:
+                    print("Error Applying for Job:", e)
 
 
             # function to add a friendship between the usernames passed as arguments so long as one does not already exist
@@ -795,7 +808,8 @@ class InCollegeAppManager:
                 print(f"Education:\n----\n{profileContent[9]}")
                                 
             # function to modify profile's options
-            def myProfileOptions(username):
+            def myProfileOptions():
+                username = self._current_user[1]
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
                                                             pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
                 # profile is not posted, so they have the option to create a profile and are asked if they want to post it there
@@ -837,13 +851,19 @@ class InCollegeAppManager:
                             updateProfile(self,username)
                         else:
                             print("Invalid choice. Please try again.")
-
+            
+            def print_jobs_applied_for():
+                applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
+                if applied_for_jobs:
+                    display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
+                    print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                
+        
             def search_job():
-                def find_jobs_by_title(job_title):
-                    return self.db_manager.fetchall("SELECT * FROM jobs where job_title LIKE ?;", ("%"+job_title+"%",))
                 job = input("Enter a Job Title to Search for: ")
                 display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
-                jobs = find_jobs_by_title(job)
+                jobs = self.db_manager.find_jobs_by_title(job)
                 print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                 
             def createProfile(self, username):
@@ -1030,7 +1050,10 @@ class InCollegeAppManager:
                 except Exception as e:
                     print('Error While Posting Job:\n', e)
             
-            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network}
+            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network,
+            '8': myProfileOptions,
+            '10': apply_for_job,
+            '11': print_jobs_applied_for}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -1041,8 +1064,6 @@ class InCollegeAppManager:
                 option = input("Select an option: ")
                 if option in options: 
                     options[option]()
-                elif option == '8':
-                    myProfileOptions(self._current_user[1])
                 elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
