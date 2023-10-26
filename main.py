@@ -50,17 +50,17 @@ class DatabaseManager:
             (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
         return True
     
-    def user_apply_job(self, user_id, job_id,):
+    def user_apply_job(self, user_id, job_id, date, quals):
         user = self.fetch('SELECT * FROM accounts WHERE user_id=?;', (user_id,))
         assert user is not None, "Could not find user"
         job = self.fetch('SELECT * FROM jobs WHERE job_id=?;', (job_id,))
         assert job is not None, "Could not find job"
 
         self.execute('''
-            INSERT INTO job_applications (applicant, job_id)
-            VALUES (?, ?);
+            INSERT INTO job_applications (applicant, job_id, date, quals)
+            VALUES (?, ?, ?, ?);
             ''',
-            (user_id, job_id))
+            (user_id, job_id, date, quals))
         return True
 
 class InCollegeAppManager:
@@ -124,8 +124,8 @@ class InCollegeAppManager:
         
         # For the job_applications table
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO job_applications (applicant, job_id)
-            VALUES (1, 1);
+            INSERT OR IGNORE INTO job_applications (applicant, job_id, date, quals)
+            VALUES (1, 1, "00/00/0000", "Very Qualified Candidate");
         ''')
 
         # Commit changes
@@ -224,6 +224,8 @@ class InCollegeAppManager:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             applicant INTEGER NOT NULL,
             job_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            quals TEXT NOT NULL,
             FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
             FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
         );
@@ -633,14 +635,18 @@ class InCollegeAppManager:
                 print("Apply For A Job")
                 print(menu_seperate)
                 try:
+                    correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
                     user = self._current_user[0]
                     job = int(input("Enter the job ID: "))
                     assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
                     #appl_exists  
                     assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
                                             (user, job))[0][0], "Cannot apply more than once for  a job."
-
-                    self.db_manager.user_apply_job(user, job)
+                    date = input("Please Enter Todays Date (dd/mm/yyyy): ")
+                    assert date and correct_date(date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                    quals = input("Tell us About Yourself and why you want the job: \n")
+                    assert quals, 'Cannot Leave field Empty.'
+                    self.db_manager.user_apply_job(user, job, date, quals)
                     print("Successfully Applied for the job.")
                 except Exception as e:
                     print("Error Applying for Job:", e)
