@@ -50,18 +50,21 @@ class DatabaseManager:
             (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
         return True
     
-    def user_apply_job(self, user_id, job_id, date, quals):
+    def user_apply_job(self, user_id, job_id, gr_date, s_date, quals):
         user = self.fetch('SELECT * FROM accounts WHERE user_id=?;', (user_id,))
         assert user is not None, "Could not find user"
         job = self.fetch('SELECT * FROM jobs WHERE job_id=?;', (job_id,))
         assert job is not None, "Could not find job"
 
         self.execute('''
-            INSERT INTO job_applications (applicant, job_id, date, quals)
-            VALUES (?, ?, ?, ?);
+            INSERT INTO job_applications (applicant, job_id, gr_date, s_date, quals)
+            VALUES (?, ?, ?, ?, ?);
             ''',
-            (user_id, job_id, date, quals))
+            (user_id, job_id, gr_date, s_date, quals))
         return True
+    
+    def user_is_applicant(self, user_id, job_id):
+        return self.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user_id, job_id))[0][0] > 0
 
 class InCollegeAppManager:
     def __init__(self, data_file="users.db", DEBUG=False):
@@ -83,6 +86,11 @@ class InCollegeAppManager:
         self.db_manager.execute('''
             INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
             VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1");
+        ''', (pw,))
+
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
+            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2");
         ''', (pw,))
         
         
@@ -124,8 +132,8 @@ class InCollegeAppManager:
         
         # For the job_applications table
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO job_applications (applicant, job_id, date, quals)
-            VALUES (1, 1, "00/00/0000", "Very Qualified Candidate");
+            INSERT OR IGNORE INTO job_applications (applicant, job_id, gr_date, s_date, quals)
+            VALUES (1, 1, "00/00/0000", "00/00/0000", "Very Qualified Candidate");
         ''')
 
         # Commit changes
@@ -224,7 +232,8 @@ class InCollegeAppManager:
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             applicant INTEGER NOT NULL,
             job_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
+            gr_date TEXT NOT NULL,
+            s_date TEXT NOT NULL,
             quals TEXT NOT NULL,
             FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
             FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
@@ -641,12 +650,14 @@ class InCollegeAppManager:
                     assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
                     #appl_exists  
                     assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
-                                            (user, job))[0][0], "Cannot apply more than once for  a job."
-                    date = input("Please Enter Todays Date (dd/mm/yyyy): ")
-                    assert date and correct_date(date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                                   c         (user, job))[0][0], "Cannot apply more than once for  a job."
+                    gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
+                    assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                    w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
+                    assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
                     quals = input("Tell us About Yourself and why you want the job: \n")
                     assert quals, 'Cannot Leave field Empty.'
-                    self.db_manager.user_apply_job(user, job, date, quals)
+                    self.db_manager.user_apply_job(user, job, gr_date, s_date, quals)
                     print("Successfully Applied for the job.")
                 except Exception as e:
                     print("Error Applying for Job:", e)
@@ -868,10 +879,19 @@ class InCollegeAppManager:
         
             def search_job():
                 job = input("Enter a Job Title to Search for: ")
-                display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                user_id = self._current_user[0]
+                display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
                 jobs = self.db_manager.find_jobs_by_title(job)
-                print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
-                
+                def all():  
+                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that  name.")
+                def applied_for():
+                    print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that  name.")
+                def n_applied_for():
+                    print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that  name.")
+                queries = {'a': all, '1': applied_for, '2': n_applied_for}
+                query = input('Enter Job Query:\na. (All Jobs)\n1. (Jobs You\'ve Applied For)\n2. (Jobs You Haven\'t Applied For)\n')
+                print('\n')
+                queries.get(query, all)()
             def createProfile(self, username):
                 """
                 Allows the user to create their profile and save it in the database.

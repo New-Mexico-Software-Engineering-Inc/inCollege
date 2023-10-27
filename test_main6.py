@@ -78,7 +78,7 @@ def test_search_for_job(monkeypatch, capsys):
     _ = runInCollege(capsys)
 
     userIn = '1\na\n!!!Goodpswd0\n' # sign in
-    userIn +='1\nJob\n' # Search for jobs
+    userIn +='1\nJob\na\n' # Search for all jobs
     # then logout and exit the program
     userIn += 'q\nq\n'
     # return

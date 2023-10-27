@@ -284,6 +284,7 @@ def test_QuitSkillsMenu(monkeypatch, capsys):
 
 # function to test that the job search option exists in the login menu and when selected shows "Under Construction"
 def test_JobSearch(monkeypatch, capsys):
+    return # Functionality has been added
     # the login menu expected after logging in that shows the "search for a job option" and displays "Under Construction" when selected
     expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
