@@ -6,7 +6,7 @@ import bcrypt
 from password_strength import PasswordPolicy
 from tabulate import tabulate
 
-__DEBUG__ = 1
+__DEBUG__ = 0
 menu_seperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
 
 class DatabaseManager:
@@ -37,6 +37,7 @@ class DatabaseManager:
     
     def find_jobs_by_id(self, job_id):
         return self.fetchall("SELECT * FROM jobs where job_id=?;", (job_id,))
+    
     def close(self):
         self.conn.close()
     
@@ -239,6 +240,18 @@ class InCollegeAppManager:
             FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
         );
         ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS job_save (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            applicant INTEGER NOT NULL,
+            job_id INTEGER NOT NULL,
+            saved BOOL NOT NULL,
+            FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
+        );
+        ''')
+
         self.db_manager.commit()
 
         if self.db_manager.fetch("SELECT COUNT(*) FROM skills")[0] == 0:
@@ -674,6 +687,40 @@ class InCollegeAppManager:
                 except Exception as e:
                     print("Error Applying for Job:", e)
 
+            def save_a_job():
+                print(menu_seperate)
+                print("Save A Job\n-------------------------------")
+                try:
+                    user_id = self._current_user[0]
+                    job_id = int(input("Enter the job ID: "))
+                    job_exists = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job_id,))
+                    assert job_exists, 'Job does not exist.'
+
+                    job_details = job_exists[0]
+
+                    # Check if the current user is trying to save their own job posting
+                    assert not (user_id == job_details[8]), "Cannot save your own posting."
+
+                    # Check if the user has already saved this job
+                    saved_job_applied = self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=? )", (user_id, job_id))[0][0]
+                    saved_job = self.db_manager.fetchall("SELECT COUNT(*) FROM job_save WHERE (job_id=? AND applicant=?)", (job_id, user_id))[0][0]
+
+                    print("\nJob Details\n-------------------------------")
+                    print(f"Title: {job_details[3]}\nDescription: {job_details[4]}\nEmployer: {job_details[5]}\nSalary: {str(job_details[7])}\nPosted By: {job_details[9] + ' '  + job_details[10]}\nApplied For: {'True' if saved_job_applied else 'False'}\nJob ID: {job_details[0]}\n")
+
+                    if saved_job_applied:
+                        print("You have already applied to this job.")
+                    elif saved_job:
+                        print("You have already saved this job.")
+                    else:
+                        # Update the saved column to True in the jobs table
+                        self.db_manager.execute("INSERT INTO job_save (job_id, applicant, saved) VALUES (?, ?, True)", (job_id, user_id))
+                        self.db_manager.commit()
+                        print("Job saved successfully!")
+
+                except Exception as e:
+                    print("Error: ", e)
+
             # function to add a friendship between the usernames passed as arguments so long as one does not already exist
             def add_friend(friendA, friendB):
                 # check if there exists a friendship between the two users already
@@ -888,10 +935,27 @@ class InCollegeAppManager:
                     display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
                     jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
                     print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
-                    
+            
+            def print_saved_jobs():
+                print(menu_seperate)
+                print("Jobs You Have Saved\n-------------------------------")
+                saved_for_jobs = self.db_manager.fetchall("SELECT * from job_save WHERE (saved=1 AND applicant=?)", (self._current_user[0],))
+                if saved_for_jobs:
+                    display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nID: {x[0]}\n"
+                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in saved_for_jobs]
+                    print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+
             def search_job():
                 print(menu_seperate)
-                print("Searching for Jobs\n-------------------------------")
+                job_titles = self.db_manager.fetchall("SELECT job_title FROM jobs")
+                print("Titles of Jobs Currently Posted\n-------------------------------")
+                if job_titles:
+                    for job_title in job_titles:
+                        print(job_title[0])
+                else:
+                    print("No job titles found.")
+                
+                print("\nSearching for Jobs\n-------------------------------")
                 job = input("Enter a Job Title to Search for: ")
                 user_id = self._current_user[0]
                 display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
@@ -908,9 +972,10 @@ class InCollegeAppManager:
                 
                 queries = {'a': all, '1': applied_for, '2': n_applied_for}
                 print("\nEnter Job Query:")
-                query = input('a. Search All Jobs\n1. Search Jobs You\'ve Applied For\n2. Search Jobs You Haven\'t Applied For\nSelect an option: ')
-                print('\n')
-                print("Jobs Found\n-------------------------------")
+                query = input('a. Search All Jobs\n1. Search Jobs You\'ve Applied For\n2. Search Jobs You Haven\'t Applied For\nq. Quit\nSelect an option: ')
+                if query == "q": 
+                    return
+                print("\nJobs Found\n-------------------------------")
                 queries.get(query, all)()
             
             def createProfile(self, username):
@@ -1100,7 +1165,9 @@ class InCollegeAppManager:
             options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network,
             '8': myProfileOptions,
             '10': apply_for_job,
-            '11': print_jobs_applied_for}
+            '11': print_jobs_applied_for,
+            '12': save_a_job,
+            '13': print_saved_jobs}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
