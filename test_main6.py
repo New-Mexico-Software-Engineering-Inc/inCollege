@@ -144,7 +144,7 @@ def test_search_applied_status(monkeypatch, capsys):
     #log into account b, sign up for Job A
     userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
     #display all jobs, log out
-    userIn += "1\njob\na\nq\nq\nq\n"
+    userIn += "1\n\na\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
@@ -168,7 +168,7 @@ def test_job_titles(monkeypatch, capsys):
     userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
     #post Job B
     userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\n"
-    #
+    #search for a job, cancel, quit, and logout
     userIn += "1\n\nq\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
@@ -277,6 +277,78 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
 
     assert expectedOut in capture.out
     assert expectedOut2 in capture.out
+
+def test_save_a_job(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, save Job A, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n5\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedJobDetails = "Job Details\n-------------------------------\nTitle: Job A\nDescription: Desc A\nEmployer: Employer A\n"
+    expectedJobDetails += "Salary: 100.0\nPosted By: fname lname\nApplied For: False\nJob ID: 1\n"
+    expectedSaveJobSuccess = "Job saved successfully!"
+
+    #capture output
+    capture = runInCollege(capsys)
+    
+    #test that the job details and the job saved success message were displayed
+    assert expectedJobDetails in capture.out
+    assert expectedSaveJobSuccess in capture.out
+
+def test_display_saved_jobs(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, save Job A, display saved jobs, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n5\n1\n6\nn\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedSavedJobs = "Jobs You Have Saved\n-------------------------------\nTitle: Job A\nDescription: Desc A\nID: 1\n"
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the saved jobs were displayed to the screen
+    assert expectedSavedJobs in capture.out
+
+def test_unsave_a_job(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, save Job A, display saved jobs and unsave Job A, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n5\n1\n6\ny\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedUnsaveJobPrompt = "Do you wish to unsave a job? (y/n) "
+    expectedJobIDPrompt = "Enter the ID of the job you want to unsave (or enter q to cancel): "
+    expectedSuccessfulUnsaveMessage = "Job with ID 1 has been unmarked as saved."
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the user was asked if they wanted to unsave a job
+    assert expectedUnsaveJobPrompt in capture.out
+    #test that the user was prompted for the Job ID of the job they wish to unsave
+    assert expectedJobIDPrompt in capture.out
+    #test that a successful message was displayed after the user unsaved a job
+    assert expectedSuccessfulUnsaveMessage in capture.out
 
 def test_post_10_jobs(monkeypatch, capsys):
     clear_accounts()
