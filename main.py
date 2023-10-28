@@ -947,6 +947,33 @@ class InCollegeAppManager:
                     jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in saved_for_jobs]
                     print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                     
+            def print_saved_jobs_for():
+                saved_for_jobs = self.db_manager.fetchall("SELECT * FROM job_save WHERE (saved=1 AND applicant=?)", (self._current_user[0],))
+                if saved_for_jobs:
+                    display_job = lambda x: f"\nTitle: {x[1]}\nDescription: {x[2]}\nID: {x[0]}\n"
+                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in saved_for_jobs]
+                    print("\n".join([display_job(j) for j in jobs]))
+                    
+                    # Ask user if they want to unmark a job as saved
+                    job_id_to_unmark = input("Enter the ID of the job you want to unmark as saved (or enter 0 to cancel): ")
+                    if job_id_to_unmark.isdigit():
+                        job_id_to_unmark = int(job_id_to_unmark)
+                        if job_id_to_unmark != 0:
+                            job_exists = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job_id_to_unmark,))
+                            if job_exists:
+                                self.db_manager.execute("UPDATE job_save SET saved=False WHERE (job_id=? AND applicant=?)", (job_id_to_unmark, self._current_user[0]))
+                                self.db_manager.commit()
+                                print(f"Job with ID {job_id_to_unmark} has been unmarked as saved.")
+                            else:
+                                print("Invalid job ID.")
+                        else:
+                            print("Operation canceled.")
+                    else:
+                        print("Invalid input. Please enter a valid job ID.")
+                else:
+                    print("No saved jobs found for the current user.")
+                    
+                    
             def search_job():
                 user_id = self._current_user[0]
                 job_titles = self.db_manager.fetchall("SELECT job_title FROM jobs")
@@ -1250,7 +1277,7 @@ class InCollegeAppManager:
                     print('\nThere has been an unexpected error while creating your account.')
             except Exception as e:
                 print('Error While Creating Account:\n', e)
-
+        
         # home screen
         while True:
             print(menu_seperate) #menu
