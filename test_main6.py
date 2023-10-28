@@ -91,3 +91,15 @@ def test_search_for_job(monkeypatch, capsys):
         assert desc in capture.out, 'Unsucessful in finding jobs'
         assert str(salary) in capture.out, 'Unsucessful in finding jobs'
         assert employer in capture.out, 'Unsucessful in finding jobs'
+
+
+def test_cannot_apply_twice(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    # create a second account to post jobs from
+    try:
+        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University', 'Major')
+    except Exception as e:
+        print(e)
+

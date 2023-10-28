@@ -648,16 +648,25 @@ class InCollegeAppManager:
                     user = self._current_user[0]
                     job = int(input("Enter the job ID: "))
                     assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
-                    #appl_exists  
+
+                    jobTest = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job,))
+                    currFirst = self._current_user[3]
+                    currLast = self._current_user[4]
+
+                    # check if name of current user matches poster's name
+                    if (jobTest[9] == currFirst) and (jobTest[10] == currLast):
+                        print("Cannot apply to your own posting.\n")
+                        return
+                    #appl_exists
                     assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
-                                   c         (user, job))[0][0], "Cannot apply more than once for  a job."
+                                            (user, job))[0][0], "Cannot apply more than once for  a job."
                     gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
                     assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
                     w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
                     assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
                     quals = input("Tell us About Yourself and why you want the job: \n")
                     assert quals, 'Cannot Leave field Empty.'
-                    self.db_manager.user_apply_job(user, job, gr_date, s_date, quals)
+                    self.db_manager.user_apply_job(user, job, gr_date, w_date, quals)
                     print("Successfully Applied for the job.")
                 except Exception as e:
                     print("Error Applying for Job:", e)
