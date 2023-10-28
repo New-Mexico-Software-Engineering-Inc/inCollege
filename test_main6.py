@@ -122,6 +122,38 @@ def test_search_for_job(monkeypatch, capsys):
         assert str(salary) in capture.out, 'Unsucessful in finding jobs'
         assert employer in capture.out, 'Unsucessful in finding jobs'
 
+def test_search_applied_or_not(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A
+    userIn = "1\na\n!!!Goodpswd0\n4\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #post Job B, log out
+    userIn += "4\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\nq\n"
+    #log into account b, sign up for Job A
+    userIn += "1\nb\n!!!Goodpswd0\n10\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
+    userIn += "1\nJob\n1\n1\nJob\n2\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedSearchApplied = "1. Search Jobs You've Applied For"
+    expectedSearchNotApplied = "2. Search Jobs You Haven't Applied For"
+    expectedJobAppliedFound = "Jobs Found\n-------------------------------\nTitle: Job A\nDescription: Desc A\n"
+    expectedJobAppliedFound += "Employer: Employer A\nSalary: 100.0\nPosted By: fname lname\nApplied For: True\nJob ID: 1\n\n"
+    expectedJobNotAppliedFound = "Jobs Found\n-------------------------------\nTitle: Job B\nDescription: Desc B\n"
+    expectedJobNotAppliedFound += "Employer: Employer B\nSalary: 200.0\nPosted By: fname lname\nApplied For: False\nJob ID: 2\n\n"
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the requirements are prompted to the user
+    assert expectedSearchApplied in capture.out
+    assert expectedSearchNotApplied in capture.out
+    assert expectedJobAppliedFound in capture.out
+    assert expectedJobNotAppliedFound in capture.out
+
 def test_application_requirements(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()

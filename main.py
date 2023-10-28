@@ -654,12 +654,11 @@ class InCollegeAppManager:
 
                     assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,))[0][0]), 'Job does not exist.'
 
-                    currFirst = self._current_user[3]
-                    currLast = self._current_user[4]
+                    currUserId = self._current_user[0]
 
-                    # check if name of current user matches poster's name
+                    # check if current user posted the job
                     if jobTest[0]:
-                        assert not ((jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast)), "Cannot apply to your own posting."
+                        assert not (jobTest[0][8] == currUserId), "Cannot apply to your own posting."
 
                     #appl_exists
                     assert not self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=?)",
