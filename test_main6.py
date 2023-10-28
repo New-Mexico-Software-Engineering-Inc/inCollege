@@ -28,6 +28,29 @@ def clear_accounts():
     conn.commit()
     conn.close()
 
+def clear_jobs():
+    main.InCollegeAppManager("test.db")
+    conn = sqlite3.connect("test.db")
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON;")
+    cursor.execute('''
+    DELETE FROM jobs;
+    ''')
+    cursor.execute("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME=?;", ("jobs",))
+    conn.commit()
+    conn.close()
+
+def clear_applications():
+    main.InCollegeAppManager("test.db")
+    conn = sqlite3.connect("test.db")
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON;")
+    cursor.execute('''
+    DELETE FROM job_applications;
+    ''')
+    conn.commit()
+    conn.close()
+
 # clear all tables in database
 def __create_user_account():
     try:
@@ -101,6 +124,8 @@ def test_search_for_job(monkeypatch, capsys):
 
 def test_cannot_apply_twice(monkeypatch, capsys):
     clear_accounts()
+    clear_jobs()
+    clear_applications()
     __create_user_account()
     __create_user_account2()
 
@@ -126,7 +151,8 @@ def test_cannot_apply_twice(monkeypatch, capsys):
     for i in appStuff:
         userIn += f"{i}\n"
 
-    userIn += "10\n1\nq\nq\n"
+    userIn += "10\n1\n"
+    userIn+= "1\nTest\na\nq\nq\n"
 
     userInput = StringIO(userIn)
 
@@ -142,6 +168,8 @@ def test_cannot_apply_twice(monkeypatch, capsys):
 
 def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     clear_accounts()
+    clear_jobs()
+    clear_applications()
     __create_user_account()
 
     # expected output when we apply for same job a second time
@@ -170,9 +198,10 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     assert expectedOut2 in capture.out
 
 
-
 def test_post_10_jobs(monkeypatch, capsys):
     clear_accounts()
+    clear_jobs()
+    clear_applications()
     __create_user_account()
 
     # will occur 10 times for 10 successful job postings
