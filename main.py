@@ -45,9 +45,9 @@ class DatabaseManager:
         assert user is not None, "Could not find user"
 
         self.execute('''
-            INSERT INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by, user_first_name, user_last_name)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''',
-            (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
+            INSERT INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by, user_first_name, user_last_name, saved)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''',
+            (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4], False))
         return True
     
     def user_apply_job(self, user_id, job_id, gr_date, s_date, quals):
@@ -938,14 +938,9 @@ class InCollegeAppManager:
                     display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
                     jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
                     print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                else:
+                    print("No saved jobs found for the current user.")
                 
-            def print_saved_jobs_for():
-                saved_for_jobs = self.db_manager.fetchall("SELECT * from job_save WHERE (saved=1 AND applicant=?)", (self._current_user[0],))
-                if saved_for_jobs:
-
-                    display_job = lambda x: f"\nTitle: {x[1]}\nDescription: {x[2]}\nID: {x[0]}\n"
-                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in saved_for_jobs]
-                    print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                     
             def print_saved_jobs_for():
                 saved_for_jobs = self.db_manager.fetchall("SELECT * FROM job_save WHERE (saved=1 AND applicant=?)", (self._current_user[0],))
@@ -972,6 +967,28 @@ class InCollegeAppManager:
                         print("Invalid input. Please enter a valid job ID.")
                 else:
                     print("No saved jobs found for the current user.")
+                    
+            def delete_job():
+                print("Delete A Job")
+                print(menu_seperate)
+                try:
+                    user_id = self._current_user[0]
+                    job_id = int(input("Enter the job ID you want to delete: "))
+                    job_details = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=? AND posted_by=?", (job_id, user_id))
+                    assert job_details, 'Job not found or you do not have permission to delete this job.'
+
+                    # Delete the job from jobs table
+                    self.db_manager.execute("DELETE FROM jobs WHERE job_id=?", (job_id,))
+
+                    # Delete the corresponding entries in job_save and job_applications tables
+                    self.db_manager.execute("DELETE FROM job_save WHERE job_id=?", (job_id,))
+                    self.db_manager.execute("DELETE FROM job_applications WHERE job_id=?", (job_id,))
+
+                    self.db_manager.commit()
+                    print(f"Job with ID {job_id} has been successfully deleted.")
+
+                except Exception as e:
+                    print("Error: ", e)
                     
                     
             def search_job():
@@ -1182,12 +1199,12 @@ class InCollegeAppManager:
                 except Exception as e:
                     print('Error While Posting Job:\n', e)
             
-            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network,
-            '8': myProfileOptions,
-            '10': apply_for_job,
-            '11': print_jobs_applied_for,
-            '12': save_a_job,
-            '13':print_saved_jobs_for}
+            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job,'5':delete_job, '6':useful_links, '7':important_InCollege_links, '8':show_my_network,
+            '9': myProfileOptions,
+            '11': apply_for_job,
+            '12': print_jobs_applied_for,
+            '13': save_a_job,
+            '14':print_saved_jobs_for}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
