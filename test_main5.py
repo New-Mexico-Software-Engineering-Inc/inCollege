@@ -53,7 +53,7 @@ def test_create_and_view_profile(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()
 
-    userIn = "1\na\n!!!Goodpswd0\n8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\n"
+    userIn = "1\na\n!!!Goodpswd0\n7\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\n"
     userIn += "Hello! I am a senior computer science student at USF, and I am looking for a full-time job as a software engineer.\n"
     userIn += "Software Engineer Intern\nGoogle\n05/2022\n08/2022\nNew York\n"
     userIn += "Responsible for contributing to software design and development. Collaborated with a team to create secure and reliable software solutions.\n"
@@ -86,7 +86,7 @@ def test_incomplete_profile(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()
 
-    userIn = "1\na\n!!!Goodpswd0\n8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\n"
+    userIn = "1\na\n!!!Goodpswd0\n7\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\n"
     userIn += "\n\n\n\n\nyes\n1\nq\nq\nq\n"
     
     choiceInput = StringIO(userIn)
@@ -105,7 +105,7 @@ def test_update_profile(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()
 
-    userIn = "1\na\n!!!Goodpswd0\n8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\n"
+    userIn = "1\na\n!!!Goodpswd0\n7\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\n"
     userIn += "\n\n\n\n\nyes\n1\n2\n1\n4th year cybersecurity student\n2\n2\ncybersecurity\n2\n3\nuniversity of central florida\n"
     userIn += "2\n4\nHello! I am a senior cybersecurity student at UCF, and I am looking for a full-time job.\n"
     userIn += "2\n5\n1\nCybersecurity Internship\nGoogle\n05/2022\n08/2022\nNew York\ncybersecurity internship.\n2\n6\n"
@@ -153,7 +153,7 @@ def test_view_friend_profile(monkeypatch, capsys):
     #log in as b
     input+='1\nb\n!!!Goodpswd0\n'
     #create profile
-    input+='8\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\nHello!\n\n"Alonso High School\nHigh School Diploma\n2016-2020\nyes\nq\n'
+    input+='7\n1\n4th year computer science student\ncomputer science\nuniversity of south florida\nHello!\n\n"Alonso High School\nHigh School Diploma\n2016-2020\nyes\nq\n'
     #send friend request
     input+='2\n1\na\ny\n1\n'
     #log out
@@ -171,7 +171,7 @@ def test_view_friend_profile(monkeypatch, capsys):
     #log in as a
     input += '1\na\n!!!Goodpswd0\n'
     #accept friend requests
-    input += '7\n3\n1\ny\n1\n1\n1\ny\n1\n1\nq\n'
+    input += '6\n3\n1\ny\n1\n1\n1\ny\n1\n1\nq\n'
     #view friends
     input += '1\n1\n'
 

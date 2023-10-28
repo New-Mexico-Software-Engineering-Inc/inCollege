@@ -29,29 +29,6 @@ def clear_accounts():
     conn.commit()
     conn.close()
 
-def clear_jobs():
-    main.InCollegeAppManager("test.db")
-    conn = sqlite3.connect("test.db")
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON;")
-    cursor.execute('''
-    DELETE FROM jobs;
-    ''')
-    cursor.execute("UPDATE SQLITE_SEQUENCE SET SEQ=0 WHERE NAME=?;", ("jobs",))
-    conn.commit()
-    conn.close()
-
-def clear_applications():
-    main.InCollegeAppManager("test.db")
-    conn = sqlite3.connect("test.db")
-    cursor = conn.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON;")
-    cursor.execute('''
-    DELETE FROM job_applications;
-    ''')
-    conn.commit()
-    conn.close()
-
 # clear all tables in database
 def __create_user_account():
     try:
@@ -92,25 +69,25 @@ def test_search_for_job(monkeypatch, capsys):
     salaries = [100.0, 200.0, 300.0, 400.0, 500.0]
 
     # first we must login with an existing account
-    userIn = '1\na\n!!!Goodpswd0\n'
+    userIn = '1\na\n!!!Goodpswd0\n1\n'
 
     # now we will try to create 5 jobs so we will loop the following inputs 5 times for each list entry
-    # 4 - post a job, then enter all criteria, then 4 - post a job, then enter all criteria, ...
+    # 2 - post a job, then enter all criteria, then 2 - post a job, then enter all criteria, ...
     for i in range(5):
-        userIn += f'4\n{jobTitles[i]}\n{jobDescriptions[i]}\n{requiredSkill[i]}\n{longDescriptions[i]}\n'
+        userIn += f'2\n{jobTitles[i]}\n{jobDescriptions[i]}\n{requiredSkill[i]}\n{longDescriptions[i]}\n'
         userIn += f'{employers[i]}\n{locations[i]}\n{salaries[i]}\n'
 
     # then logout and exit the program
-    userIn += 'q\nq\n'
+    userIn += 'q\nq\nq\n'
     print(userIn)
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
     _ = runInCollege(capsys)
 
     userIn = '1\na\n!!!Goodpswd0\n' # sign in
-    userIn +='1\nJob\na\n' # Search for all jobs
+    userIn +='1\n1\nJob\na\n' # Search for all jobs
     # then logout and exit the program
-    userIn += 'q\nq\n'
+    userIn += 'q\nq\nq\n'
     # return
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
@@ -128,12 +105,13 @@ def test_search_applied_or_not(monkeypatch, capsys):
     __create_user_account2()
 
     #log into account a, post Job A
-    userIn = "1\na\n!!!Goodpswd0\n4\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
     #post Job B, log out
-    userIn += "4\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\nq\n"
+    userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\nq\nq\n"
     #log into account b, sign up for Job A
-    userIn += "1\nb\n!!!Goodpswd0\n10\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
-    userIn += "1\nJob\n1\n1\nJob\n2\nq\nq\n"
+    userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
+    #search for jobs not applied to, search for jobs already applied to, log out, quit
+    userIn += "1\nJob\n1\n1\nJob\n2\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
@@ -154,15 +132,66 @@ def test_search_applied_or_not(monkeypatch, capsys):
     assert expectedJobAppliedFound in capture.out
     assert expectedJobNotAppliedFound in capture.out
 
+def test_search_applied_status(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #post Job B, log out
+    userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\nq\nq\n"
+    #log into account b, sign up for Job A
+    userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
+    #display all jobs, log out
+    userIn += "1\njob\na\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    #program is expected to print out two jobs: one the current user has applied for and one the current user has not applied for
+    #program is expected to print out "Applied For: " followed by True if the current user applied for the job and False otherwise
+    expectedJobsFound = "Jobs Found\n-------------------------------\nTitle: Job A\nDescription: Desc A\n"
+    expectedJobsFound += "Employer: Employer A\nSalary: 100.0\nPosted By: fname lname\nApplied For: True\nJob ID: 1\n\n"
+    expectedJobsFound += "Title: Job B\nDescription: Desc B\nEmployer: Employer B\nSalary: 200.0\nPosted By: fname lname\nApplied For: False\nJob ID: 2\n\n"
+    
+    #capture output
+    capture = runInCollege(capsys)
+
+    assert expectedJobsFound in capture.out 
+
+def test_job_titles(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    #log into account a, post Job A
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #post Job B
+    userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\n"
+    #
+    userIn += "1\n\nq\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    #titles of jobs currently posted are to be displayed when searching for a job
+    expectedTitlesOutput = "Titles of Jobs Currently Posted\n-------------------------------\nJob A\nJob B"
+
+    #capture output
+    capture = runInCollege(capsys)
+    
+    #test that the job titles were displayed to the screen
+    assert expectedTitlesOutput in capture.out
+
 def test_application_requirements(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()
     __create_user_account2()
 
     #log into account a, post a job, log out
-    userIn = "1\na\n!!!Goodpswd0\n4\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
     #log into account b, sign up for job, log out
-    userIn += "q\n1\nb\n!!!Goodpswd0\n10\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\nq\nq\n"
+    userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
@@ -182,8 +211,6 @@ def test_application_requirements(monkeypatch, capsys):
 
 def test_cannot_apply_twice(monkeypatch, capsys):
     clear_accounts()
-    clear_jobs()
-    clear_applications()
     __create_user_account()
     __create_user_account2()
 
@@ -199,17 +226,17 @@ def test_cannot_apply_twice(monkeypatch, capsys):
     # job id, grad date, start date, description
     appStuff = ["01/01/0001", "02/02/0002", "Testing Testing Testing"]
 
-    userIn = "1\na\n!!!Goodpswd0\n4\n"
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\n"
 
     for i in jobStuff:
         userIn += f"{i}\n"
 
-    userIn += "q\n1\nb\n!!!Goodpswd0\n10\n1\n"
+    userIn += "q\nq\n1\nb\n!!!Goodpswd0\n1\n3\n1\n"
 
     for i in appStuff:
         userIn += f"{i}\n"
 
-    userIn += "10\n1\nq\nq\n"
+    userIn += "3\n1\n\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
 
@@ -224,8 +251,6 @@ def test_cannot_apply_twice(monkeypatch, capsys):
 
 def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     clear_accounts()
-    clear_jobs()
-    clear_applications()
     __create_user_account()
 
     # expected output when we apply for same job a second time
@@ -235,12 +260,12 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     # test items to post for job
     jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
 
-    userIn = "1\na\n!!!Goodpswd0\n4\n"
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\n"
 
     for i in jobStuff:
         userIn += f"{i}\n"
 
-    userIn += "10\n1\nq\nq\n"
+    userIn += "3\n1\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
 
@@ -255,8 +280,6 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
 
 def test_post_10_jobs(monkeypatch, capsys):
     clear_accounts()
-    clear_jobs()
-    clear_applications()
     __create_user_account()
 
     # will occur 10 times for 10 successful job postings
@@ -267,12 +290,12 @@ def test_post_10_jobs(monkeypatch, capsys):
     jobTest = ["a", "b" , "c", "d" , "e", "f", "g" ,"h", "i", "j", "h"]
     jobSalaries = ["1", "2" , "3", "4" , "5", "6", "7" ,"8", "9", "10", "11"]
 
-    userIn = "1\na\n!!!Goodpswd0\n"
+    userIn = "1\na\n!!!Goodpswd0\n1\n"
 
     for i in range(11):
-        userIn += f"4\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobSalaries[i]}\n"
+        userIn += f"2\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobSalaries[i]}\n"
 
-    userIn += "q\nq\n"
+    userIn += "q\nq\nq\n"
 
     userInput = StringIO(userIn)
 

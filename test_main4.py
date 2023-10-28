@@ -162,7 +162,7 @@ def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
     #log in as b
     userIn += "1\nb\n!!!Goodpswd0\n"
     #accept request from a, as b
-    userIn += "7\n3\n1\ny\n1\n1\n"
+    userIn += "6\n3\n1\ny\n1\n1\n"
     #check that a and b are friends
     userIn += "q\n1\n"
     #log out and quit
