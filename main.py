@@ -653,10 +653,12 @@ class InCollegeAppManager:
                     currFirst = self._current_user[3]
                     currLast = self._current_user[4]
 
+
                     # check if name of current user matches poster's name
-                    if (jobTest[9] == currFirst) and (jobTest[10] == currLast):
+                    if (jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast):
                         print("Cannot apply to your own posting.\n")
                         return
+
                     #appl_exists
                     assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
                                             (user, job))[0][0], "Cannot apply more than once for  a job."
