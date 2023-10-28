@@ -107,7 +107,8 @@ def test_cannot_apply_twice(monkeypatch, capsys):
 
     # expected output when we apply for same job a second time
     expectedOut = "Error Applying for Job:"
-    expectedOut2 = "Cannot apply more than once for a job."
+    # expected output when we successfully apply the first time
+    expectedOut2 = "Successfully Applied for the job."
 
     # test items to post for job
     jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
@@ -133,5 +134,64 @@ def test_cannot_apply_twice(monkeypatch, capsys):
 
     capture = runInCollege(capsys)
 
+    print(capture.out)
+
     assert expectedOut in capture.out
     assert expectedOut2 in capture.out
+
+
+def test_cannot_apply_to_own_posting(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    # expected output when we apply for same job a second time
+    expectedOut = "Error Applying for Job:"
+    expectedOut2 = "Cannot apply to your own posting."
+
+    # test items to post for job
+    jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
+
+    userIn = "1\na\n!!!Goodpswd0\n4\n"
+
+    for i in jobStuff:
+        userIn += f"{i}\n"
+
+    userIn += "10\n2\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+
+    assert expectedOut in capture.out
+    assert expectedOut2 in capture.out
+
+
+def test_post_10_jobs(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    expectedOut1 = "Successfully Posted Job."
+    expectedOut2 = "All jobs have been created. Please come back later."
+
+    jobTest = ["a", "b" , "c", "d" , "e", "f", "g" ,"h", "i", "j", "h"]
+    jobSalaries = ["1", "2" , "3", "4" , "5", "6", "7" ,"8", "9", "10", "11"]
+
+    userIn = "1\na\n!!!Goodpswd0\n"
+
+    for i in range(11):
+        userIn += f"4\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobSalaries[i]}\n"
+
+    userIn += "q\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    assert 10 == capture.out.count(expectedOut1)
+    assert 1 == capture.out.count(expectedOut2)

@@ -654,17 +654,13 @@ class InCollegeAppManager:
                     currFirst = self._current_user[3]
                     currLast = self._current_user[4]
 
-
                     # check if name of current user matches poster's name
-                    assert not ((jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast)), "Cannot apply to your own posting."
+                    if jobTest[0]:
+                        assert not ((jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast)), "Cannot apply to your own posting."
 
                     #appl_exists
-
-                    if self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user, job))[0][0]:
-                        print("Error Applying for Job: Cannot apply more than once for a job.")
-                        return
-                    #assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
-                    #                        (user, job))[0][0], "Cannot apply more than once for a job."
+                    assert not self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=?)",
+                                            (user, job))[0][0], "Cannot apply more than once for a job."
                     gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
                     assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
                     w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
