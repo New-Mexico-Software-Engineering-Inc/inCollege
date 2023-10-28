@@ -640,9 +640,10 @@ class InCollegeAppManager:
                     self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
                     print(f"\nFriend request sent to {receiver} successfully!")
             # Function for allowing users to apply for jobs
+            
             def apply_for_job():
-                print("Apply For A Job")
                 print(menu_seperate)
+                print("Apply for a Job\n-------------------------------")
                 try:
                     correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
                     user = self._current_user[0]
@@ -673,7 +674,6 @@ class InCollegeAppManager:
                     print("Successfully Applied for the job.")
                 except Exception as e:
                     print("Error Applying for Job:", e)
-
 
             # function to add a friendship between the usernames passed as arguments so long as one does not already exist
             def add_friend(friendA, friendB):
@@ -882,28 +882,38 @@ class InCollegeAppManager:
                             print("Invalid choice. Please try again.")
             
             def print_jobs_applied_for():
+                print(menu_seperate)
+                print("Jobs You Have Applied For\n-------------------------------")
                 applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
                 if applied_for_jobs:
-                    display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                    display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
                     jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
                     print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
-                
-        
+                    
             def search_job():
+                print(menu_seperate)
+                print("Searching for Jobs\n-------------------------------")
                 job = input("Enter a Job Title to Search for: ")
                 user_id = self._current_user[0]
-                display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
+                display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
                 jobs = self.db_manager.find_jobs_by_title(job)
+                
                 def all():  
-                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                
                 def applied_for():
                     print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
+                
                 def n_applied_for():
                     print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
+                
                 queries = {'a': all, '1': applied_for, '2': n_applied_for}
-                query = input('Enter Job Query:\na. (All Jobs)\n1. (Jobs You\'ve Applied For)\n2. (Jobs You Haven\'t Applied For)\n')
+                print("\nEnter Job Query:")
+                query = input('a. Search All Jobs\n1. Search Jobs You\'ve Applied For\n2. Search Jobs You Haven\'t Applied For\nSelect an option: ')
                 print('\n')
+                print("Jobs Found\n-------------------------------")
                 queries.get(query, all)()
+            
             def createProfile(self, username):
                 """
                 Allows the user to create their profile and save it in the database.

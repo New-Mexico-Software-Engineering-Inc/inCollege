@@ -25,6 +25,7 @@ def clear_accounts():
     cursor.execute('''
     DELETE FROM accounts;
     ''')
+    cursor.execute("UPDATE SQLITE_SEQUENCE SET SEQ=0;")
     conn.commit()
     conn.close()
 
@@ -121,6 +122,31 @@ def test_search_for_job(monkeypatch, capsys):
         assert str(salary) in capture.out, 'Unsucessful in finding jobs'
         assert employer in capture.out, 'Unsucessful in finding jobs'
 
+def test_application_requirements(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post a job, log out
+    userIn = "1\na\n!!!Goodpswd0\n4\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #log into account b, sign up for job, log out
+    userIn += "q\n1\nb\n!!!Goodpswd0\n10\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    #expected requirements for job application
+    expectedGraduationPrompt = "Please Enter your Graduation Date (dd/mm/yyyy):"
+    expectedStartDatePrompt = "Please Enter your Available Start Date (dd/mm/yyyy):"
+    expectedExplainPrompt = "Tell us About Yourself and why you want the job:"
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the requirements are prompted to the user
+    assert expectedGraduationPrompt in capture.out
+    assert expectedStartDatePrompt in capture.out
+    assert expectedExplainPrompt in capture.out
 
 def test_cannot_apply_twice(monkeypatch, capsys):
     clear_accounts()
@@ -164,7 +190,6 @@ def test_cannot_apply_twice(monkeypatch, capsys):
     assert expectedOut in capture.out
     assert expectedOut2 in capture.out
 
-
 def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     clear_accounts()
     clear_jobs()
@@ -195,7 +220,6 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
 
     assert expectedOut in capture.out
     assert expectedOut2 in capture.out
-
 
 def test_post_10_jobs(monkeypatch, capsys):
     clear_accounts()
