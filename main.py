@@ -6,6 +6,7 @@ import bcrypt
 from password_strength import PasswordPolicy
 from tabulate import tabulate
 
+__DEBUG__ = 1
 menu_seperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
 
 class DatabaseManager:
@@ -29,8 +30,13 @@ class DatabaseManager:
 
     def fetchall(self, query, params=()):
         self.cursor.execute(query, params)
-        return self.cursor.fetchall()
+        return self.cursor.fetchall() 
 
+    def find_jobs_by_title(self, job_title):
+        return self.fetchall("SELECT * FROM jobs where job_title LIKE ?;", ("%"+job_title+"%",))
+    
+    def find_jobs_by_id(self, job_id):
+        return self.fetchall("SELECT * FROM jobs where job_id=?;", (job_id,))
     def close(self):
         self.conn.close()
     
@@ -43,9 +49,25 @@ class DatabaseManager:
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);''',
             (skill_name, long_description, job_title, job_description, employer, location, salary, user[0], user[3], user[4]))
         return True
+    
+    def user_apply_job(self, user_id, job_id, gr_date, s_date, quals):
+        user = self.fetch('SELECT * FROM accounts WHERE user_id=?;', (user_id,))
+        assert user is not None, "Could not find user"
+        job = self.fetch('SELECT * FROM jobs WHERE job_id=?;', (job_id,))
+        assert job is not None, "Could not find job"
+
+        self.execute('''
+            INSERT INTO job_applications (applicant, job_id, gr_date, s_date, quals)
+            VALUES (?, ?, ?, ?, ?);
+            ''',
+            (user_id, job_id, gr_date, s_date, quals))
+        return True
+    
+    def user_is_applicant(self, user_id, job_id):
+        return self.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user_id, job_id))[0][0] > 0
 
 class InCollegeAppManager:
-    def __init__(self, data_file="users.db"):
+    def __init__(self, data_file="users.db", DEBUG=False):
         self.db_manager = DatabaseManager(data_file)
         self.setup_database()
         self._PasswordPolicy = PasswordPolicy.from_names(
@@ -54,6 +76,73 @@ class InCollegeAppManager:
         self._current_user = None
         with open('./data/menus.json', 'r') as f:
             self.menus = json.load(f)['menus']
+
+        if DEBUG:
+            self.InitDebugData()
+
+    def InitDebugData(self):
+        # For the accounts table
+        pw = bcrypt.hashpw("p1".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
+            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1");
+        ''', (pw,))
+
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
+            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2");
+        ''', (pw,))
+        
+        
+        # For the settings table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO settings (username, email_notifs, sms_notifs, target_ads, language)
+            VALUES ("test_user1", 1, 0, 1, "English");
+        ''')
+        
+        # For the profiles table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO profiles (username, first_name, last_name, title, major, university, about, pastJob1, pastJob2, pastJob3, education, posted)
+            VALUES ("test_user1", "John", "Doe", "Software Developer", "Major1", "University1", "About me...", "Past Job 1", "Past Job 2", "Past Job 3", "My Education", "Last Posted");
+        ''')
+        
+        # For the skills table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO skills (skill_name, long_description)
+            VALUES ("Python", "A high-level programming language.");
+        ''')
+
+        # For the jobs table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO jobs (skill_name, long_description, job_title, job_description, employer, location, salary, posted_by, user_first_name, user_last_name, saved)
+            VALUES ("Python", "A high-level programming language.", "Python Developer", "Develop in Python", "Company1", "Location1", 60000, 1, "John", "Doe", False);
+        ''')
+
+        # For the friend_requests table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO friend_requests (sender, receiver)
+            VALUES ("test_user1", "test_user2");
+        ''')
+        
+        # For the friendship table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO friendship (user_one, user_two)
+            VALUES ("test_user1", "test_user2");
+        ''')
+        
+        # For the job_applications table
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO job_applications (applicant, job_id, gr_date, s_date, quals)
+            VALUES (1, 1, "00/00/0000", "00/00/0000", "Very Qualified Candidate");
+        ''')
+        
+        self.db_manager.execute('''
+            INSERT OR IGNORE INTO job_save (applicant, job_id, saved)
+            VALUES (1, 1, False);
+        ''')
+
+        # Commit changes
+        self.db_manager.commit()
         
     def setup_database(self):
         self.db_manager.execute("PRAGMA foreign_keys=ON;")
@@ -139,7 +228,31 @@ class InCollegeAppManager:
             posted_by INTEGER,
             user_first_name TEXT NOT NULL,
             user_last_name TEXT NOT NULL,
-            FOREIGN KEY (posted_by) REFERENCES accounts(user_id)
+            saved BOOL NOT NULL,
+            FOREIGN KEY (posted_by) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS job_applications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            applicant INTEGER NOT NULL,
+            job_id INTEGER NOT NULL,
+            gr_date TEXT NOT NULL,
+            s_date TEXT NOT NULL,
+            quals TEXT NOT NULL,
+            FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
+        );
+        ''')
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS job_save (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            applicant INTEGER NOT NULL,
+            job_id INTEGER NOT NULL,
+            saved BOOL NOT NULL,
+            FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
         );
         ''')
         self.db_manager.commit()
@@ -542,6 +655,76 @@ class InCollegeAppManager:
                 else:
                     self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
                     print(f"\nFriend request sent to {receiver} successfully!")
+            # Function for allowing users to apply for jobs
+            def apply_for_job():
+                print("Apply For A Job")
+                print(menu_seperate)
+                try:
+                    correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
+                    user = self._current_user[0]
+                    job = int(input("Enter the job ID: "))
+                    assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
+
+
+                    jobTest = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job,))
+                    currFirst = self._current_user[3]
+                    currLast = self._current_user[4]
+
+
+                    # check if name of current user matches poster's name
+                    assert not ((jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast)), "Cannot apply to your own posting."
+
+                    #appl_exists
+
+                    if self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user, job))[0][0]:
+                        print("Error Applying for Job: Cannot apply more than once for a job.")
+                        return
+                    #assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
+                    #                        (user, job))[0][0], "Cannot apply more than once for a job."
+                    gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
+                    assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                    w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
+                    assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                    quals = input("Tell us About Yourself and why you want the job: \n")
+                    assert quals, 'Cannot Leave field Empty.'
+                    self.db_manager.user_apply_job(user, job, gr_date, w_date, quals)
+                    print("Successfully Applied for the job.")
+                except Exception as e:
+                    print("Error Applying for Job:", e)
+                    
+                    
+            def save_a_job():
+                print("Save For A Job")
+                print(menu_seperate)
+                try:
+                    user_id = self._current_user[0]
+                    job_id = int(input("Enter the job ID: "))
+                    job_exists = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job_id,))
+                    assert job_exists, 'Job does not exist.'
+
+                    job_details = job_exists[0]
+                    poster_first_name, poster_last_name = job_details[9], job_details[10]
+
+                    # Check if the current user is trying to save their own job posting
+                    assert not (poster_first_name == self._current_user[3] and poster_last_name == self._current_user[4]), "Cannot save your own posting."
+
+                    # Check if the user has already saved this job
+                    saved_job_applied = self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=? )", (user_id, job_id))[0][0]
+                    saved_job = self.db_manager.fetchall("SELECT COUNT(*) FROM job_save WHERE (job_id=? AND applicant=?)", (job_id, user_id))[0][0]
+
+                    if saved_job_applied:
+                        print("You have already applied to this job.")
+                    elif saved_job:
+                        print("You have already saved this job.")
+                    else:
+                        # Update the saved column to True in the jobs table
+                        self.db_manager.execute("INSERT INTO job_save (job_id, applicant, saved) VALUES (?, ?, True)", (job_id, user_id))
+                        self.db_manager.commit()
+                        print("Job saved successfully!")
+
+                except Exception as e:
+                    print("Error: ", e)
+
 
             # function to add a friendship between the usernames passed as arguments so long as one does not already exist
             def add_friend(friendA, friendB):
@@ -630,8 +813,6 @@ class InCollegeAppManager:
                                 print("\nPlease enter the number associated with the friend in your network.\n")
                                 continue
 
-                            #alter_profile1("b")
-                            #alter_profile2("c")
                             if (friends[friendNum][6] == "View Profile"):
                                 print("")
                                 printProfile(friends[friendNum][1])
@@ -677,27 +858,7 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
-            def alter_profile1(username):
-                title = "Senior Pursuing Computer Science"
-                about = "I like cats, and I like to kayak in my spare time."
-                pj1 = "Title:\nManager\nEmployer:\nAMC\nStart Date:\n2018\nEnd Date:\nActive\nDescription:\nBlahBlahBlah\n"
-                pj2 = "Title:\nCrew\nEmployer:\nCat\nStart Date:\n2019\nEnd Date:\nActive\nDescription:\nBlah2Blah2Blah2\n"
-                pj3 = "Title:\nSupervisor\nEmployer:\nDog\nStart Date:\n2020\nEnd Date:\nActive\nDescription:\nBlah3Blah3Blah3\n"
-                edu = "School Name:\nUSF\nDegree:\nComputer Science\nYears Attended:\n2022-2023\n"
-                self.db_manager.execute(f'''
-                            UPDATE profiles SET title = ?, about = ?, pastJob1 = ?, pastJob2 = ?, pastJob3 = ?, education = ?, posted = "yes" WHERE username = ?               
-                ''', (title, about, pj1, pj2, pj3, edu, username))
-
-
-            def alter_profile2(username):
-                title = "Junior Pursuing Computer Science"
-                about = "I like dogs, and I like to play video games in my spare time."
-                pj1 = "Title:\nA\nEmployer:\nB\nStart Date:\n2018\nEnd Date:\nActive\nDescription:\nBlahBlahBlah\n"
-                edu = "School Name:\nUSF\nDegree:\nComputer Science\nYears Attended:\n2022-2023\n"
-                self.db_manager.execute(f'''
-                            UPDATE profiles SET title = ?, about = ?, pastJob1 = ?, education = ?, posted = "yes" WHERE username = ?               
-                ''', (title, about, pj1, edu, username))
-
+            # function to print a user's profile 
             def printProfile(username):
                 print(menu_seperate)
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
@@ -723,31 +884,39 @@ class InCollegeAppManager:
                     
                 if profileContent[8] != "n/a" and profileContent[8] != "\n":
                     print(f"Job 3:\n----\n{profileContent[8]}\n")
-                                
 
-            def myProfileOptions(username):
+                print(f"Education:\n----\n{profileContent[9]}")
+                                
+            # function to modify profile's options
+            def myProfileOptions():
+                username = self._current_user[1]
                 profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
-                                                                       pastJob3, education, posted FROM profiles WHERE (username=?)',
-                                                       (username,))
+                                                            pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
                 # profile is not posted, so they have the option to create a profile and are asked if they want to post it there
                 if profileContent[10] != "yes":
                     while True and profileContent[10] != "yes":
                         print(menu_seperate)
                         print("My Profile Options\n-------------------------------")
-                        print("1. Create a Profile\nq. Quit\n")
+                        print("1. Create a Profile\n2. Post my Profile\nq. Quit\n")
                         userChoice = input("\nPlease enter a provided option: ")
 
                         if userChoice == "q":
                             break
                         elif userChoice == "1":
                             createProfile(self, username)
+                            profileContent = self.db_manager.fetch('SELECT first_name, last_name, title, major, university, about, pastJob1, pastJob2, \
+                                                                       pastJob3, education, posted FROM profiles WHERE (username=?)', (username,))
+
+                        elif userChoice == "2":
+                            self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
+                            print("Your profile has been posted!\n")
                             break
                         else:
                             print("Invalid choice. Please try again.")
 
 
                 # profile is displayed, so they have the option to update it or view their profile
-                elif profileContent[10] == "yes":
+                if profileContent[10] == "yes":
                     while True:
                         print(menu_seperate)
                         print("My Profile Options\n-------------------------------")
@@ -762,48 +931,95 @@ class InCollegeAppManager:
                             updateProfile(self,username)
                         else:
                             print("Invalid choice. Please try again.")
-
-
-
-            def search_job():
-                print("\nUnder Construction")
+            
+            def print_jobs_applied_for():
+                applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
+                if applied_for_jobs:
+                    display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
+                    print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                 
+            def print_saved_jobs_for():
+                saved_for_jobs = self.db_manager.fetchall("SELECT * from job_save WHERE (saved=1 AND applicant=?)", (self._current_user[0],))
+                if saved_for_jobs:
+
+                    display_job = lambda x: f"\nTitle: {x[1]}\nDescription: {x[2]}\nID: {x[0]}\n"
+                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in saved_for_jobs]
+                    print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    
+            def search_job():
+                user_id = self._current_user[0]
+                job_titles = self.db_manager.fetchall("SELECT job_title FROM jobs")
+                if job_titles:
+                    print("All Job Titles:")
+                    for job_title in job_titles:
+                        print(job_title[0])
+                else:
+                    print("No job titles found in the system.")
+                print()
+                job = input("Enter a Job Title to Search for: ")
+                display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
+                jobs = self.db_manager.find_jobs_by_title(job)
+                def all():  
+                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                def applied_for():
+                    print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
+                def n_applied_for():
+                    print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
+                queries = {'a': all, '1': applied_for, '2': n_applied_for}
+                print('Job Queries:\na. (All Jobs)\n1. (Jobs You\'ve Applied For)\n2. (Jobs You Haven\'t Applied For)\n')
+                query = input('Enter Job Querie:')
+                print('\n')
+                queries.get(query, all)()
             def createProfile(self, username):
                 """
                 Allows the user to create their profile and save it in the database.
                 """
                 title = input("Enter your title (e.g. '3rd year Computer Science student'): ")
+                title = title.title()
                 major = input("Enter your major: ")
+                major = major.title()
                 university = input("Enter your university name: ")
+                university = university.title()
                 about = input("Enter a paragraph about yourself: ")
     
                 # Experience Section
                 # Collect information for up to three past jobs
-                past_jobs = []
+                past_jobs = ["n/a", "n/a", "n/a"]
                 for i in range(3):
                     job_title = input(f"Enter job title for past job {i + 1} (or press Enter to skip): ")
                     if not job_title:
                         break
+                    job_title = job_title.title()
                     employer = input("Enter employer: ")
+                    employer = employer.title()
                     date_started = input("Enter date started (e.g., MM/YYYY): ")
                     date_ended = input("Enter date ended (e.g., MM/YYYY): ")
                     location = input("Enter location: ")
+                    location = location.title()
                     job_description = input("Enter job description: ")
-                    past_jobs.append((job_title, employer, date_started, date_ended, location, job_description))
+                    past_jobs[i] = f"Title:\n{job_title}\n"
+                    past_jobs[i] += f"Employer:\n{employer}\n"
+                    past_jobs[i] += f"Date Started:\n{date_started}\n"
+                    past_jobs[i] += f"Date Ended:\n{date_ended}\n"
+                    past_jobs[i] += f"Location:\n{location}\n"
+                    past_jobs[i] += f"Job Description:\n{job_description}\n"
 
                 # Collect education information
+                print("Enter Education Information Below:")
                 school_name = input("Enter school name: ")
+                school_name = school_name.title()
                 degree = input("Enter degree: ")
+                degree = degree.title()
                 years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
 
-
-                self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (about, username))
-                self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (title, username))
-                self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (major, username))
-                self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (university, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob1=? WHERE username=?", (pastJob1, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob2=? WHERE username=?", (pastJob2, username))
-                self.db_manager.execute(f"UPDATE profiles SET pastJob3=? WHERE username=?", (pastJob3, username))
+                education = ""
+                education += f"School Name:\n{school_name}\n"
+                education += f"Degree:\n{degree}\n"
+                education += f"Years Attended:\n{years_attended}\n"
+            
+                self.db_manager.execute("UPDATE profiles SET about=?, title=?, major=?, university=?, pastJob1=?, pastJob2=?, pastJob3=?, education=? \
+                                        WHERE username=?", (about, title, major, university, past_jobs[0], past_jobs[1], past_jobs[2], education, username))
                 print("Profile saved successfully!")
 
                 # Ask user if they want to post their profile
@@ -811,7 +1027,6 @@ class InCollegeAppManager:
                 if post_profile == "yes":
                     self.db_manager.execute("UPDATE profiles SET posted='yes' WHERE username=?", (username,))
                     print("Profile posted successfully!")
-                    updateProfile(self,username)
                 else:
                     print("Profile not posted.")
 
@@ -827,32 +1042,58 @@ class InCollegeAppManager:
                 print("4. About")
                 print("5. Past Jobs")
                 print("6. Education")
-                print("7. Exit")
+                print("q. Exit\n")
 
                 choice = input("Enter your choice: ")
 
                 if choice == "1":
                     new_title = input("Enter your new title: ")
+                    new_title = new_title.title()
                     self.db_manager.execute("UPDATE profiles SET title=? WHERE username=?", (new_title, username))
                 elif choice == "2":
                     new_major = input("Enter your new major: ")
+                    new_major = new_major.title()
                     self.db_manager.execute("UPDATE profiles SET major=? WHERE username=?", (new_major, username))
                 elif choice == "3":
                     new_university = input("Enter your new university name: ")
+                    new_university = new_university.title()
                     self.db_manager.execute("UPDATE profiles SET university=? WHERE username=?", (new_university, username))
                 elif choice == "4":
                     new_about = input("Enter your new About section: ")
                     self.db_manager.execute("UPDATE profiles SET about=? WHERE username=?", (new_about, username))
                 elif choice == "5":
-                    new_past_job = input("Enter your new past job title: ") or "n/a"
                     job_number = input("Enter the job number to update (1, 2, or 3): ")
                     column_name = f"pastJob{job_number}"
+                    new_past_job = ""
+                    job_title = input(f"Enter job title for past job {job_number}: ")
+                    job_title = job_title.title()
+                    employer = input("Enter employer: ")
+                    employer = employer.title()
+                    date_started = input("Enter date started (e.g., MM/YYYY): ")
+                    date_ended = input("Enter date ended (e.g., MM/YYYY): ")
+                    location = input("Enter location: ")
+                    location = location.title()
+                    job_description = input("Enter job description: ")
+                    new_past_job = f"Title:\n{job_title}\n"
+                    new_past_job += f"Employer:\n{employer}\n"
+                    new_past_job += f"Date Started:\n{date_started}\n"
+                    new_past_job += f"Date Ended:\n{date_ended}\n"
+                    new_past_job += f"Location:\n{location}\n"
+                    new_past_job += f"Job Description:\n{job_description}\n"
                     self.db_manager.execute(f"UPDATE profiles SET {column_name}=? WHERE username=?", (new_past_job, username))
                 elif choice == "6":
-                    new_years_attended = input("Enter your new years attended: ")
-                    new_education = json.dumps({'years_attended': new_years_attended})
+                    new_education = ""
+                    print("Enter New Education Information Below:")
+                    school_name = input("Enter school name: ")
+                    school_name = school_name.title()
+                    degree = input("Enter degree: ")
+                    degree = degree.title()
+                    years_attended = input("Enter years attended (e.g., YYYY-YYYY): ")
+                    new_education += f"School Name:\n{school_name}\n"
+                    new_education += f"Degree:\n{degree}\n"
+                    new_education += f"Years Attended:\n{years_attended}\n"
                     self.db_manager.execute("UPDATE profiles SET education=? WHERE username=?", (new_education, username))
-                elif choice == "7":
+                elif choice == "q":
                     print("Exiting profile update.")
                 else:
                     print("Invalid choice. Please try again.")
@@ -879,7 +1120,7 @@ class InCollegeAppManager:
                 """
                 Posts a job under the specified username
                 """
-                if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 5:
+                if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 10:
                     print("All jobs have been created. Please come back later.")
                     return
                 try:
@@ -914,7 +1155,12 @@ class InCollegeAppManager:
                 except Exception as e:
                     print('Error While Posting Job:\n', e)
             
-            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network}
+            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network,
+            '8': myProfileOptions,
+            '10': apply_for_job,
+            '11': print_jobs_applied_for,
+            '12': save_a_job,
+            '13':print_saved_jobs_for}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -925,8 +1171,6 @@ class InCollegeAppManager:
                 option = input("Select an option: ")
                 if option in options: 
                     options[option]()
-                elif option == '8':
-                    myProfileOptions(self._current_user[1])
                 elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
@@ -1030,7 +1274,7 @@ class InCollegeAppManager:
                 print("Invalid choice. Please try again.")
 
 def main():
-    InCollegeAppManager().Run()
+    InCollegeAppManager(DEBUG=__DEBUG__).Run()
 
 if __name__ == '__main__':
     main()
