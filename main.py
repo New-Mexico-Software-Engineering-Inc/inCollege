@@ -649,19 +649,22 @@ class InCollegeAppManager:
                     job = int(input("Enter the job ID: "))
                     assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
 
+
                     jobTest = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job,))
                     currFirst = self._current_user[3]
                     currLast = self._current_user[4]
 
 
                     # check if name of current user matches poster's name
-                    if (jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast):
-                        print("Cannot apply to your own posting.\n")
-                        return
+                    assert not ((jobTest[0][9] == currFirst) and (jobTest[0][10] == currLast)), "Cannot apply to your own posting."
 
                     #appl_exists
-                    assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
-                                            (user, job))[0][0], "Cannot apply more than once for  a job."
+
+                    if self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user, job))[0][0]:
+                        print("Error Applying for Job: Cannot apply more than once for a job.")
+                        return
+                    #assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
+                    #                        (user, job))[0][0], "Cannot apply more than once for a job."
                     gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
                     assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
                     w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
@@ -894,11 +897,11 @@ class InCollegeAppManager:
                 display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
                 jobs = self.db_manager.find_jobs_by_title(job)
                 def all():  
-                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that  name.")
+                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                 def applied_for():
-                    print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that  name.")
+                    print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
                 def n_applied_for():
-                    print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that  name.")
+                    print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
                 queries = {'a': all, '1': applied_for, '2': n_applied_for}
                 query = input('Enter Job Query:\na. (All Jobs)\n1. (Jobs You\'ve Applied For)\n2. (Jobs You Haven\'t Applied For)\n')
                 print('\n')

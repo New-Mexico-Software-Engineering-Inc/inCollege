@@ -35,6 +35,12 @@ def __create_user_account():
     except Exception as e:
         print(e)
 
+def __create_user_account2():
+    try:
+        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University', 'Major')
+    except Exception as e:
+        print(e)
+
 # function to run the inCollege program and return program output
 def runInCollege(capsys):
     # Run the program, and collect the system exit code
@@ -96,10 +102,36 @@ def test_search_for_job(monkeypatch, capsys):
 def test_cannot_apply_twice(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()
+    __create_user_account2()
 
-    # create a second account to post jobs from
-    try:
-        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University', 'Major')
-    except Exception as e:
-        print(e)
 
+    # expected output when we apply for same job a second time
+    expectedOut = "Error Applying for Job:"
+    expectedOut2 = "Cannot apply more than once for a job."
+
+    # test items to post for job
+    jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
+
+    # job id, grad date, start date, description
+    appStuff = ["01/0/0001", "02/02/0002", "Testing Testing Testing"]
+
+    userIn = "1\na\n!!!Goodpswd0\n4\n"
+
+    for i in jobStuff:
+        userIn += f"{i}\n"
+
+    userIn += "q\n1\nb\n!!!Goodpswd0\n10\n2\n"
+
+    for i in appStuff:
+        userIn += f"{i}\n"
+
+    userIn += "10\n2\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    assert expectedOut in capture.out
+    assert expectedOut2 in capture.out
