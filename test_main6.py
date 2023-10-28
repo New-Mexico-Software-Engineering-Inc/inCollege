@@ -151,8 +151,7 @@ def test_cannot_apply_twice(monkeypatch, capsys):
     for i in appStuff:
         userIn += f"{i}\n"
 
-    userIn += "10\n1\n"
-    userIn+= "1\nTest\na\nq\nq\n"
+    userIn += "10\n1\nq\nq\n"
 
     userInput = StringIO(userIn)
 
