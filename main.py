@@ -646,11 +646,13 @@ class InCollegeAppManager:
                 try:
                     correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
                     user = self._current_user[0]
-                    job = int(input("Enter the job ID: "))
-                    assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
 
+                    job = int(input("Enter the job ID: "))
 
                     jobTest = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job,))
+
+                    assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,))[0][0]), 'Job does not exist.'
+
                     currFirst = self._current_user[3]
                     currLast = self._current_user[4]
 

@@ -114,19 +114,19 @@ def test_cannot_apply_twice(monkeypatch, capsys):
     jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
 
     # job id, grad date, start date, description
-    appStuff = ["01/0/0001", "02/02/0002", "Testing Testing Testing"]
+    appStuff = ["01/01/0001", "02/02/0002", "Testing Testing Testing"]
 
     userIn = "1\na\n!!!Goodpswd0\n4\n"
 
     for i in jobStuff:
         userIn += f"{i}\n"
 
-    userIn += "q\n1\nb\n!!!Goodpswd0\n10\n2\n"
+    userIn += "q\n1\nb\n!!!Goodpswd0\n10\n1\n"
 
     for i in appStuff:
         userIn += f"{i}\n"
 
-    userIn += "10\n2\nq\nq\n"
+    userIn += "10\n1\nq\nq\n"
 
     userInput = StringIO(userIn)
 
@@ -156,7 +156,7 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     for i in jobStuff:
         userIn += f"{i}\n"
 
-    userIn += "10\n2\nq\nq\n"
+    userIn += "10\n1\nq\nq\n"
 
     userInput = StringIO(userIn)
 
@@ -170,11 +170,14 @@ def test_cannot_apply_to_own_posting(monkeypatch, capsys):
     assert expectedOut2 in capture.out
 
 
+
 def test_post_10_jobs(monkeypatch, capsys):
     clear_accounts()
     __create_user_account()
 
+    # will occur 10 times for 10 successful job postings
     expectedOut1 = "Successfully Posted Job."
+    # will occur once for failed 11th posting
     expectedOut2 = "All jobs have been created. Please come back later."
 
     jobTest = ["a", "b" , "c", "d" , "e", "f", "g" ,"h", "i", "j", "h"]
