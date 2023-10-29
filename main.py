@@ -1044,6 +1044,34 @@ class InCollegeAppManager:
                     except Exception as e:
                         print('Error While Posting Job:\n', e)
 
+                def delete_job():
+                    print(menu_seperate)
+                    print("Jobs you have posted\n-------------------------------")
+                    try:
+                        user_id = self._current_user[0]
+                        jobs_from_user = self.db_manager.fetchall("SELECT * FROM jobs WHERE posted_by=?", (user_id,))
+                        if not jobs_from_user:
+                            print("You have no jobs posted.")
+                            return
+                        
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job[0])[0] for job in jobs_from_user]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs.")
+
+                        print("Delete a job\n-------------------------------")
+                        job_id = input("Enter the ID of the job you wish to delete (or enter q to cancel): ")
+                        if job_id == "q":
+                            return
+                        job_id = int(job_id)
+                        job_details = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=? AND posted_by=?", (job_id, user_id))
+                        assert job_details, 'Job not found or you do not have permission to delete this job.'
+
+                        # Delete the job from jobs table
+                        self.db_manager.execute("DELETE FROM jobs WHERE job_id=?", (job_id,))
+                        print(f"Job with ID {job_id} has been successfully deleted.\nAll applications to this job have also been deleted.")
+                    except Exception as e:
+                        print("Error: ", e)
+
                 def search_job():
                     print(menu_seperate)
                     job_titles = self.db_manager.fetchall("SELECT job_title FROM jobs")
@@ -1055,7 +1083,7 @@ class InCollegeAppManager:
                         print("No job titles found.")
                     
                     print("\nSearching for Jobs\n-------------------------------")
-                    job = input("Enter a Job Title to Search for: ")
+                    job = input("Enter a job title to search for: ")
                     user_id = self._current_user[0]
                     display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
                     jobs = self.db_manager.find_jobs_by_title(job)
@@ -1085,6 +1113,8 @@ class InCollegeAppManager:
                         display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
                         jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
                         print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    else:
+                        print("You have no currently active job applications.")
                 
                 def print_saved_jobs():
                     print(menu_seperate)
@@ -1144,7 +1174,7 @@ class InCollegeAppManager:
                         assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
                         w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
                         assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
-                        quals = input("Tell us About Yourself and why you want the job: \n")
+                        quals = input("Tell us about yourself and why you want the job: \n")
                         assert quals, 'Cannot Leave field Empty.'
                         self.db_manager.user_apply_job(user, job, gr_date, w_date, quals)
                         print("\nSuccessfully Applied for the job.")
@@ -1185,11 +1215,11 @@ class InCollegeAppManager:
                     except Exception as e:
                         print("Error: ", e)
 
-                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs}
+                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': delete_job}
                 while True:
                     print(menu_seperate)
                     print(self.menus["jobs"])
-                    option = input("Select an option: ")
+                    option = input("\nSelect an option: ")
                     if option in functions:
                         functions[option]()
                     elif option.lower() == "q":

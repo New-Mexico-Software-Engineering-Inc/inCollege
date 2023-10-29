@@ -21,6 +21,6 @@
         "find_someone": "Find Someone You Know\n-------------------------------\n1. Search by Last Name\n2. Search by University\n3. Search by Major\nq. Quit\n",
         "friend_requests": "Friend Requests\n-------------------------------\n1. Show incoming requests\n2. Show outgoing requests\nq. Quit",
         "show_my_network": "Show my network\n-------------------------------\n1. Show friends list\n2. Remove a friend\n3. Manage friend requests\nq. Quit",
-        "jobs": "Jobs Menu\n-------------------------------\n1. Search for a job\n2. Post a job\n3. Apply for a job\n4. Show jobs I've applied to\n5. Save a job\n6. Show jobs I've saved\nq. Quit"
+        "jobs": "Jobs Menu\n-------------------------------\n1. Search for a job\n2. Post a job\n3. Apply for a job\n4. Show jobs I've applied to\n5. Save a job\n6. Show jobs I've saved\n7. Delete a job\nq. Quit"
     }
 }
