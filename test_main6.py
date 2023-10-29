@@ -399,7 +399,7 @@ def test_delete_job(monkeypatch, capsys):
     userIn += "1\nTest\na\n"
 
     # delete test job and then research to find it is no longer there, then quit, logout, end program
-    userIn += "7\n1\n1\nTest\na\nq\nq\nq\n"
+    userIn += "8\n1\n1\nTest\na\nq\nq\nq\n"
 
     userInput = StringIO(userIn)
 

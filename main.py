@@ -1115,6 +1115,30 @@ class InCollegeAppManager:
                         print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                     else:
                         print("You have no currently active job applications.")
+
+                def print_jobs_not_applied_for():
+                    print(menu_seperate)
+                    print("Jobs You Have Not Applied For\n-------------------------------")
+                    applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
+
+                    applied_job_ids = []
+                    for i in applied_for_jobs:
+                        applied_job_ids.append(i[2])
+
+                    not_applied_ids = []
+
+                    all_ids = self.db_manager.fetchall("SELECT job_id from jobs")
+
+                    for i in all_ids:
+                        if i[0] not in applied_job_ids:
+                            not_applied_ids.append(i[0])
+
+                    if not_applied_ids:
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job)[0] for job in not_applied_ids]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    else:
+                        print("There are currently no jobs that you have not already applied to.")
                 
                 def print_saved_jobs():
                     print(menu_seperate)
@@ -1215,7 +1239,7 @@ class InCollegeAppManager:
                     except Exception as e:
                         print("Error: ", e)
 
-                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': delete_job}
+                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': print_jobs_not_applied_for, '8': delete_job}
                 while True:
                     print(menu_seperate)
                     print(self.menus["jobs"])
