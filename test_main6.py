@@ -1,8 +1,8 @@
 # Sprint 6 Test Cases
 # The functions use monkeypatch to mock input and capsys to capture output
-# Created by: Jonathan Koch
+# Created by: Jonathan Koch, Austin Martin, Ryan Martinez
 # Date created: 10/25/2023
-# Last Update: 10/25/2023
+# Last Update: 10/28/2023
 
 import sqlite3
 import json
