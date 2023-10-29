@@ -242,6 +242,15 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS deleted_job_notifs (
+            applicantID INTEGER,
+            jobID INTEGER,
+            jobTitle TEXT NOT NULL,
+            FOREIGN KEY (applicantID) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS job_save (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             applicant INTEGER NOT NULL,
@@ -1065,10 +1074,17 @@ class InCollegeAppManager:
                         job_id = int(job_id)
                         job_details = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=? AND posted_by=?", (job_id, user_id))
                         assert job_details, 'Job not found or you do not have permission to delete this job.'
+                        job_title = job_details[0][3]
+
+                        # add all users that have applied to this job to the deleted_job_notifs table
+                        applicantIDs = self.db_manager.fetchall("SELECT applicant FROM job_applications WHERE job_id=?", (job_id,))
+                        for i in applicantIDs:
+                            self.db_manager.execute("INSERT INTO deleted_job_notifs (applicantID, jobID, jobTitle) VALUES (?, ?, ?)", (i[0], job_id, job_title))
 
                         # Delete the job from jobs table
                         self.db_manager.execute("DELETE FROM jobs WHERE job_id=?", (job_id,))
                         print(f"Job with ID {job_id} has been successfully deleted.\nAll applications to this job have also been deleted.")
+
                     except Exception as e:
                         print("Error: ", e)
 
@@ -1242,6 +1258,16 @@ class InCollegeAppManager:
                 functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': print_jobs_not_applied_for, '8': delete_job}
                 while True:
                     print(menu_seperate)
+
+                    # if there are any deleted_job_notif entries with this user's user_id, we will display the notifs and then remove the entries
+                    userID = self._current_user[0]
+                    deleted_jobs = self.db_manager.fetchall("SELECT * FROM deleted_job_notifs WHERE applicantID=?", (userID,))
+                    if deleted_jobs:
+                        print("Job Notifications:\n-------------------------------")
+                        for i in deleted_jobs:
+                            print(f"The job posting with ID [{i[1]}] and title [{i[2]}] that you applied for was removed.\n")
+                        self.db_manager.execute("DELETE FROM deleted_job_notifs where applicantID=?", (userID,))
+
                     print(self.menus["jobs"])
                     option = input("\nSelect an option: ")
                     if option in functions:
