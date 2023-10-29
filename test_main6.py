@@ -199,7 +199,7 @@ def test_application_requirements(monkeypatch, capsys):
     #expected requirements for job application
     expectedGraduationPrompt = "Please Enter your Graduation Date (dd/mm/yyyy):"
     expectedStartDatePrompt = "Please Enter your Available Start Date (dd/mm/yyyy):"
-    expectedExplainPrompt = "Tell us About Yourself and why you want the job:"
+    expectedExplainPrompt = "Tell us about yourself and why you want the job:"
 
     #capture output
     capture = runInCollege(capsys)
