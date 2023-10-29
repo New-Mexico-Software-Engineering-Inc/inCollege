@@ -1,2 +1,2 @@
 #!/bin/bash
-source inCollegeEnv/bin/activate && pytest
+source inCollegeEnv/bin/activate && pytest -vv

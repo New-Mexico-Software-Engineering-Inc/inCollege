@@ -100,7 +100,7 @@ def test_Change_Guest_Controls_off(monkeypatch, capsys):
     expectedOut_3rd_iteration = "Targeted Advertising successfully turned off."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\n!!!Goodpswd0\n6\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n5\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -121,7 +121,7 @@ def test_Change_Guest_Controls_on(monkeypatch, capsys):
     expectedOut_3rd_iteration = "Targeted Advertising successfully turned on."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\n!!!Goodpswd0\n6\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n5\n9\ny\n1\ny\n2\ny\n3\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -142,7 +142,7 @@ def test_Change_Language_to_Spanish(monkeypatch, capsys):
     expectedOut_1st_iteration = "Language successfully switched to Spanish."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\n!!!Goodpswd0\n6\na\ny\n2\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n5\na\ny\n2\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -161,7 +161,7 @@ def test_Change_Language_to_English(monkeypatch, capsys):
     expectedOut_1st_iteration = "Language successfully switched to English."
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\n!!!Goodpswd0\n6\na\ny\n1\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n5\na\ny\n1\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run the program and capture the output
@@ -203,7 +203,7 @@ def test_Delete_Settings(monkeypatch, capsys):
     expectedOut2 = " InCollege Email Notifications: On\n   InCollege SMS Notifications: On\nInCollege Targeted Advertising: On"  # Expected user settings before deletion
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\n!!!Goodpswd0\n6\n9\ny\n2\nn\nq\nq\nq\n2\ne\n!!!Goodpswd0\nfname1\nlname1\n1\na\n!!!Goodpswd0\n6\n9\ny\n2\nn\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n5\n9\ny\n2\nn\nq\nq\nq\n2\ne\n!!!Goodpswd0\nfname1\nlname1\n1\na\n!!!Goodpswd0\n6\n9\ny\n2\nn\nq\nq\nq\n")
     monkeypatch.setattr('sys.stdin', userInput)
     
     # Run the program and capture the output
@@ -219,7 +219,7 @@ def test_Useful_Links_After_Login(monkeypatch, capsys):
     __create_user_account()
 
     # Set user input for the test scenario
-    userInput = StringIO("1\na\n!!!Goodpswd0\n5\n1\nq\nq\nq\nq\n")
+    userInput = StringIO("1\na\n!!!Goodpswd0\n4\n1\nq\nq\nq\nq\n")
     
     monkeypatch.setattr('sys.stdin', userInput)
 
