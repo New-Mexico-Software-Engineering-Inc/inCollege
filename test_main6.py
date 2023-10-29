@@ -377,3 +377,38 @@ def test_post_10_jobs(monkeypatch, capsys):
 
     assert 10 == capture.out.count(expectedOut1)
     assert 1 == capture.out.count(expectedOut2)
+
+
+def test_delete_job(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    # successfully post test job
+    expectedOut1 = "Successfully Posted Job."
+    # first time we search newly created job, we will find it
+    expectedOut2 = "Jobs Found\n-------------------------------\nTitle: Test"
+    # successful job deletion message
+    expectedOut3 = "Job with ID 1 has been successfully deleted."
+    # cannot find the deleted job when searching
+    expectedOut4 = "Could not find any jobs by that name."
+
+    # create mock input where we sign in with account a and then post a test job with every item as "Test" and salary of 100
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest\nTest\nTest\nTest\nTest\nTest\n100\n"
+
+    # search for job, see that it was posted
+    userIn += "1\nTest\na\n"
+
+    # delete test job and then research to find it is no longer there, then quit, logout, end program
+    userIn += "7\n1\n1\nTest\na\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # all of the expected outputs should occur exactly once
+    assert 1 == capture.out.count(expectedOut1)
+    assert 1 == capture.out.count(expectedOut2)
+    assert 1 == capture.out.count(expectedOut3)
+    assert 1 == capture.out.count(expectedOut4)
