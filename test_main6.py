@@ -412,3 +412,37 @@ def test_delete_job(monkeypatch, capsys):
     assert 1 == capture.out.count(expectedOut2)
     assert 1 == capture.out.count(expectedOut3)
     assert 1 == capture.out.count(expectedOut4)
+
+def test_deleted_job_notification(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    # expect to see a notification that the job was deleted only once when jobs section is first opened
+    expectedOutput = "The job posting with ID [1] and title [Test Job] that you applied for was removed."
+
+    # sign in and post Test Job under user a and post a Test Job
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest Job\ntest\ntest\ntest\ntest\ntest\n100\n"
+
+    # logout and sign in with user b and begin to apply for posted job
+    userIn += "q\nq\n1\nb\n!!!Goodpswd0\n1\n3\n1\n"
+
+    # enter application details and then logout
+    userIn += "01/01/0001\n01/01/0001\nTesting\nq\nq\n"
+
+    # log back in to user a and delete the posted job, then log out
+    userIn += "1\na\n!!!Goodpswd0\n1\n8\n1\nq\nq\n"
+
+    # sign back into user b, check for notification of deleted job only upon first time entering job section
+    userIn += "1\nb\n!!!Goodpswd0\n1\nq\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+
+    # we should only see the notification once since it only appears the first time someone enters their job section
+    assert 1 == capture.out.count(expectedOutput)
