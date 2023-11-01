@@ -150,7 +150,8 @@ class InCollegeAppManager:
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
             university TEXT NOT NULL,
-            major TEXT NOT NULL
+            major TEXT NOT NULL,
+            plus BOOL NOT NULL
         );
         ''')
 
@@ -259,7 +260,7 @@ class InCollegeAppManager:
         print('Goodbye!')
         exit(0)
         
-    def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
+    def _create_account(self, username, password, first_name, last_name, university, major, plus) -> Any:
         """
             Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
         """
@@ -279,8 +280,8 @@ class InCollegeAppManager:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         self.db_manager.execute(
-            'INSERT INTO accounts (username, password, first_name, last_name, university, major) VALUES (?, ?, ?, ?, ?, ?);',
-            (username, hashed_password, first_name, last_name, university, major))
+            'INSERT INTO accounts (username, password, first_name, last_name, university, major, plus) VALUES (?, ?, ?, ?, ?, ?, ?);',
+            (username, hashed_password, first_name, last_name, university, major, plus))
         
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
@@ -1162,7 +1163,11 @@ class InCollegeAppManager:
                 name_last = input("Enter your last name: \n")
                 univ = input("Enter your university: \n")
                 major = input("Enter your major: \n")
-                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major)
+
+                plus = input("Would you like to create a plus account?(y/n)\nYou will be charged 10$ a month\n")
+                plus = (plus == 'y')
+
+                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major, plus=plus)
                 if _acc is not None:
                     print('\nYou have successfully created an account!\nLog in to start using InCollege.')
                 else:
