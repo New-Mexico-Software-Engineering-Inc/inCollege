@@ -156,6 +156,14 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+                CREATE TABLE IF NOT EXISTS messages (
+                    recpient INTEGER NOT NULL,
+                    message TEXT NOT NULL,
+                    sender INTEGER NOT NULL
+                );
+                ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS settings (
             username TEXT PRIMARY KEY,
             email_notifs BOOL NOT NULL,
