@@ -1,8 +1,8 @@
 # Sprint 6 Test Cases
 # The functions use monkeypatch to mock input and capsys to capture output
-# Created by: Jonathan Koch
+# Created by: Jonathan Koch, Austin Martin, Ryan Martinez
 # Date created: 10/25/2023
-# Last Update: 10/25/2023
+# Last Update: 10/28/2023
 
 import sqlite3
 import json
@@ -25,6 +25,7 @@ def clear_accounts():
     cursor.execute('''
     DELETE FROM accounts;
     ''')
+    cursor.execute("UPDATE SQLITE_SEQUENCE SET SEQ=0;")
     conn.commit()
     conn.close()
 
@@ -32,6 +33,12 @@ def clear_accounts():
 def __create_user_account():
     try:
         main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+    except Exception as e:
+        print(e)
+
+def __create_user_account2():
+    try:
+        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University', 'Major')
     except Exception as e:
         print(e)
 
@@ -62,25 +69,25 @@ def test_search_for_job(monkeypatch, capsys):
     salaries = [100.0, 200.0, 300.0, 400.0, 500.0]
 
     # first we must login with an existing account
-    userIn = '1\na\n!!!Goodpswd0\n'
+    userIn = '1\na\n!!!Goodpswd0\n1\n'
 
     # now we will try to create 5 jobs so we will loop the following inputs 5 times for each list entry
-    # 4 - post a job, then enter all criteria, then 4 - post a job, then enter all criteria, ...
+    # 2 - post a job, then enter all criteria, then 2 - post a job, then enter all criteria, ...
     for i in range(5):
-        userIn += f'4\n{jobTitles[i]}\n{jobDescriptions[i]}\n{requiredSkill[i]}\n{longDescriptions[i]}\n'
+        userIn += f'2\n{jobTitles[i]}\n{jobDescriptions[i]}\n{requiredSkill[i]}\n{longDescriptions[i]}\n'
         userIn += f'{employers[i]}\n{locations[i]}\n{salaries[i]}\n'
 
     # then logout and exit the program
-    userIn += 'q\nq\n'
+    userIn += 'q\nq\nq\n'
     print(userIn)
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
     _ = runInCollege(capsys)
 
     userIn = '1\na\n!!!Goodpswd0\n' # sign in
-    userIn +='1\nJob\na\n' # Search for all jobs
+    userIn +='1\n1\nJob\na\n' # Search for all jobs
     # then logout and exit the program
-    userIn += 'q\nq\n'
+    userIn += 'q\nq\nq\n'
     # return
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin', userInput)
@@ -91,3 +98,351 @@ def test_search_for_job(monkeypatch, capsys):
         assert desc in capture.out, 'Unsucessful in finding jobs'
         assert str(salary) in capture.out, 'Unsucessful in finding jobs'
         assert employer in capture.out, 'Unsucessful in finding jobs'
+
+def test_search_applied_or_not(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #post Job B, log out
+    userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\nq\nq\n"
+    #log into account b, sign up for Job A
+    userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
+    #search for jobs not applied to, search for jobs already applied to, log out, quit
+    userIn += "1\nJob\n1\n1\nJob\n2\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedSearchApplied = "1. Search Jobs You've Applied For"
+    expectedSearchNotApplied = "2. Search Jobs You Haven't Applied For"
+    expectedJobAppliedFound = "Jobs Found\n-------------------------------\nTitle: Job A\nDescription: Desc A\n"
+    expectedJobAppliedFound += "Employer: Employer A\nSalary: 100.0\nPosted By: fname lname\nApplied For: True\nJob ID: 1\n\n"
+    expectedJobNotAppliedFound = "Jobs Found\n-------------------------------\nTitle: Job B\nDescription: Desc B\n"
+    expectedJobNotAppliedFound += "Employer: Employer B\nSalary: 200.0\nPosted By: fname lname\nApplied For: False\nJob ID: 2\n\n"
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the requirements are prompted to the user
+    assert expectedSearchApplied in capture.out
+    assert expectedSearchNotApplied in capture.out
+    assert expectedJobAppliedFound in capture.out
+    assert expectedJobNotAppliedFound in capture.out
+
+def test_search_applied_status(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #post Job B, log out
+    userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\nq\nq\n"
+    #log into account b, sign up for Job A
+    userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\n"
+    #display all jobs, log out
+    userIn += "1\n\na\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    #program is expected to print out two jobs: one the current user has applied for and one the current user has not applied for
+    #program is expected to print out "Applied For: " followed by True if the current user applied for the job and False otherwise
+    expectedJobsFound = "Jobs Found\n-------------------------------\nTitle: Job A\nDescription: Desc A\n"
+    expectedJobsFound += "Employer: Employer A\nSalary: 100.0\nPosted By: fname lname\nApplied For: True\nJob ID: 1\n\n"
+    expectedJobsFound += "Title: Job B\nDescription: Desc B\nEmployer: Employer B\nSalary: 200.0\nPosted By: fname lname\nApplied For: False\nJob ID: 2\n\n"
+    
+    #capture output
+    capture = runInCollege(capsys)
+
+    assert expectedJobsFound in capture.out 
+
+def test_job_titles(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    #log into account a, post Job A
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\n"
+    #post Job B
+    userIn += "2\nJob B\nDesc B\nSkill B\nLong Desc B\nEmployer B\nLocation B\n200.0\n"
+    #search for a job, cancel, quit, and logout
+    userIn += "1\n\nq\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    #titles of jobs currently posted are to be displayed when searching for a job
+    expectedTitlesOutput = "Titles of Jobs Currently Posted\n-------------------------------\nJob A\nJob B"
+
+    #capture output
+    capture = runInCollege(capsys)
+    
+    #test that the job titles were displayed to the screen
+    assert expectedTitlesOutput in capture.out
+
+def test_application_requirements(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post a job, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, sign up for job, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n3\n1\n01/01/0001\n02/02/0002\nTesting Testing Testing\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    #expected requirements for job application
+    expectedGraduationPrompt = "Please Enter your Graduation Date (dd/mm/yyyy):"
+    expectedStartDatePrompt = "Please Enter your Available Start Date (dd/mm/yyyy):"
+    expectedExplainPrompt = "Tell us about yourself and why you want the job:"
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the requirements are prompted to the user
+    assert expectedGraduationPrompt in capture.out
+    assert expectedStartDatePrompt in capture.out
+    assert expectedExplainPrompt in capture.out
+
+def test_cannot_apply_twice(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+
+    # expected output when we apply for same job a second time
+    expectedOut = "Error Applying for Job:"
+    # expected output when we successfully apply the first time
+    expectedOut2 = "Successfully Applied for the job."
+
+    # test items to post for job
+    jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
+
+    # job id, grad date, start date, description
+    appStuff = ["01/01/0001", "02/02/0002", "Testing Testing Testing"]
+
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\n"
+
+    for i in jobStuff:
+        userIn += f"{i}\n"
+
+    userIn += "q\nq\n1\nb\n!!!Goodpswd0\n1\n3\n1\n"
+
+    for i in appStuff:
+        userIn += f"{i}\n"
+
+    userIn += "3\n1\n\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+
+    assert expectedOut in capture.out
+    assert expectedOut2 in capture.out
+
+def test_cannot_apply_to_own_posting(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    # expected output when we apply for same job a second time
+    expectedOut = "Error Applying for Job:"
+    expectedOut2 = "Cannot apply to your own posting."
+
+    # test items to post for job
+    jobStuff = ["Test", "Test Description", "Test Skill", "Test Description", "Test", "Test", "200"]
+
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\n"
+
+    for i in jobStuff:
+        userIn += f"{i}\n"
+
+    userIn += "3\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+
+    assert expectedOut in capture.out
+    assert expectedOut2 in capture.out
+
+def test_save_a_job(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, save Job A, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n5\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedJobDetails = "Job Details\n-------------------------------\nTitle: Job A\nDescription: Desc A\nEmployer: Employer A\n"
+    expectedJobDetails += "Salary: 100.0\nPosted By: fname lname\nApplied For: False\nJob ID: 1\n"
+    expectedSaveJobSuccess = "Job saved successfully!"
+
+    #capture output
+    capture = runInCollege(capsys)
+    
+    #test that the job details and the job saved success message were displayed
+    assert expectedJobDetails in capture.out
+    assert expectedSaveJobSuccess in capture.out
+
+def test_display_saved_jobs(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, save Job A, display saved jobs, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n5\n1\n6\nn\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedSavedJobs = "Jobs You Have Saved\n-------------------------------\nTitle: Job A\nDescription: Desc A\nID: 1\n"
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the saved jobs were displayed to the screen
+    assert expectedSavedJobs in capture.out
+
+def test_unsave_a_job(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    #log into account a, post Job A, log out
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nJob A\nDesc A\nSkill A\nLong Desc A\nEmployer A\nLocation A\n100.0\nq\nq\n"
+    #log into account b, save Job A, display saved jobs and unsave Job A, log out
+    userIn += "1\nb\n!!!Goodpswd0\n1\n5\n1\n6\ny\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    expectedUnsaveJobPrompt = "Do you wish to unsave a job? (y/n) "
+    expectedJobIDPrompt = "Enter the ID of the job you want to unsave (or enter q to cancel): "
+    expectedSuccessfulUnsaveMessage = "Job with ID 1 has been unmarked as saved."
+
+    #capture output
+    capture = runInCollege(capsys)
+
+    #test that the user was asked if they wanted to unsave a job
+    assert expectedUnsaveJobPrompt in capture.out
+    #test that the user was prompted for the Job ID of the job they wish to unsave
+    assert expectedJobIDPrompt in capture.out
+    #test that a successful message was displayed after the user unsaved a job
+    assert expectedSuccessfulUnsaveMessage in capture.out
+
+def test_post_10_jobs(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    # will occur 10 times for 10 successful job postings
+    expectedOut1 = "Successfully Posted Job."
+    # will occur once for failed 11th posting
+    expectedOut2 = "All jobs have been created. Please come back later."
+
+    jobTest = ["a", "b" , "c", "d" , "e", "f", "g" ,"h", "i", "j", "h"]
+    jobSalaries = ["1", "2" , "3", "4" , "5", "6", "7" ,"8", "9", "10", "11"]
+
+    userIn = "1\na\n!!!Goodpswd0\n1\n"
+
+    for i in range(11):
+        userIn += f"2\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobTest[i]}\n{jobSalaries[i]}\n"
+
+    userIn += "q\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    assert 10 == capture.out.count(expectedOut1)
+    assert 1 == capture.out.count(expectedOut2)
+
+
+def test_delete_job(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+
+    # successfully post test job
+    expectedOut1 = "Successfully Posted Job."
+    # first time we search newly created job, we will find it
+    expectedOut2 = "Jobs Found\n-------------------------------\nTitle: Test"
+    # successful job deletion message
+    expectedOut3 = "Job with ID 1 has been successfully deleted."
+    # cannot find the deleted job when searching
+    expectedOut4 = "Could not find any jobs by that name."
+
+    # create mock input where we sign in with account a and then post a test job with every item as "Test" and salary of 100
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest\nTest\nTest\nTest\nTest\nTest\n100\n"
+
+    # search for job, see that it was posted
+    userIn += "1\nTest\na\n"
+
+    # delete test job and then research to find it is no longer there, then quit, logout, end program
+    userIn += "8\n1\n1\nTest\na\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    # all of the expected outputs should occur exactly once
+    assert 1 == capture.out.count(expectedOut1)
+    assert 1 == capture.out.count(expectedOut2)
+    assert 1 == capture.out.count(expectedOut3)
+    assert 1 == capture.out.count(expectedOut4)
+
+def test_deleted_job_notification(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account()
+    __create_user_account2()
+
+    # expect to see a notification that the job was deleted only once when jobs section is first opened
+    expectedOutput = "The job posting with ID [1] and title [Test Job] that you applied for was removed."
+
+    # sign in and post Test Job under user a and post a Test Job
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest Job\ntest\ntest\ntest\ntest\ntest\n100\n"
+
+    # logout and sign in with user b and begin to apply for posted job
+    userIn += "q\nq\n1\nb\n!!!Goodpswd0\n1\n3\n1\n"
+
+    # enter application details and then logout
+    userIn += "01/01/0001\n01/01/0001\nTesting\nq\nq\n"
+
+    # log back in to user a and delete the posted job, then log out
+    userIn += "1\na\n!!!Goodpswd0\n1\n8\n1\nq\nq\n"
+
+    # sign back into user b, check for notification of deleted job only upon first time entering job section
+    userIn += "1\nb\n!!!Goodpswd0\n1\nq\n1\nq\nq\nq\n"
+
+    userInput = StringIO(userIn)
+
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+
+    # we should only see the notification once since it only appears the first time someone enters their job section
+    assert 1 == capture.out.count(expectedOutput)
