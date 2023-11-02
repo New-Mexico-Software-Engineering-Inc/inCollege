@@ -151,9 +151,18 @@ class InCollegeAppManager:
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
             university TEXT NOT NULL,
-            major TEXT NOT NULL
+            major TEXT NOT NULL,
+            plus BOOL NOT NULL
         );
         ''')
+
+        self.db_manager.execute('''
+                CREATE TABLE IF NOT EXISTS messages (
+                    recipient INTEGER NOT NULL,
+                    message TEXT NOT NULL,
+                    sender INTEGER NOT NULL
+                );
+                ''')
 
         self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS settings (
@@ -281,7 +290,7 @@ class InCollegeAppManager:
         print('Goodbye!')
         exit(0)
         
-    def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
+    def _create_account(self, username, password, first_name, last_name, university, major, plus) -> Any:
         """
             Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
         """
@@ -301,8 +310,8 @@ class InCollegeAppManager:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         self.db_manager.execute(
-            'INSERT INTO accounts (username, password, first_name, last_name, university, major) VALUES (?, ?, ?, ?, ?, ?);',
-            (username, hashed_password, first_name, last_name, university, major))
+            'INSERT INTO accounts (username, password, first_name, last_name, university, major, plus) VALUES (?, ?, ?, ?, ?, ?, ?);',
+            (username, hashed_password, first_name, last_name, university, major, plus))
         
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
@@ -1277,8 +1286,93 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
+            def messsaging_menu():
+                def send_message():
+                    while True:
+                        #generate list of friends
+                        print(menu_seperate)
+                        print_friends()
+                        list = create_friends_list(self._current_user[1])
+
+                        print("1. send one of your friends a message\n2.View the list of all users\nq.Quit\n")
+                        choice = input("Select an option: ")
+
+                        if choice == '1':
+                            receiverNumber = input("Enter the user num of the user to send a message: ")
+                            try:
+                                found = False
+                                receiverNumber = int(receiverNumber) - 1
+                                if 0 <= receiverNumber < len(list):
+
+                                    r_user = list[receiverNumber][1]
+
+                                    sender = self._current_user[0]
+                                    recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
+                                    message = input("what message would you like to send?\n")
+
+                                    self.db_manager.execute(
+                                        "INSERT INTO messages(sender, message, receiver) VALUES (?, ?, ?)",
+                                        (recipient, message, sender))
+                                    print(f"\nmessage sent to '{r_user}' successfully!")
+
+                                    found = True
+
+                                if not found:
+                                    print("User not found, please try again.")
+                            except:
+                                print("User Num did not match. Please try again.")
+
+                        elif choice == '2':
+                            if self._current_user[7]:
+                                print()
+                            else:
+                                print("only plus members may view the list of all users")
+                        elif choice == 'q':
+                            break
+                        else:
+                            print("invalid selection")
+
+                    return 0
+                def delete_message():
+                    print('under construction')
+                    return 0
+                def reply_message():
+                    print('under construction')
+                    return 0
+
+                while True:
+                    #print all messages to this user
+                    #get messages(recipient not needed)
+                    # currently shows all messages add this to select relavant messages only: WHERE (recipient =?) self._current_user[0],
+                    messages = self.db_manager.fetchall("SELECT * FROM messages ", ())
+                    #for each message, cut out the first 20 characters
+
+                    if not messages:
+                        print("you have no messages")
+                    else:
+                        print("\nFriends List")
+                        print("-------------------------------")
+                        head = ["sender", "message", ""]
+                        print(tabulate(messages, headers=head, tablefmt="grid"), "\n")
+
+
+                    #print the menu
+                    print('1.Send a new message\n2.Reply to a message\n3.Delete a message\nq.Quit\n')
+                    choice = input("Select an option: ")
+
+                    if(choice == '1'):
+                        send_message()
+                    elif(choice == '2'):
+                        reply_message()
+                    elif(choice == '2'):
+                        delete_message()
+                    elif(choice == 'q'):
+                        break
+                    else:
+                        print("invalid selection")
+
             options = {'1':jobs, '2':connect_with_user, '3':learn_skill, '4':useful_links, '5':important_InCollege_links, '6':show_my_network,
-            '7': myProfileOptions}
+            '7': myProfileOptions, '8':messsaging_menu}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -1289,7 +1383,7 @@ class InCollegeAppManager:
                 option = input("Select an option: ")
                 if option in options: 
                     options[option]()
-                elif option == '8':
+                elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
@@ -1361,7 +1455,11 @@ class InCollegeAppManager:
                 name_last = input("Enter your last name: \n")
                 univ = input("Enter your university: \n")
                 major = input("Enter your major: \n")
-                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major)
+
+                plus = input("Would you like to create a plus account?(y/n)\nYou will be charged 10$ a month\n")
+                plus = (plus == 'y')
+
+                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major, plus=plus)
                 if _acc is not None:
                     print('\nYou have successfully created an account!\nLog in to start using InCollege.')
                 else:
