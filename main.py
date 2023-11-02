@@ -1310,7 +1310,7 @@ class InCollegeAppManager:
                                     recipient = self.db_manager.fetchall("SELECT COUNT(*) FROM accounts WHERE (username =?)", (r_user,))[0][0]
                                     message = input("what message would you like to send?\n")
 
-                                    self.db_manager.execute("INSERT INTO messages(sender, message, recipient) VALUES (?, ?, ?)",(recipient, message, sender))
+                                    self.db_manager.execute("INSERT INTO messages(sender, message, recipient) VALUES (?, ?, ?)",(sender, message, recipient))
                                     print(f"\nmessage sent to '{r_user}' successfully!")
 
                                     found = True
@@ -1331,7 +1331,14 @@ class InCollegeAppManager:
                             print("invalid selection")
 
                     return 0
-                def delete_message():
+
+                def view_full_message(text, user):
+                    print(menu_seperate)
+                    print("sender: " + user)
+                    print('-------------------')
+                    print(text)
+                    print(menu_seperate)
+                def delete_message(message_to_delete):
                     print('under construction')
                     return 0
                 def reply_message():
@@ -1341,10 +1348,13 @@ class InCollegeAppManager:
                 while True:
                     #print all messages to this user
                     #get messages(recipient not needed)
-                    # currently shows all messages add this to select relavant messages only: WHERE (recipient =?) self._current_user[0],
-                    messages = self.db_manager.fetchall("SELECT * FROM messages ", ())
+                    messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
+                    modified_messages = []
                     for i in range(len(messages)):
-                        messages[i] = [messages[i][0], messages[i][1]]
+                        modified_string = messages[i][1][:20] + '...' if len(messages[i][1]) > 20 else messages[i][1]
+                        username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][0],))[0][1]
+
+                        modified_messages.append([i+1, username, modified_string])
                     #for each message, cut out the first 20 characters
 
                     if not messages:
@@ -1352,20 +1362,34 @@ class InCollegeAppManager:
                     else:
                         print("\nCurrent messages")
                         print("-------------------------------")
-                        head = ["sender", "message"]
-                        print(tabulate(messages, headers=head, tablefmt="grid"), "\n")
+                        head = ["message ID", "sender", "message"]
+                        print(tabulate(modified_messages, headers=head, tablefmt="grid"), "\n")
 
 
                     #print the menu
-                    print('1.Send a new message\n2.Reply to a message\n3.Delete a message\nq.Quit\n')
+                    print('1.Send a new message\n2.Reply to a message\n3.View full message\n4.Delete a message\nq.Quit\n')
                     choice = input("Select an option: ")
 
                     if(choice == '1'):
                         send_message()
                     elif(choice == '2'):
                         reply_message()
-                    elif(choice == '2'):
-                        delete_message()
+                    elif(choice == '3'):
+                        choice = input("Which message would you like to view in full?\nenter the message ID: ")
+                        try:
+                            choice = int(choice)-1
+                            view_full_message(messages[choice][1],modified_messages[choice][1])
+                        except:
+                            print("message not found")
+                    elif(choice == '4'):
+                        choice = input("Which message would you like to delete?\nenter the message ID: ")
+                        try:
+                            choice = int(choice) - 1
+                            delete_message(messages[choice])
+                        except:
+                            print("message not found")
+
+
                     elif(choice == 'q'):
                         break
                     else:
