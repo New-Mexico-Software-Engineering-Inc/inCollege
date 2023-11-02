@@ -1334,13 +1334,16 @@ class InCollegeAppManager:
 
                     return 0
                 def delete_message():
+                    print('under construction')
                     return 0
                 def reply_message():
+                    print('under construction')
                     return 0
 
                 while True:
                     #print all messages to this user
-                    #get messages(recipient not needed) WHERE (recipient =?) self._current_user[0],
+                    #get messages(recipient not needed)
+                    # currently shows all messages add this to select relavant messages only: WHERE (recipient =?) self._current_user[0],
                     messages = self.db_manager.fetchall("SELECT * FROM messages ", ())
                     #for each message, cut out the first 20 characters
 
