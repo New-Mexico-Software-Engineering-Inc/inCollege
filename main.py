@@ -158,7 +158,7 @@ class InCollegeAppManager:
 
         self.db_manager.execute('''
                 CREATE TABLE IF NOT EXISTS messages (
-                    recpient INTEGER NOT NULL,
+                    recipient INTEGER NOT NULL,
                     message TEXT NOT NULL,
                     sender INTEGER NOT NULL
                 );
@@ -1286,8 +1286,82 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
+            def messsaging_menu():
+                def send_message():
+                    while True:
+                        #generate list of friends
+                        print(menu_seperate)
+                        print_friends()
+                        list = create_friends_list(self._current_user[1])
+
+                        print("1. send one of your friends a message\n2.View the list of all users\nq.Quit\n")
+                        choice = input("Select an option: ")
+
+                        if choice == '1':
+                            receiverNumber = input("Enter the user num of the user to send a message: ")
+                            try:
+                                found = False
+                                receiverNumber = int(receiverNumber) - 1
+                                if 0 <= receiverNumber < len(list):
+
+                                    sender = list[receiverNumber][0]
+                                    recipient = self._current_user[0]
+                                    message = input("what message would you like to send?")
+
+                                    self.db_manager.execute(
+                                        "INSERT INTO messages(sender, message, receiver) VALUES (?, ?, ?)",
+                                        (sender[0], message, recipient))
+                                    print(f"\nmessage sent to {self._current_user[1]} successfully!")
+
+                                    found = True
+
+                                if not found:
+                                    print("User not found, please try again.")
+                            except:
+                                print("User Num did not match. Please try again.")
+
+                        elif choice == '2':
+                            if self._current_user[7]:
+                                print()
+                            else:
+                                print("only plus members may view the list of all users")
+                        elif choice == 'q':
+                            break
+                        else:
+                            print("invalid selection")
+
+                    return 0
+                def delete_message():
+                    return 0
+                def reply_message():
+                    return 0
+
+                while True:
+                    #print all messages to this user
+                    #get messages(recipient not needed)
+                    messages = self.db_manager.fetchall("SELECT sender, message  FROM messages WHERE recipient=?", (self._current_user[0]))
+                    #for each message, cut out the first 20 characters
+                    for message in messages:
+                        print()
+
+
+                    #print the menu
+                    print('1.Send a new message\n2.Reply to a message\n3.Delete a message\nq.Quit\n')
+                    choice = input("Select an option: ")
+
+                    if(choice == '1'):
+                        send_message()
+                    elif(choice == '2'):
+                        reply_message()
+                    elif(choice == '2'):
+                        delete_message()
+                    elif(choice == 'q'):
+                        break
+                    else:
+                        print("invalid selection")
+
             options = {'1':jobs, '2':connect_with_user, '3':learn_skill, '4':useful_links, '5':important_InCollege_links, '6':show_my_network,
-            '7': myProfileOptions}
+            '7': myProfileOptions, '9':messsaging_menu}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
