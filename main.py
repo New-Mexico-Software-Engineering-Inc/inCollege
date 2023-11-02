@@ -1307,12 +1307,10 @@ class InCollegeAppManager:
                                     r_user = list[receiverNumber][1]
 
                                     sender = self._current_user[0]
-                                    recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
+                                    recipient = self.db_manager.fetchall("SELECT COUNT(*) FROM accounts WHERE (username =?)", (r_user,))[0][0]
                                     message = input("what message would you like to send?\n")
 
-                                    self.db_manager.execute(
-                                        "INSERT INTO messages(sender, message, receiver) VALUES (?, ?, ?)",
-                                        (recipient, message, sender))
+                                    self.db_manager.execute("INSERT INTO messages(sender, message, recipient) VALUES (?, ?, ?)",(recipient, message, sender))
                                     print(f"\nmessage sent to '{r_user}' successfully!")
 
                                     found = True
@@ -1345,14 +1343,16 @@ class InCollegeAppManager:
                     #get messages(recipient not needed)
                     # currently shows all messages add this to select relavant messages only: WHERE (recipient =?) self._current_user[0],
                     messages = self.db_manager.fetchall("SELECT * FROM messages ", ())
+                    for i in range(len(messages)):
+                        messages[i] = [messages[i][0], messages[i][1]]
                     #for each message, cut out the first 20 characters
 
                     if not messages:
                         print("you have no messages")
                     else:
-                        print("\nFriends List")
+                        print("\nCurrent messages")
                         print("-------------------------------")
-                        head = ["sender", "message", ""]
+                        head = ["sender", "message"]
                         print(tabulate(messages, headers=head, tablefmt="grid"), "\n")
 
 
