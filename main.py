@@ -1304,14 +1304,16 @@ class InCollegeAppManager:
                                 receiverNumber = int(receiverNumber) - 1
                                 if 0 <= receiverNumber < len(list):
 
-                                    sender = list[receiverNumber][0]
-                                    recipient = self._current_user[0]
-                                    message = input("what message would you like to send?")
+                                    r_user = list[receiverNumber][1]
+
+                                    sender = self._current_user[0]
+                                    recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
+                                    message = input("what message would you like to send?\n")
 
                                     self.db_manager.execute(
                                         "INSERT INTO messages(sender, message, receiver) VALUES (?, ?, ?)",
-                                        (sender[0], message, recipient))
-                                    print(f"\nmessage sent to {self._current_user[1]} successfully!")
+                                        (recipient, message, sender))
+                                    print(f"\nmessage sent to '{r_user}' successfully!")
 
                                     found = True
 
@@ -1338,11 +1340,17 @@ class InCollegeAppManager:
 
                 while True:
                     #print all messages to this user
-                    #get messages(recipient not needed)
-                    messages = self.db_manager.fetchall("SELECT sender, message  FROM messages WHERE recipient=?", (self._current_user[0]))
+                    #get messages(recipient not needed) WHERE (recipient =?) self._current_user[0],
+                    messages = self.db_manager.fetchall("SELECT * FROM messages ", ())
                     #for each message, cut out the first 20 characters
-                    for message in messages:
-                        print()
+
+                    if not messages:
+                        print("you have no messages")
+                    else:
+                        print("\nFriends List")
+                        print("-------------------------------")
+                        head = ["sender", "message", ""]
+                        print(tabulate(messages, headers=head, tablefmt="grid"), "\n")
 
 
                     #print the menu
@@ -1361,7 +1369,7 @@ class InCollegeAppManager:
                         print("invalid selection")
 
             options = {'1':jobs, '2':connect_with_user, '3':learn_skill, '4':useful_links, '5':important_InCollege_links, '6':show_my_network,
-            '7': myProfileOptions, '9':messsaging_menu}
+            '7': myProfileOptions, '8':messsaging_menu}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -1372,7 +1380,7 @@ class InCollegeAppManager:
                 option = input("Select an option: ")
                 if option in options: 
                     options[option]()
-                elif option == '8':
+                elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
