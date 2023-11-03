@@ -738,6 +738,7 @@ class InCollegeAppManager:
 
                 if friends:
                     print("\nFriends List")
+                    print("-------------------------------")
                     head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major", "Profile"]
                     print(tabulate(friends, headers=head, tablefmt="grid"), "\n")
 
@@ -748,6 +749,9 @@ class InCollegeAppManager:
                 while True:
                     print(menu_seperate)
                     print(self.menus["show_my_network"])
+                    user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (self._current_user[0],))
+                    if user_messages and user_messages[0][0] > 0:
+                        print("You have a message waiting for you in the Message Center.")
                     choice = input("Please select an option: ")
 
                     if choice == "1":
@@ -1312,11 +1316,7 @@ class InCollegeAppManager:
                         print_friends()
                         friend_list = create_friends_list(self._current_user[1])
 
-<<<<<<< Updated upstream
-                        print("1. Send one of your friends a message\n2. View the list of all users\nq. Quit\n")
-=======
                         print("1. send one of your friends a message\n2.View the list of all users (Plus)\nq.Quit\n")
->>>>>>> Stashed changes
                         choice = input("Select an option: ")
 
                         if choice == '1':
@@ -1330,21 +1330,15 @@ class InCollegeAppManager:
 
                                     sender = self._current_user[0]
                                     recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
-<<<<<<< Updated upstream
-                                    message = input("what message would you like to send?\nHit \"ENTER\" after you are done typing your message\n")
-
-                                    self.db_manager.execute("INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",(recipient, message, sender))
-=======
                                     assert recipient, "Error: This user does not exist."
                                     is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient)
                                     # Assert user is friend or user is plus
                                     assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
-                                    message = input("what message would you like to send?\n")
+                                    message = input("what message would you like to send?\nHit \"ENTER\" after you are done typing your message\n")
 
                                     self.db_manager.execute(
                                         "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
                                         (recipient, message, sender))
->>>>>>> Stashed changes
                                     print(f"\nmessage sent to '{r_user}' successfully!")
 
                                     found = True
