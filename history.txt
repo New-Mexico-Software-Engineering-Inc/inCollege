@@ -1,0 +1,213 @@
+commit fdc808c2343f6a4aca13b39065a7b9374b8e4295     (tag:231008NewMexico)
+Merge: c016557 9d6a7cb
+Author: ryanmartnz <145288898+ryanmartnz@users.noreply.github.com>
+Date:   Sun Oct 8 23:09:07 2023 -0400
+
+    tests now run with database file already created, tests are independent
+
+commit 9d6a7cb921c8e8f4439b607d496996626152b9bd     (tag:231008NewMexico)
+Merge: 1847d45 c016557
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Sun Oct 8 23:04:18 2023 -0400
+
+    Merge branch 'dev-main' of https://github.com/New-Mexico-Software-Engineering-Inc/inCollege into dev-main
+
+commit 1847d456171843fc4326232508cedfc07aa40193     (tag:231008NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Sun Oct 8 23:02:40 2023 -0400
+
+    tests now run with database file already created, pytests are now independent
+
+commit c01655757a16e1fde588900df95da41415c51db5     (tag:231008NewMexico)
+Author: John Koch <77421428+Johnnykoch02@users.noreply.github.com>
+Date:   Sun Oct 8 22:45:44 2023 -0400
+
+    Update python-app.yml
+
+commit d86b8e850774ecc379144e8b56b1815906e166be     (tag:231008NewMexico)
+Author: John Koch <77421428+Johnnykoch02@users.noreply.github.com>
+Date:   Sun Oct 8 22:44:43 2023 -0400
+
+    Create python-app.yml
+
+commit f03d2784afe400a4c97dc2e6f6fa7103d275a8e1     (tag:231008NewMexico)
+Author: DESKTOP-N9VDHAM\John <johnnykoch02@gmail.com>
+Date:   Sun Oct 8 22:40:59 2023 -0400
+
+    Fix test
+
+commit f2f4611fddb14eb3f406d8e33810907d18cb36af     (tag:231008NewMexico)
+Merge: 67e9d58 2f08683
+Author: DESKTOP-N9VDHAM\John <johnnykoch02@gmail.com>
+Date:   Sun Oct 8 22:05:57 2023 -0400
+
+    Merge branch 'dev-main' of https://github.com/New-Mexico-Software-Engineering-Inc/inCollege into dev-main
+
+commit 67e9d58c590d0be61f55edd77861641d49dd8f57     (tag:231008NewMexico)
+Author: DESKTOP-N9VDHAM\John <johnnykoch02@gmail.com>
+Date:   Sun Oct 8 22:02:39 2023 -0400
+
+    Fixing Tests
+
+commit 2f0868387c0242a325fcd9ebc5dfc9ece895e725     (tag:231008NewMexico)
+Merge: 6485462 ea3db5a
+Author: ryanmartnz <145288898+ryanmartnz@users.noreply.github.com>
+Date:   Sun Oct 8 20:09:25 2023 -0400
+
+    fixed test_main4.py
+
+commit ea3db5a385ad9d4603a13ddea83e2e7818409234     (tag:231008NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Sun Oct 8 20:08:27 2023 -0400
+
+    fixed test_main4.py
+
+commit 6485462c1df4b6303124ea694e2389eb6038e13a     (tag:231007NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Sat Oct 7 20:15:32 2023 -0400
+
+    fixed some more tests
+
+commit 35d71e88aef970816ba48065836bb684f00dbbf9     (tag:231007NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Sat Oct 7 19:19:39 2023 -0400
+
+    test_main fixed
+
+commit 59f7bd2739060593dc7d9ed93be46a269493d20f     (tag:231007NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Sat Oct 7 17:58:37 2023 -0400
+
+    un-comment test for 5 accounts
+
+commit 1718d8f756b5e0570b8e73db89b576e7916ef1e4     (tag:231007NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Sat Oct 7 17:47:36 2023 -0400
+
+    added tests
+
+commit a9a6464f90cd5c496ac41d71a11d5f0e4c714010     (tag:231007NewMexico)
+Merge: 9b9911e 1891afc
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Sat Oct 7 14:55:19 2023 -0400
+
+    Merge branch 'dev-main' into dev-main-johnboi
+
+commit 9b9911e3b5b7e9a2319a488e4df9cf8c4389912d     (tag:231007NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Sat Oct 7 14:55:08 2023 -0400
+
+    created test one, which creates two users
+
+commit 1891afc445266c6880868a1b0aa36d5edc660ce8     (tag:231006NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Fri Oct 6 18:26:49 2023 -0400
+
+    changed unlogged in version of find a user
+
+commit b55314959be96555df36a4eab62d2e1a076d16c7     (tag:231006NewMexico)
+Merge: 5e47178 a839f0e
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Fri Oct 6 17:16:44 2023 -0400
+
+    Merge branch 'dev-main' into dev-main-johnboi
+
+commit a839f0e14e9b0f0bcfada717e48f62bf6132b696     (tag:231006NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Fri Oct 6 17:16:18 2023 -0400
+
+    added some boilerplate code
+
+commit 5e471786bdd96a3d49f31af734c74d3011bd06e8     (tag:231006NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Fri Oct 6 17:14:21 2023 -0400
+
+    example test
+
+commit be02aa0313e911a54e839e2d54415dd1da1a19a2     (tag:231006NewMexico)
+Author: johnboiiii <145299227+johnboiiii@users.noreply.github.com>
+Date:   Fri Oct 6 16:49:00 2023 -0400
+
+    created test 4 file
+
+commit d3a3409ba042770ddcdc4049914cff7e0ffad435     (tag:231005NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Thu Oct 5 15:25:17 2023 -0400
+
+    now allows users to see their outgoing friend requests, converted menus to a dictionary
+
+commit 0f39eea540214e0d8abf4c88ee77d1afd02fef2f     (tag:231005NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Thu Oct 5 14:35:39 2023 -0400
+
+    implemented show my network function, friendships fully implemented, reorganized code
+
+commit 7d0a4f0323677046975331681ac7f14db7dc53ff     (tag:231004NewMexico)
+Merge: adfe209 dffbafa
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Wed Oct 4 00:41:48 2023 -0400
+
+    merged branch dev-main-austin
+
+commit adfe2092127a7ba7d2eb9f406415b09db0548e2b     (tag:231003NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 22:22:50 2023 -0400
+
+    small grammar changes
+
+commit 2cd611ff49c0d268ea405e6be3ad8b46bcfc39cc     (tag:231003NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 21:51:22 2023 -0400
+
+    updated friends functions
+
+commit 0dd5f17de50adc775f4b7b6fc980b80af53eb931     (tag:231003NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 17:51:26 2023 -0400
+
+    added friendship functionality
+
+commit dffbafa6eae8dcc3f5ffd136bb807ef591b9f040     (tag:231003NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Tue Oct 3 17:16:23 2023 -0400
+
+    implemented menu for viewing and managing friend requests
+
+commit 2d10046afcd843499a48c65d76b0ccdc00d98784     (tag:231003NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 16:07:30 2023 -0400
+
+    menu update
+
+commit e23507f4cc41d82249784e12e030e522607ea64d     (tag:231003NewMexico)
+Merge: 56b0fea 886a9ea
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 16:02:59 2023 -0400
+
+    Merge branch 'dev-main-ryan' into dev-main-austin
+
+commit 56b0fea1019ba3e2da0648eee088c7cdce36a330     (tag:231003NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 16:00:26 2023 -0400
+
+    delete to merge from ryan
+
+commit 886a9eae22b9f02876cdc1a497815b43c89d6bf3     (tag:231003NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Tue Oct 3 15:48:16 2023 -0400
+
+    updated friend request and connect with user functions
+
+commit 7f94320da75404b622e3c7477e89cb30de006e4d     (tag:231003NewMexico)
+Author: ryanmartinez <martinez274@usf.edu>
+Date:   Tue Oct 3 15:30:55 2023 -0400
+
+    updated search user by, implemented send friend request function
+
+commit 6e8c156f1199d1b785f64bfde7776a97c5fedd84     (tag:231003NewMexico)
+Author: austinmartin2424 <austinmartin2424@gmail.com>
+Date:   Tue Oct 3 11:21:38 2023 -0400
+
+    dev1 changes
+    
+    updated to 10 users, altered accounts table to store university and major, and started the new version of ConnectWUser (not finished yet)

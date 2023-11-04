@@ -66,6 +66,24 @@ class DatabaseManager:
     
     def user_is_applicant(self, user_id, job_id):
         return self.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user_id, job_id))[0][0] > 0
+    
+    def check_friendship_status(self, user1_id, user2_id):
+                query = """
+                SELECT COUNT(1) FROM friendship 
+                WHERE (user_one = (SELECT username FROM accounts WHERE user_id = ?) 
+                AND user_two = (SELECT username FROM accounts WHERE user_id = ?)) 
+                OR (user_one = (SELECT username FROM accounts WHERE user_id = ?) 
+                AND user_two = (SELECT username FROM accounts WHERE user_id = ?))
+                """
+                try:
+                    # Execute the SQL query
+                    result = self.fetch(query, (user1_id, user2_id, user2_id, user1_id))
+                    # Check if the friendship exists
+                    return result[0] > 0  # True if count is more than 0, otherwise False
+                except Exception as e:
+                    # Handle any exceptions, such as database connection errors or query errors
+                    print(f"An error occurred: {e}")
+                    return False
 
 class InCollegeAppManager:
     def __init__(self, data_file="users.db", DEBUG=False):
@@ -85,14 +103,14 @@ class InCollegeAppManager:
         # For the accounts table
         pw = bcrypt.hashpw("p1".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
-            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1");
-        ''', (pw,))
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major, plus)
+            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1", ?);
+        ''', (pw, True))
 
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
-            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2");
-        ''', (pw,))
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major, plus)
+            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2", ?);
+        ''', (pw, False))
         
         
         # For the settings table
@@ -136,15 +154,7 @@ class InCollegeAppManager:
             INSERT OR IGNORE INTO job_applications (applicant, job_id, gr_date, s_date, quals)
             VALUES (1, 1, "00/00/0000", "00/00/0000", "Very Qualified Candidate");
         ''')
-        self.db_manager.execute('''
-            INSERT OR IGNORE INTO job_save (applicant, job_id, saved)
-            VALUES (1, 1, False);
-        ''')
-        self.db_manager.execute('''
-            INSERT OR IGNORE INTO job_deleted (applicant, job_id, deleted_num)
-            VALUES (1, 1, 0);
-        ''')
-    
+
         # Commit changes
         self.db_manager.commit()
         
@@ -159,7 +169,18 @@ class InCollegeAppManager:
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
             university TEXT NOT NULL,
-            major TEXT NOT NULL
+            major TEXT NOT NULL,
+            plus BOOL NOT NULL
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            recipient INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            sender INTEGER NOT NULL,
+            FOREIGN KEY (recipient) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (sender) REFERENCES accounts(user_id) ON DELETE CASCADE
         );
         ''')
 
@@ -250,6 +271,15 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS deleted_job_notifs (
+            applicantID INTEGER,
+            jobID INTEGER,
+            jobTitle TEXT NOT NULL,
+            FOREIGN KEY (applicantID) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS job_save (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             applicant INTEGER NOT NULL,
@@ -259,16 +289,7 @@ class InCollegeAppManager:
             FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
         );
         ''')
-        self.db_manager.execute('''
-        CREATE TABLE IF NOT EXISTS job_deleted (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            applicant INTEGER NOT NULL,
-            job_id INTEGER NOT NULL,
-            deleted_num INTEGER NOT NULL,
-            FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
-            FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
-        );
-        ''')
+
         self.db_manager.commit()
 
         if self.db_manager.fetch("SELECT COUNT(*) FROM skills")[0] == 0:
@@ -289,7 +310,7 @@ class InCollegeAppManager:
         print('Goodbye!')
         exit(0)
         
-    def _create_account(self, username, password, first_name, last_name, university, major) -> Any:
+    def _create_account(self, username, password, first_name, last_name, university, major, plus) -> Any:
         """
             Attempts to Create Account with [username, password]. Returns True if successful, otherwise throws an Exception.
         """
@@ -309,8 +330,8 @@ class InCollegeAppManager:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         self.db_manager.execute(
-            'INSERT INTO accounts (username, password, first_name, last_name, university, major) VALUES (?, ?, ?, ?, ?, ?);',
-            (username, hashed_password, first_name, last_name, university, major))
+            'INSERT INTO accounts (username, password, first_name, last_name, university, major, plus) VALUES (?, ?, ?, ?, ?, ?, ?);',
+            (username, hashed_password, first_name, last_name, university, major, plus))
         
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
@@ -647,6 +668,7 @@ class InCollegeAppManager:
                                 print("User Num did not match. Please try again.")
 
             # function that sends a friend request to the "receiver" user from the "sender" user
+
             def send_friend_request(sender, receiver):
                 request_exists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
                                         (sender, receiver)))[0][0]
@@ -706,7 +728,7 @@ class InCollegeAppManager:
                     friends_list[i] = list(friends_list[i])
                     friends_list[i].insert(0, i+1)
                     profile_status = self.db_manager.fetch('SELECT posted FROM profiles WHERE (username=?)', (friends_list[i][1],))
-                    if profile_status[0] == "yes":
+                    if profile_status and profile_status[0] == "yes":
                         friends_list[i].append("View Profile")
                     else:
                         friends_list[i].append("No Profile Posted")
@@ -729,6 +751,9 @@ class InCollegeAppManager:
                 while True:
                     print(menu_seperate)
                     print(self.menus["show_my_network"])
+                    user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (self._current_user[0],))
+                    if user_messages and user_messages[0][0] > 0:
+                        print("You have a message waiting for you in the Message Center.")
                     choice = input("Please select an option: ")
 
                     if choice == "1":
@@ -1062,36 +1087,39 @@ class InCollegeAppManager:
                         print('Error While Posting Job:\n', e)
 
                 def delete_job():
-                        print(menu_seperate)
-                        print("Jobs you have posted\n-------------------------------")
-                        try:
-                            user_id = self._current_user[0]
-                            jobs_from_user = self.db_manager.fetchall("SELECT * FROM jobs WHERE posted_by=?", (user_id,))
-                            if not jobs_from_user:
-                                print("You have no jobs posted.")
-                                return
-                            
-                            display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nID: {x[0]}\n"
-                            jobs = [self.db_manager.find_jobs_by_id(job[0])[0] for job in jobs_from_user]
-                            print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs.")
+                    print(menu_seperate)
+                    print("Jobs you have posted\n-------------------------------")
+                    try:
+                        user_id = self._current_user[0]
+                        jobs_from_user = self.db_manager.fetchall("SELECT * FROM jobs WHERE posted_by=?", (user_id,))
+                        if not jobs_from_user:
+                            print("You have no jobs posted.")
+                            return
+                        
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job[0])[0] for job in jobs_from_user]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs.")
 
-                            print("Delete a job\n-------------------------------")
-                            job_id = input("Enter the ID of the job you wish to delete (or enter q to cancel): ")
-                            if job_id == "q":
-                                return
-                            job_id = int(job_id)
-                            job_details = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=? AND posted_by=?", (job_id, user_id))
-                            assert job_details, 'Job not found or you do not have permission to delete this job.'
-                            
-                            # Delete the job from jobs table
-                            self.db_manager.execute("DELETE FROM jobs WHERE job_id=?", (job_id,))
-                            # Delete related applications from job_applications table
-                            self.db_manager.execute("DELETE FROM job_applications WHERE job_id=?", (job_id,))
-                            self.db_manager.execute("DELETE FROM job_save WHERE job_id=?", (job_id,))
-                            print(f"Job with ID {job_id} has been successfully deleted.\nAll applications and saves to this job have also been deleted.")
-                            self.db_manager.commit()
-                        except Exception as e:
-                            print("Error: ", e)
+                        print("Delete a job\n-------------------------------")
+                        job_id = input("Enter the ID of the job you wish to delete (or enter q to cancel): ")
+                        if job_id == "q":
+                            return
+                        job_id = int(job_id)
+                        job_details = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=? AND posted_by=?", (job_id, user_id))
+                        assert job_details, 'Job not found or you do not have permission to delete this job.'
+                        job_title = job_details[0][3]
+
+                        # add all users that have applied to this job to the deleted_job_notifs table
+                        applicantIDs = self.db_manager.fetchall("SELECT applicant FROM job_applications WHERE job_id=?", (job_id,))
+                        for i in applicantIDs:
+                            self.db_manager.execute("INSERT INTO deleted_job_notifs (applicantID, jobID, jobTitle) VALUES (?, ?, ?)", (i[0], job_id, job_title))
+
+                        # Delete the job from jobs table
+                        self.db_manager.execute("DELETE FROM jobs WHERE job_id=?", (job_id,))
+                        print(f"Job with ID {job_id} has been successfully deleted.\nAll applications to this job have also been deleted.")
+
+                    except Exception as e:
+                        print("Error: ", e)
 
                 def search_job():
                     print(menu_seperate)
@@ -1135,18 +1163,31 @@ class InCollegeAppManager:
                         jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
                         print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                     else:
-                        print("You have no currently active job applications.\n")
-                        
+                        print("You have no currently active job applications.")
+
                 def print_jobs_not_applied_for():
                     print(menu_seperate)
-                    print("\nJobs You Haven't Applied For\n-------------------------------")
-                    unapplied_jobs = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id NOT IN (SELECT job_id FROM job_applications WHERE applicant=?) AND posted_by != ?", (self._current_user[0], self._current_user[0]))
-                    if unapplied_jobs:
-                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' ' + x[10]}\nJob ID: {x[0]}\n"
-                        jobs = unapplied_jobs
-                        print("\n".join([display_job(j) for j in jobs]))
+                    print("Jobs You Have Not Applied For\n-------------------------------")
+                    applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
+
+                    applied_job_ids = []
+                    for i in applied_for_jobs:
+                        applied_job_ids.append(i[2])
+
+                    not_applied_ids = []
+
+                    all_ids = self.db_manager.fetchall("SELECT job_id from jobs")
+
+                    for i in all_ids:
+                        if i[0] not in applied_job_ids:
+                            not_applied_ids.append(i[0])
+
+                    if not_applied_ids:
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job)[0] for job in not_applied_ids]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
                     else:
-                        print("You have applied for all available jobs.")
+                        print("There are currently no jobs that you have not already applied to.")
                 
                 def print_saved_jobs():
                     print(menu_seperate)
@@ -1247,9 +1288,19 @@ class InCollegeAppManager:
                     except Exception as e:
                         print("Error: ", e)
 
-                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':print_jobs_not_applied_for , '6':save_a_job, '7':print_saved_jobs, '8': delete_job}
+                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': print_jobs_not_applied_for, '8': delete_job}
                 while True:
                     print(menu_seperate)
+
+                    # if there are any deleted_job_notif entries with this user's user_id, we will display the notifs and then remove the entries
+                    userID = self._current_user[0]
+                    deleted_jobs = self.db_manager.fetchall("SELECT * FROM deleted_job_notifs WHERE applicantID=?", (userID,))
+                    if deleted_jobs:
+                        print("Job Notifications:\n-------------------------------")
+                        for i in deleted_jobs:
+                            print(f"The job posting with ID [{i[1]}] and title [{i[2]}] that you applied for was removed.\n")
+                        self.db_manager.execute("DELETE FROM deleted_job_notifs where applicantID=?", (userID,))
+
                     print(self.menus["jobs"])
                     option = input("\nSelect an option: ")
                     if option in functions:
@@ -1259,8 +1310,171 @@ class InCollegeAppManager:
                     else:
                         print("Invalid choice. Please try again.")
 
+            def messsaging_menu():
+                def send_message():
+                    while True:
+                        #generate list of friends
+                        print(menu_seperate)
+                        print_friends()
+                        friend_list = create_friends_list(self._current_user[1])
+
+                        print("1. Send one of your friends a message\n2. View the list of all users (Plus)\nq.Quit\n")
+                        choice = input("Select an option: ")
+
+                        if choice == '1':
+                            receiverNumber = input("Enter the friend num of the user to send a message: ")
+                            try:
+                                found = False
+                                receiverNumber = int(receiverNumber) - 1
+                                if 0 <= receiverNumber < len(friend_list):
+
+                                    r_user = friend_list[receiverNumber][1]
+
+                                    sender = self._current_user[0]
+                                    recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
+                                    assert recipient, "Error: This user does not exist."
+                                    is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient)
+                                    # Assert user is friend or user is plus
+                                    assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
+                                    message = input("what message would you like to send?\nHit \"ENTER\" after you are done typing your message\n")
+
+                                    self.db_manager.execute(
+                                        "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
+                                        (recipient, message, sender))
+                                    print(f"\nmessage sent to '{r_user}' successfully!")
+
+                                    found = True
+
+                                if not found:
+                                    print("User not found, please try again.")
+                            except Exception as e:
+                                print("Error while sending a message:", e)
+
+                        elif choice == '2':
+                            if self._current_user[7]:
+                                try:
+                                    users = self.db_manager.fetchall("""SELECT * FROM 
+                                    accounts""")
+                                    if users:
+                                        display_user = lambda x: f"Name: {str(x[3]) + ' ' + str(x[4])}, ID: {x[0]}, University: {x[5]}, Major: {x[6]}\n"
+                                        
+                                        print("\n".join([display_user(user) for user in users]))
+
+                                        id = input("\n\nEnter the User ID of the user or q to quit: ").strip()
+
+                                        if id.lower() == "q": break
+                                        
+                                        id = int(id)
+
+                                        sender = self._current_user[0]
+                                        recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (id,))[0]
+                                        assert recipient, "Error: This user does not exist."
+                                        is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient[0])
+                                        # Assert user is friend or user is plus
+                                        assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
+                                        message = input("what message would you like to send?\n")
+
+                                        self.db_manager.execute(
+                                            "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
+                                            (recipient[0], message, sender))
+                                        print(f"\nmessage sent to '{recipient[3]}' successfully!")
+                                except Exception as e:
+                                    print("Error while sending a message:", e )
+                            else:
+                                print("Only plus members may view the list of all users")
+                        elif choice == 'q':
+                            break
+                        else:
+                            print("invalid selection")
+
+                    return 0
+                def view_full_message(text, user):
+                    print(menu_seperate)
+                    print(text)
+                    print("\n- " + user)
+                def delete_message(message_to_delete):
+                    recipient = message_to_delete[0]
+                    message = message_to_delete[1]
+                    sender = message_to_delete[2]
+
+                    self.db_manager.execute("DELETE FROM messages WHERE sender=? AND message=? AND recipient=?",((sender, message, recipient)))
+                    print('\nMessage successfully deleted!')
+                    return 0
+                def reply_message(message_to_reply):
+                    recipient = message_to_reply[0]
+                    message = message_to_reply[1]
+                    sender = message_to_reply[2]
+
+                    s_user = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (sender,))[0][1]
+
+                    reply = input("How would you like to reply to this message?\nHit \"ENTER\" after you are done typing your message\n")
+
+                    new_message = message+"\n\n- "+ s_user + "\n-------------------\n" + reply
+
+                    self.db_manager.execute("INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",(sender, new_message, recipient))
+                    print(f"\nreply sent to '{s_user}' successfully!")
+
+                while True:
+                    #print a preview of all messages to this user
+                    messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
+                    modified_messages = []
+
+                    print(messages)
+
+                    print(menu_seperate)
+                    if not messages:
+                        print("you have no messages\n")
+                    else:
+                        for i in range(len(messages)):
+                            modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
+                            username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
+                            modified_messages.append([i+1, username, modified_string])
+
+                        print("\nCurrent messages")
+                        head = ["message ID", "sender", "message"]
+                        print(tabulate(modified_messages, headers=head, tablefmt="grid"), "\n")
+
+
+                    #print the menu
+                    print('1. Send a new message\n2. Reply to a message\n3. View full message\n4. Delete a message\nq. Quit\n')
+                    choice = input("Select an option: ")
+
+                    #send a new message
+                    if(choice == '1'):
+                        send_message()
+                    #reply to a message
+                    elif(choice == '2'):
+                        choice = input("Which message would you like to reply to?\nenter the message ID: ")
+                        try:
+                            choice = int(choice) - 1
+                            reply_message(messages[choice])
+                        except:
+                            print("\nmessage not found")
+                    #view full message
+                    elif(choice == '3'):
+                        choice = input("Which message would you like to view in full?\nenter the message ID: ")
+                        try:
+                            choice = int(choice)-1
+                            view_full_message(messages[choice][1],modified_messages[choice][1])
+                        except:
+                            print("\nmessage not found")
+                    #delete a message
+                    elif(choice == '4'):
+                        choice = input("Which message would you like to delete?\nenter the message ID: ")
+                        try:
+                            choice = int(choice) - 1
+                            delete_message(messages[choice])
+                        except:
+                            print("\nmessage not found")
+                    #quit
+                    elif(choice == 'q'):
+                        break
+                    #else invalid
+                    else:
+                        print("invalid selection")
+
             options = {'1':jobs, '2':connect_with_user, '3':learn_skill, '4':useful_links, '5':important_InCollege_links, '6':show_my_network,
-            '7': myProfileOptions}
+            '7': myProfileOptions, '8':messsaging_menu}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -1271,7 +1485,7 @@ class InCollegeAppManager:
                 option = input("Select an option: ")
                 if option in options: 
                     options[option]()
-                elif option == '8':
+                elif option == '9':
                     if delete_this_account() == True: 
                         self._current_user = None
                         break
@@ -1293,6 +1507,9 @@ class InCollegeAppManager:
             _acc = self.__login(username=username, password=password)
             if _acc is not None:
                 print("\nYou have successfully logged in.")
+                user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (_acc[0],))
+                if user_messages and user_messages[0][0] > 0:
+                    print("You have a message waiting for you in the Message Center.")
                 signed_in_menu(_acc)
             else:
                 print('\nIncorrect username / password, please try again')
@@ -1343,7 +1560,11 @@ class InCollegeAppManager:
                 name_last = input("Enter your last name: \n")
                 univ = input("Enter your university: \n")
                 major = input("Enter your major: \n")
-                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major)
+
+                plus = input("Would you like to create a plus account?(y/n)\nYou will be charged 10$ a month\n")
+                plus = (plus == 'y')
+
+                _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major, plus=plus)
                 if _acc is not None:
                     print('\nYou have successfully created an account!\nLog in to start using InCollege.')
                 else:
@@ -1374,7 +1595,7 @@ class InCollegeAppManager:
                 print("Invalid choice. Please try again.")
 
 def main():
-    InCollegeAppManager(DEBUG=__DEBUG__).Run()
+    InCollegeAppManager().Run()
 
 if __name__ == '__main__':
     main()

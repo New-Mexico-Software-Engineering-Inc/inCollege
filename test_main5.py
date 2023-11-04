@@ -32,7 +32,7 @@ def clear_accounts():
 # clear all tables in database
 def __create_user_account():
     try:
-        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major', False)
     except Exception as e:
         print(e)
 
@@ -145,9 +145,9 @@ def test_view_friend_profile(monkeypatch, capsys):
 
     input = ''
     #create three accounts
-    input+= '2\na\n!!!Goodpswd0\na\na\na\na\n'
-    input +='2\nb\n!!!Goodpswd0\nb\nb\nb\nb\n'
-    input +='2\nc\n!!!Goodpswd0\nc\nc\nc\nc\n'
+    input+= '2\na\n!!!Goodpswd0\na\na\na\na\nn\n'
+    input +='2\nb\n!!!Goodpswd0\nb\nb\nb\nb\nn\n'
+    input +='2\nc\n!!!Goodpswd0\nc\nc\nc\nc\nn\n'
 
     #b creates a profile and sends a friend request to a
     #log in as b
