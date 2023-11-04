@@ -1316,15 +1316,15 @@ class InCollegeAppManager:
                         print_friends()
                         friend_list = create_friends_list(self._current_user[1])
 
-                        print("1. send one of your friends a message\n2.View the list of all users (Plus)\nq.Quit\n")
+                        print("1. Send one of your friends a message\n2. View the list of all users (Plus)\nq.Quit\n")
                         choice = input("Select an option: ")
 
                         if choice == '1':
-                            receiverNumber = input("Enter the user num of the user to send a message: ")
+                            receiverNumber = input("Enter the friend num of the user to send a message: ")
                             try:
                                 found = False
                                 receiverNumber = int(receiverNumber) - 1
-                                if 0 <= receiverNumber < len(list):
+                                if 0 <= receiverNumber < len(friend_list):
 
                                     r_user = friend_list[receiverNumber][1]
 
@@ -1379,7 +1379,7 @@ class InCollegeAppManager:
                                 except Exception as e:
                                     print("Error while sending a message:", e )
                             else:
-                                print("only plus members may view the list of all users")
+                                print("Only plus members may view the list of all users")
                         elif choice == 'q':
                             break
                         else:
