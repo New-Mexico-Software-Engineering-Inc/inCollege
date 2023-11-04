@@ -37,6 +37,7 @@ class DatabaseManager:
     
     def find_jobs_by_id(self, job_id):
         return self.fetchall("SELECT * FROM jobs where job_id=?;", (job_id,))
+    
     def close(self):
         self.conn.close()
     
@@ -65,6 +66,24 @@ class DatabaseManager:
     
     def user_is_applicant(self, user_id, job_id):
         return self.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user_id, job_id))[0][0] > 0
+    
+    def check_friendship_status(self, user1_id, user2_id):
+                query = """
+                SELECT COUNT(1) FROM friendship 
+                WHERE (user_one = (SELECT username FROM accounts WHERE user_id = ?) 
+                AND user_two = (SELECT username FROM accounts WHERE user_id = ?)) 
+                OR (user_one = (SELECT username FROM accounts WHERE user_id = ?) 
+                AND user_two = (SELECT username FROM accounts WHERE user_id = ?))
+                """
+                try:
+                    # Execute the SQL query
+                    result = self.fetch(query, (user1_id, user2_id, user2_id, user1_id))
+                    # Check if the friendship exists
+                    return result[0] > 0  # True if count is more than 0, otherwise False
+                except Exception as e:
+                    # Handle any exceptions, such as database connection errors or query errors
+                    print(f"An error occurred: {e}")
+                    return False
 
 class InCollegeAppManager:
     def __init__(self, data_file="users.db", DEBUG=False):
@@ -84,14 +103,14 @@ class InCollegeAppManager:
         # For the accounts table
         pw = bcrypt.hashpw("p1".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
-            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1");
-        ''', (pw,))
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major, plus)
+            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1", ?);
+        ''', (pw, True))
 
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
-            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2");
-        ''', (pw,))
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major, plus)
+            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2", ?);
+        ''', (pw, False))
         
         
         # For the settings table
@@ -157,11 +176,11 @@ class InCollegeAppManager:
 
         self.db_manager.execute('''
                 CREATE TABLE IF NOT EXISTS messages (
-                    recpient INTEGER NOT NULL,
+                    recipient INTEGER NOT NULL,
                     message TEXT NOT NULL,
                     sender INTEGER NOT NULL
                 );
-                ''')
+        ''')
 
         self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS settings (
@@ -248,6 +267,27 @@ class InCollegeAppManager:
             FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
         );
         ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS deleted_job_notifs (
+            applicantID INTEGER,
+            jobID INTEGER,
+            jobTitle TEXT NOT NULL,
+            FOREIGN KEY (applicantID) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
+        ''')
+
+        self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS job_save (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            applicant INTEGER NOT NULL,
+            job_id INTEGER NOT NULL,
+            saved BOOL NOT NULL,
+            FOREIGN KEY (applicant) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (job_id) REFERENCES jobs(job_id) ON DELETE CASCADE
+        );
+        ''')
+
         self.db_manager.commit()
 
         if self.db_manager.fetch("SELECT COUNT(*) FROM skills")[0] == 0:
@@ -626,6 +666,7 @@ class InCollegeAppManager:
                                 print("User Num did not match. Please try again.")
 
             # function that sends a friend request to the "receiver" user from the "sender" user
+
             def send_friend_request(sender, receiver):
                 request_exists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
                                         (sender, receiver)))[0][0]
@@ -648,30 +689,7 @@ class InCollegeAppManager:
                 else:
                     self.db_manager.execute("INSERT INTO friend_requests(sender, receiver) VALUES (?, ?)", (sender, receiver))
                     print(f"\nFriend request sent to {receiver} successfully!")
-            # Function for allowing users to apply for jobs
-            def apply_for_job():
-                print("Apply For A Job")
-                print(menu_seperate)
-                try:
-                    correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
-                    user = self._current_user[0]
-                    job = int(input("Enter the job ID: "))
-                    assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,)))[0][0], 'Job does not exist.'
-                    #appl_exists  
-                    assert not self.db_manager.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",
-                                   c         (user, job))[0][0], "Cannot apply more than once for  a job."
-                    gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
-                    assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
-                    w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
-                    assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
-                    quals = input("Tell us About Yourself and why you want the job: \n")
-                    assert quals, 'Cannot Leave field Empty.'
-                    self.db_manager.user_apply_job(user, job, gr_date, s_date, quals)
-                    print("Successfully Applied for the job.")
-                except Exception as e:
-                    print("Error Applying for Job:", e)
-
-
+            
             # function to add a friendship between the usernames passed as arguments so long as one does not already exist
             def add_friend(friendA, friendB):
                 # check if there exists a friendship between the two users already
@@ -708,7 +726,7 @@ class InCollegeAppManager:
                     friends_list[i] = list(friends_list[i])
                     friends_list[i].insert(0, i+1)
                     profile_status = self.db_manager.fetch('SELECT posted FROM profiles WHERE (username=?)', (friends_list[i][1],))
-                    if profile_status[0] == "yes":
+                    if profile_status and profile_status[0] == "yes":
                         friends_list[i].append("View Profile")
                     else:
                         friends_list[i].append("No Profile Posted")
@@ -731,6 +749,9 @@ class InCollegeAppManager:
                 while True:
                     print(menu_seperate)
                     print(self.menus["show_my_network"])
+                    user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (self._current_user[0],))
+                    if user_messages and user_messages[0][0] > 0:
+                        print("You have a message waiting for you in the Message Center.")
                     choice = input("Please select an option: ")
 
                     if choice == "1":
@@ -877,30 +898,7 @@ class InCollegeAppManager:
                             updateProfile(self,username)
                         else:
                             print("Invalid choice. Please try again.")
-            
-            def print_jobs_applied_for():
-                applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
-                if applied_for_jobs:
-                    display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
-                    jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
-                    print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
-                
-        
-            def search_job():
-                job = input("Enter a Job Title to Search for: ")
-                user_id = self._current_user[0]
-                display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer:{x[5]}\nSalary:{str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
-                jobs = self.db_manager.find_jobs_by_title(job)
-                def all():  
-                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that  name.")
-                def applied_for():
-                    print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that  name.")
-                def n_applied_for():
-                    print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that  name.")
-                queries = {'a': all, '1': applied_for, '2': n_applied_for}
-                query = input('Enter Job Query:\na. (All Jobs)\n1. (Jobs You\'ve Applied For)\n2. (Jobs You Haven\'t Applied For)\n')
-                print('\n')
-                queries.get(query, all)()
+     
             def createProfile(self, username):
                 """
                 Allows the user to create their profile and save it in the database.
@@ -1046,49 +1044,432 @@ class InCollegeAppManager:
                 print("Account deletion canceled, returning to account menu")
                 return False
 
-            def post_job():
-                """
-                Posts a job under the specified username
-                """
-                if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 10:
-                    print("All jobs have been created. Please come back later.")
-                    return
-                try:
-                    print(menu_seperate) #menu
-                    print("Create A Job\n-------------------------------")
-                    # Capture job details
-                    job_title = input("Enter the job title: \n")
-                    job_description = input("Enter the job description: \n")
-                    skill_name = input("Enter the required skill name: \n")
-                    long_description = input("Enter a long description for the skill: \n")
-                    employer = input("Enter the employer: \n")
-                    location = input("Enter the location: \n")
-                    salary = input("Enter the salary: \n")
-
-                    # ensure that the value entered for salary is numerical, otherwise we print message and leave function
-                    try:
-                        float(salary)
-                    except ValueError:
-                        print("Please enter a number for salary")
+            def jobs():
+                def post_job():
+                    """
+                    Posts a job under the specified username
+                    """
+                    if self.db_manager.fetch('SELECT COUNT(*) FROM jobs;')[0] >= 10:
+                        print("All jobs have been created. Please come back later.")
                         return
+                    try:
+                        print(menu_seperate) #menu
+                        print("Create A Job\n-------------------------------")
+                        # Capture job details
+                        job_title = input("Enter the job title: \n")
+                        job_description = input("Enter the job description: \n")
+                        skill_name = input("Enter the required skill name: \n")
+                        long_description = input("Enter a long description for the skill: \n")
+                        employer = input("Enter the employer: \n")
+                        location = input("Enter the location: \n")
+                        salary = input("Enter the salary: \n")
 
-                    salary = float(salary)
+                        # ensure that the value entered for salary is numerical, otherwise we print message and leave function
+                        try:
+                            float(salary)
+                        except ValueError:
+                            print("Please enter a number for salary")
+                            return
 
-                    assert job_title and job_description and skill_name and long_description and employer and location and salary, "Error: Cannot leave field Blank."
+                        salary = float(salary)
 
-                    # Insert job details into jobs table
-                    if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, self._current_user[0]):
-                        raise Exception("Could not create job.")
+                        assert job_title and job_description and skill_name and long_description and employer and location and salary, "Error: Cannot leave field Blank."
+
+                        # Insert job details into jobs table
+                        if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, self._current_user[0]):
+                            raise Exception("Could not create job.")
+                        
+                        print('Successfully Posted Job.')
+
+                    except Exception as e:
+                        print('Error While Posting Job:\n', e)
+
+                def delete_job():
+                    print(menu_seperate)
+                    print("Jobs you have posted\n-------------------------------")
+                    try:
+                        user_id = self._current_user[0]
+                        jobs_from_user = self.db_manager.fetchall("SELECT * FROM jobs WHERE posted_by=?", (user_id,))
+                        if not jobs_from_user:
+                            print("You have no jobs posted.")
+                            return
+                        
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job[0])[0] for job in jobs_from_user]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs.")
+
+                        print("Delete a job\n-------------------------------")
+                        job_id = input("Enter the ID of the job you wish to delete (or enter q to cancel): ")
+                        if job_id == "q":
+                            return
+                        job_id = int(job_id)
+                        job_details = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=? AND posted_by=?", (job_id, user_id))
+                        assert job_details, 'Job not found or you do not have permission to delete this job.'
+                        job_title = job_details[0][3]
+
+                        # add all users that have applied to this job to the deleted_job_notifs table
+                        applicantIDs = self.db_manager.fetchall("SELECT applicant FROM job_applications WHERE job_id=?", (job_id,))
+                        for i in applicantIDs:
+                            self.db_manager.execute("INSERT INTO deleted_job_notifs (applicantID, jobID, jobTitle) VALUES (?, ?, ?)", (i[0], job_id, job_title))
+
+                        # Delete the job from jobs table
+                        self.db_manager.execute("DELETE FROM jobs WHERE job_id=?", (job_id,))
+                        print(f"Job with ID {job_id} has been successfully deleted.\nAll applications to this job have also been deleted.")
+
+                    except Exception as e:
+                        print("Error: ", e)
+
+                def search_job():
+                    print(menu_seperate)
+                    job_titles = self.db_manager.fetchall("SELECT job_title FROM jobs")
+                    print("Titles of Jobs Currently Posted\n-------------------------------")
+                    if job_titles:
+                        for job_title in job_titles:
+                            print(job_title[0])
+                    else:
+                        print("No job titles found.")
                     
-                    print('Successfully Posted Job.')
+                    print("\nSearching for Jobs\n-------------------------------")
+                    job = input("Enter a job title to search for: ")
+                    user_id = self._current_user[0]
+                    display_job = lambda x, y: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nApplied For: {y}\nJob ID: {x[0]}\n"
+                    jobs = self.db_manager.find_jobs_by_title(job)
+                    
+                    def all():  
+                        print("\n".join([display_job(j, self.db_manager.user_is_applicant(user_id, j[0])) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    
+                    def applied_for():
+                        print("\n".join([display_job(j, True) for j in jobs if self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
+                    
+                    def n_applied_for():
+                        print("\n".join([display_job(j, False) for j in jobs if not self.db_manager.user_is_applicant(user_id, j[0])])) if jobs else print("Could not find any jobs by that name.")
+                    
+                    queries = {'a': all, '1': applied_for, '2': n_applied_for}
+                    print("\nEnter Job Query:")
+                    query = input('a. Search All Jobs\n1. Search Jobs You\'ve Applied For\n2. Search Jobs You Haven\'t Applied For\nq. Quit\nSelect an option: ')
+                    if query == "q": 
+                        return
+                    print("\nJobs Found\n-------------------------------")
+                    queries.get(query, all)()
 
-                except Exception as e:
-                    print('Error While Posting Job:\n', e)
-            
-            options = {'1':search_job, '2':connect_with_user, '3':learn_skill, '4':post_job, '5':useful_links, '6':important_InCollege_links, '7':show_my_network,
-            '8': myProfileOptions,
-            '10': apply_for_job,
-            '11': print_jobs_applied_for}
+                def print_jobs_applied_for():
+                    print(menu_seperate)
+                    print("Jobs You Have Applied For\n-------------------------------")
+                    applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
+                    if applied_for_jobs:
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in applied_for_jobs]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    else:
+                        print("You have no currently active job applications.")
+
+                def print_jobs_not_applied_for():
+                    print(menu_seperate)
+                    print("Jobs You Have Not Applied For\n-------------------------------")
+                    applied_for_jobs = self.db_manager.fetchall("SELECT * from job_applications WHERE applicant=?", (self._current_user[0],))
+
+                    applied_job_ids = []
+                    for i in applied_for_jobs:
+                        applied_job_ids.append(i[2])
+
+                    not_applied_ids = []
+
+                    all_ids = self.db_manager.fetchall("SELECT job_id from jobs")
+
+                    for i in all_ids:
+                        if i[0] not in applied_job_ids:
+                            not_applied_ids.append(i[0])
+
+                    if not_applied_ids:
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nEmployer: {x[5]}\nSalary: {str(x[7])}\nPosted By: {x[9] + ' '  + x[10]}\nJob ID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job)[0] for job in not_applied_ids]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                    else:
+                        print("There are currently no jobs that you have not already applied to.")
+                
+                def print_saved_jobs():
+                    print(menu_seperate)
+                    print("Jobs You Have Saved\n-------------------------------")
+                    saved_jobs = self.db_manager.fetchall("SELECT * from job_save WHERE (saved=1 AND applicant=?)", (self._current_user[0],))
+                    if saved_jobs:
+                        display_job = lambda x: f"Title: {x[3]}\nDescription: {x[4]}\nID: {x[0]}\n"
+                        jobs = [self.db_manager.find_jobs_by_id(job[2])[0] for job in saved_jobs]
+                        print("\n".join([display_job(j) for j in jobs])) if jobs else print("Could not find any jobs by that name.")
+                        # Ask user if they want to unmark a job as saved
+                        unsave_job = input("Do you wish to unsave a job? (y/n) ")
+                        if unsave_job != "y":
+                            return
+                        
+                        job_id_to_unmark = input("Enter the ID of the job you want to unsave (or enter q to cancel): ")
+                        if job_id_to_unmark == "q":
+                            return
+                        
+                        try:
+                            job_id_to_unmark = int(job_id_to_unmark)
+                            job_exists = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job_id_to_unmark,))
+                            if job_exists:
+                                self.db_manager.execute("DELETE FROM job_save WHERE (job_id=? AND applicant=?)", (job_id_to_unmark, self._current_user[0]))
+                                print(f"Job with ID {job_id_to_unmark} has been unmarked as saved.")
+                            else:
+                                print(f"Job with ID {job_id_to_unmark} not found.")
+                        except Exception as e:
+                            print("Invalid input. Please enter a valid job ID.")
+                    else:
+                        print("You have no saved jobs.")
+
+                  # Function for allowing users to apply for jobs
+                
+                def apply_for_job():
+                    print(menu_seperate)
+                    print("Apply for a Job\n-------------------------------")
+                    try:
+                        correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
+                        user = self._current_user[0]
+
+                        job = int(input("Enter the job ID: "))
+
+                        jobTest = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job,))
+
+                        assert (self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;",  (job,))[0][0]), 'Job does not exist.'
+
+                        currUserId = self._current_user[0]
+
+                        # check if current user posted the job
+                        if jobTest[0]:
+                            assert not (jobTest[0][8] == currUserId), "Cannot apply to your own posting."
+
+                        #appl_exists
+                        assert not self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=?)",
+                                                (user, job))[0][0], "Cannot apply more than once for a job."
+                        gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
+                        assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                        w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
+                        assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                        quals = input("Tell us about yourself and why you want the job: \n")
+                        assert quals, 'Cannot Leave field Empty.'
+                        self.db_manager.user_apply_job(user, job, gr_date, w_date, quals)
+                        print("\nSuccessfully Applied for the job.")
+                    except Exception as e:
+                        print("Error Applying for Job:", e)
+
+                def save_a_job():
+                    print(menu_seperate)
+                    print("Save A Job\n-------------------------------")
+                    try:
+                        user_id = self._current_user[0]
+                        job_id = int(input("Enter the job ID: "))
+                        job_exists = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job_id,))
+                        assert job_exists, 'Job does not exist.'
+
+                        job_details = job_exists[0]
+
+                        # Check if the current user is trying to save their own job posting
+                        assert not (user_id == job_details[8]), "Cannot save your own posting."
+
+                        # Check if the user has already saved this job
+                        saved_job_applied = self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=? )", (user_id, job_id))[0][0]
+                        saved_job = self.db_manager.fetchall("SELECT COUNT(*) FROM job_save WHERE (job_id=? AND applicant=?)", (job_id, user_id))[0][0]
+
+                        print("\nJob Details\n-------------------------------")
+                        print(f"Title: {job_details[3]}\nDescription: {job_details[4]}\nEmployer: {job_details[5]}\nSalary: {str(job_details[7])}\nPosted By: {job_details[9] + ' '  + job_details[10]}\nApplied For: {'True' if saved_job_applied else 'False'}\nJob ID: {job_details[0]}\n")
+
+                        if saved_job_applied:
+                            print("You have already applied to this job.")
+                        elif saved_job:
+                            print("You have already saved this job.")
+                        else:
+                            # Update the saved column to True in the jobs table
+                            self.db_manager.execute("INSERT INTO job_save (job_id, applicant, saved) VALUES (?, ?, True)", (job_id, user_id))
+                            self.db_manager.commit()
+                            print("Job saved successfully!")
+
+                    except Exception as e:
+                        print("Error: ", e)
+
+                functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': print_jobs_not_applied_for, '8': delete_job}
+                while True:
+                    print(menu_seperate)
+
+                    # if there are any deleted_job_notif entries with this user's user_id, we will display the notifs and then remove the entries
+                    userID = self._current_user[0]
+                    deleted_jobs = self.db_manager.fetchall("SELECT * FROM deleted_job_notifs WHERE applicantID=?", (userID,))
+                    if deleted_jobs:
+                        print("Job Notifications:\n-------------------------------")
+                        for i in deleted_jobs:
+                            print(f"The job posting with ID [{i[1]}] and title [{i[2]}] that you applied for was removed.\n")
+                        self.db_manager.execute("DELETE FROM deleted_job_notifs where applicantID=?", (userID,))
+
+                    print(self.menus["jobs"])
+                    option = input("\nSelect an option: ")
+                    if option in functions:
+                        functions[option]()
+                    elif option.lower() == "q":
+                        break
+                    else:
+                        print("Invalid choice. Please try again.")
+
+            def messsaging_menu():
+                def send_message():
+                    while True:
+                        #generate list of friends
+                        print(menu_seperate)
+                        print_friends()
+                        friend_list = create_friends_list(self._current_user[1])
+
+                        print("1. send one of your friends a message\n2.View the list of all users (Plus)\nq.Quit\n")
+                        choice = input("Select an option: ")
+
+                        if choice == '1':
+                            receiverNumber = input("Enter the user num of the user to send a message: ")
+                            try:
+                                found = False
+                                receiverNumber = int(receiverNumber) - 1
+                                if 0 <= receiverNumber < len(list):
+
+                                    r_user = friend_list[receiverNumber][1]
+
+                                    sender = self._current_user[0]
+                                    recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
+                                    assert recipient, "Error: This user does not exist."
+                                    is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient)
+                                    # Assert user is friend or user is plus
+                                    assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
+                                    message = input("what message would you like to send?\nHit \"ENTER\" after you are done typing your message\n")
+
+                                    self.db_manager.execute(
+                                        "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
+                                        (recipient, message, sender))
+                                    print(f"\nmessage sent to '{r_user}' successfully!")
+
+                                    found = True
+
+                                if not found:
+                                    print("User not found, please try again.")
+                            except Exception as e:
+                                print("Error while sending a message:", e)
+
+                        elif choice == '2':
+                            if self._current_user[7]:
+                                try:
+                                    users = self.db_manager.fetchall("""SELECT * FROM 
+                                    accounts""")
+                                    if users:
+                                        display_user = lambda x: f"Name: {str(x[3]) + ' ' + str(x[4])}, ID: {x[0]}, University: {x[5]}, Major: {x[6]}\n"
+                                        
+                                        print("\n".join([display_user(user) for user in users]))
+
+                                        id = input("\n\nEnter the User ID of the user or q to quit: ").strip()
+
+                                        if id.lower() == "q": break
+                                        
+                                        id = int(id)
+
+                                        sender = self._current_user[0]
+                                        recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (id,))[0]
+                                        assert recipient, "Error: This user does not exist."
+                                        is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient[0])
+                                        # Assert user is friend or user is plus
+                                        assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
+                                        message = input("what message would you like to send?\n")
+
+                                        self.db_manager.execute(
+                                            "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
+                                            (recipient[0], message, sender))
+                                        print(f"\nmessage sent to '{recipient[3]}' successfully!")
+                                except Exception as e:
+                                    print("Error while sending a message:", e )
+                            else:
+                                print("only plus members may view the list of all users")
+                        elif choice == 'q':
+                            break
+                        else:
+                            print("invalid selection")
+
+                    return 0
+                def view_full_message(text, user):
+                    print(menu_seperate)
+                    print(text)
+                    print("\n- " + user)
+                def delete_message(message_to_delete):
+                    recipient = message_to_delete[0]
+                    message = message_to_delete[1]
+                    sender = message_to_delete[2]
+
+                    self.db_manager.execute("DELETE FROM messages WHERE sender=? AND message=? AND recipient=?",((sender, message, recipient)))
+                    print('\nMessage successfully deleted!')
+                    return 0
+                def reply_message(message_to_reply):
+                    recipient = message_to_reply[0]
+                    message = message_to_reply[1]
+                    sender = message_to_reply[2]
+
+                    s_user = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (sender,))[0][1]
+
+                    reply = input("How would you like to reply to this message?\nHit \"ENTER\" after you are done typing your message\n")
+
+                    new_message = message+"\n\n- "+ s_user + "\n-------------------\n" + reply
+
+                    self.db_manager.execute("INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",(sender, new_message, recipient))
+                    print(f"\nreply sent to '{s_user}' successfully!")
+
+                while True:
+                    #print a preview of all messages to this user
+                    messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
+                    modified_messages = []
+                    for i in range(len(messages)):
+                        modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
+                        username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
+                        modified_messages.append([i+1, username, modified_string])
+
+                    print(menu_seperate)
+                    if not messages:
+                        print("you have no messages\n")
+                    else:
+                        print("\nCurrent messages")
+                        head = ["message ID", "sender", "message"]
+                        print(tabulate(modified_messages, headers=head, tablefmt="grid"), "\n")
+
+
+                    #print the menu
+                    print('1. Send a new message\n2. Reply to a message\n3. View full message\n4. Delete a message\nq. Quit\n')
+                    choice = input("Select an option: ")
+
+                    #send a new message
+                    if(choice == '1'):
+                        send_message()
+                    #reply to a message
+                    elif(choice == '2'):
+                        choice = input("Which message would you like to reply to?\nenter the message ID: ")
+                        try:
+                            choice = int(choice) - 1
+                            reply_message(messages[choice])
+                        except:
+                            print("\nmessage not found")
+                    #view full message
+                    elif(choice == '3'):
+                        choice = input("Which message would you like to view in full?\nenter the message ID: ")
+                        try:
+                            choice = int(choice)-1
+                            view_full_message(messages[choice][1],modified_messages[choice][1])
+                        except:
+                            print("\nmessage not found")
+                    #delete a message
+                    elif(choice == '4'):
+                        choice = input("Which message would you like to delete?\nenter the message ID: ")
+                        try:
+                            choice = int(choice) - 1
+                            delete_message(messages[choice])
+                        except:
+                            print("\nmessage not found")
+                    #quit
+                    elif(choice == 'q'):
+                        break
+                    #else invalid
+                    else:
+                        print("invalid selection")
+
+            options = {'1':jobs, '2':connect_with_user, '3':learn_skill, '4':useful_links, '5':important_InCollege_links, '6':show_my_network,
+            '7': myProfileOptions, '8':messsaging_menu}
             while True:
                 print(menu_seperate) #menu
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
@@ -1121,6 +1502,9 @@ class InCollegeAppManager:
             _acc = self.__login(username=username, password=password)
             if _acc is not None:
                 print("\nYou have successfully logged in.")
+                user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (_acc[0],))
+                if user_messages and user_messages[0][0] > 0:
+                    print("You have a message waiting for you in the Message Center.")
                 signed_in_menu(_acc)
             else:
                 print('\nIncorrect username / password, please try again')
