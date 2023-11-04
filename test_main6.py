@@ -32,13 +32,13 @@ def clear_accounts():
 # clear all tables in database
 def __create_user_account():
     try:
-        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major', False)
     except Exception as e:
         print(e)
 
 def __create_user_account2():
     try:
-        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University', 'Major')
+        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University', 'Major', False)
     except Exception as e:
         print(e)
 
