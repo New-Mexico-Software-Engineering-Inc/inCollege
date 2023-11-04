@@ -1,6 +1,6 @@
-# Sprint 6 Test Cases
+# Sprint 7 Test Cases
 # The functions use monkeypatch to mock input and capsys to capture output
-# Created by: Austin Martin,
+# Created by: Austin Martin,Emin Mahmudzade
 # Date created: 11/2/2023
 # Last Update: 11/2/2023
 
@@ -210,3 +210,119 @@ def test_select_and_read_message(monkeypatch, capsys):
     print(capture.out)
     assert expectedOut1 in capture.out
     assert expectedOut2 in capture.out
+
+
+def test_not_able_to_use_plus_benefits_standart_user(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_standard()
+
+    # sign in as user b, trying to use premium feature
+    userIn = ""
+    userIn += "1\nb\n!!!Goodpswd0\n8\n1\n2\nq\nq\nq\nq\n"
+
+    # expect to see an option asking to sign up for plus, and a disclaimer stating it costs $10/month
+    expectedOut = "Only plus members may view the list of all users"
+
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+
+    capture = runInCollege(capsys)
+
+    assert expectedOut in capture.out
+
+def test_standart_user_can_respond_to_not_friend(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_plus()
+    __create_user_account_standard()
+
+    userIn = ""
+
+    # sign into account b (standart), send message to account a, then sign out
+    userIn += "1\na\n!!!Goodpswd0\n8\n1\n2\n2\nTest Message Works\nq\nq\nq\n"
+
+    # sign into account a, view message and sender fully, then exit
+    userIn += "1\nb\n!!!Goodpswd0\n8\n3\n1\n2\n1\nHello\nq\nq\nq\nq\n"
+    # expect to see actual message printed, as well as a signature showing sender
+    expectedOut1 = "Test Message Works"
+    expectedOut2 = "- a"
+    expectedOut3 = "reply sent to 'a' successfully!"
+    
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin',userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+    assert expectedOut1 in capture.out
+    assert expectedOut2 in capture.out
+    assert expectedOut3 in capture.out
+def test_notification_for_waiting_message(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_plus()
+    __create_user_account_standard()
+
+    userIn = ""
+
+    # sign into account b (standart), send message to account a, then sign out
+    userIn += "1\na\n!!!Goodpswd0\n8\n1\n2\n2\nTest Message Works\nq\nq\nq\n"
+
+    # sign into account a, view message and sender fully, then exit
+    userIn += "1\nb\n!!!Goodpswd0\n8\n3\n1\n2\n1\nHello\nq\nq\nq\nq\n"
+    # expect to see actual message printed, as well as a signature showing sender
+    expectedOut1 = "You have a message waiting for you in the Message Center."
+
+    
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin',userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+    assert expectedOut1 in capture.out
+
+def test_reply_works(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_plus()
+    __create_user_account_standard()
+
+    userIn = ""
+
+    # sign into account b (standart), send message to account a, then sign out
+    userIn += "1\na\n!!!Goodpswd0\n8\n1\n2\n2\nTest Message Works\nq\nq\nq\n"
+
+    # sign into account a, view message and sender fully, then exit
+    userIn += "1\nb\n!!!Goodpswd0\n8\n3\n1\n2\n1\nTest Reply Works\nq\nq\n1\na\n!!!Goodpswd0\n8\nq\nq\nq\n"
+    # expect to see actual message printed, as well as a signature showing sender
+    expectedOut1 = "Test Reply Works"
+
+    
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin',userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+    assert expectedOut1 in capture.out
+def test_delete_works(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_plus()
+    __create_user_account_standard()
+
+    userIn = ""
+
+    # sign into account b (standart), send message to account a, then sign out
+    userIn += "1\na\n!!!Goodpswd0\n8\n1\n2\n2\nTest Message Works\nq\nq\nq\n"
+
+    # sign into account a, view message and sender fully, then exit
+    userIn += "1\nb\n!!!Goodpswd0\n8\n4\n1\nq\nq\nq\n"
+    # expect to see actual message printed, as well as a signature showing sender
+    expectedOut1 = "Message successfully deleted!"
+
+    
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin',userInput)
+
+    capture = runInCollege(capsys)
+
+    print(capture.out)
+    assert expectedOut1 in capture.out
