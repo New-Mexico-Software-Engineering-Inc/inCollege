@@ -18,7 +18,7 @@ with open('./data/menus.json', 'r') as f:
     menus = json.load(f)['menus']
 
 def clear_accounts():
-    main.InCollegeAppManager("test.db")
+    main.InCollegeAppManager("test.db", False)
     conn = sqlite3.connect("test.db")
     cursor = conn.cursor()
     cursor.execute("PRAGMA foreign_keys=ON;")
@@ -32,26 +32,26 @@ def clear_accounts():
 # clear all tables in database
 def __create_user_account_plus():
     try:
-        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major', True)
+        main.InCollegeAppManager("test.db", False)._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major', True)
     except Exception as e:
         print(e)
 
 
 def __create_user_account_standard():
     try:
-        main.InCollegeAppManager("test.db")._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University2', 'Major2', False)
+        main.InCollegeAppManager("test.db", False)._create_account('b', '!!!Goodpswd0', 'fname2', 'lname2', 'University2', 'Major2', False)
     except Exception as e:
         print(e)
 
 def __create_user_account_standard2():
     try:
-        main.InCollegeAppManager("test.db")._create_account('c', '!!!Goodpswd0', 'fname3', 'lname3', 'University3', 'Major3', False)
+        main.InCollegeAppManager("test.db", False)._create_account('c', '!!!Goodpswd0', 'fname3', 'lname3', 'University3', 'Major3', False)
     except Exception as e:
         print(e)
 
 def __create_user_account_plus2():
     try:
-        main.InCollegeAppManager("test.db")._create_account('d', '!!!Goodpswd0', 'fname4', 'lname4', 'University4', 'Major4', True)
+        main.InCollegeAppManager("test.db", False)._create_account('d', '!!!Goodpswd0', 'fname4', 'lname4', 'University4', 'Major4', True)
     except Exception as e:
         print(e)
 
@@ -60,7 +60,7 @@ def __create_user_account_plus2():
 def runInCollege(capsys):
     # Run the program, and collect the system exit code
     with pytest.raises(SystemExit) as e:
-        main.InCollegeAppManager("test.db").Run()
+        main.InCollegeAppManager("test.db", False).Run()
 
     # verify the exit code is 0
     assert e.type == SystemExit

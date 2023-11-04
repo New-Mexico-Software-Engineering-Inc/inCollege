@@ -6,7 +6,7 @@ import bcrypt
 from password_strength import PasswordPolicy
 from tabulate import tabulate
 
-__DEBUG__ = 1
+__DEBUG__ = 0
 menu_seperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
 
 class DatabaseManager:
@@ -175,11 +175,13 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
-                CREATE TABLE IF NOT EXISTS messages (
-                    recipient INTEGER NOT NULL,
-                    message TEXT NOT NULL,
-                    sender INTEGER NOT NULL
-                );
+        CREATE TABLE IF NOT EXISTS messages (
+            recipient INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            sender INTEGER NOT NULL,
+            FOREIGN KEY (recipient) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (sender) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
         ''')
 
         self.db_manager.execute('''
@@ -1416,15 +1418,18 @@ class InCollegeAppManager:
                     #print a preview of all messages to this user
                     messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
                     modified_messages = []
-                    for i in range(len(messages)):
-                        modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
-                        username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
-                        modified_messages.append([i+1, username, modified_string])
+
+                    print(messages)
 
                     print(menu_seperate)
                     if not messages:
                         print("you have no messages\n")
                     else:
+                        for i in range(len(messages)):
+                            modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
+                            username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
+                            modified_messages.append([i+1, username, modified_string])
+
                         print("\nCurrent messages")
                         head = ["message ID", "sender", "message"]
                         print(tabulate(modified_messages, headers=head, tablefmt="grid"), "\n")
