@@ -1590,7 +1590,7 @@ class InCollegeAppManager:
                 print("Invalid choice. Please try again.")
 
 def main():
-    InCollegeAppManager(DEBUG=__DEBUG__).Run()
+    InCollegeAppManager().Run()
 
 if __name__ == '__main__':
     main()
