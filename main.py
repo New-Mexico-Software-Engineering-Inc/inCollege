@@ -1419,8 +1419,6 @@ class InCollegeAppManager:
                     messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
                     modified_messages = []
 
-                    print(messages)
-
                     print(menu_seperate)
                     if not messages:
                         print("you have no messages\n")
