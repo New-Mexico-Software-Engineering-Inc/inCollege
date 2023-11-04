@@ -32,7 +32,7 @@ def clear_accounts():
 # clear all tables in database
 def __create_user_account():
     try:
-        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major', False)
     except Exception as e:
         print(e)
 
@@ -61,7 +61,7 @@ def test_request_university_and_major_upon_signup(monkeypatch, capsys):
     expectedOut6 = "Enter your major: \n"
 
     # create a StringIO object and set it as the test input
-    choiceInput = StringIO('2\nuser1\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nCSE\nq\n')
+    choiceInput = StringIO('2\nuser1\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nCSE\nn\nq\n')
 
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
@@ -96,7 +96,7 @@ def test_create_10_accounts(monkeypatch, capsys):
 
     userIn = ""
     for i in range(10):
-        userIn += f"2\n{userList[i]}\n{pw}\n{fname}\n{lname}\n{uni}\n{major}\n"
+        userIn += f"2\n{userList[i]}\n{pw}\n{fname}\n{lname}\n{uni}\n{major}\nn\n"
 
     # loop to verify login works correctly for all 10 following same process as above
 
@@ -154,7 +154,7 @@ def test_send_recive_notify_store_friend_request(monkeypatch, capsys):
 
     # create a StringIO object and set it as the test input
     #log in as a
-    userIn = "2\nb\n!!!Goodpswd0\nfname\nlname\nusf\nCSE\n1\na\n!!!Goodpswd0\n"
+    userIn = "2\nb\n!!!Goodpswd0\nfname\nlname\nusf\nCSE\nn\n1\na\n!!!Goodpswd0\n"
     #send request to b
     userIn += "2\n3\nCSE\ny\n1\n"
     #log out of a

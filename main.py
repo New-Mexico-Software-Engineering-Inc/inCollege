@@ -66,6 +66,24 @@ class DatabaseManager:
     
     def user_is_applicant(self, user_id, job_id):
         return self.fetchall("SELECT COUNT(*) FROM   job_applications WHERE (applicant=? AND job_id=?)",(user_id, job_id))[0][0] > 0
+    
+    def check_friendship_status(self, user1_id, user2_id):
+                query = """
+                SELECT COUNT(1) FROM friendship 
+                WHERE (user_one = (SELECT username FROM accounts WHERE user_id = ?) 
+                AND user_two = (SELECT username FROM accounts WHERE user_id = ?)) 
+                OR (user_one = (SELECT username FROM accounts WHERE user_id = ?) 
+                AND user_two = (SELECT username FROM accounts WHERE user_id = ?))
+                """
+                try:
+                    # Execute the SQL query
+                    result = self.fetch(query, (user1_id, user2_id, user2_id, user1_id))
+                    # Check if the friendship exists
+                    return result[0] > 0  # True if count is more than 0, otherwise False
+                except Exception as e:
+                    # Handle any exceptions, such as database connection errors or query errors
+                    print(f"An error occurred: {e}")
+                    return False
 
 class InCollegeAppManager:
     def __init__(self, data_file="users.db", DEBUG=False):
@@ -85,14 +103,14 @@ class InCollegeAppManager:
         # For the accounts table
         pw = bcrypt.hashpw("p1".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
-            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1");
-        ''', (pw,))
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major, plus)
+            VALUES ("test_user1", ?, "John", "Doe", "University1", "Major1", ?);
+        ''', (pw, True))
 
         self.db_manager.execute('''
-            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major)
-            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2");
-        ''', (pw,))
+            INSERT OR IGNORE INTO accounts (username, password, first_name, last_name, university, major, plus)
+            VALUES ("test_user2", ?, "Jason", "Morris", "University2", "Major2", ?);
+        ''', (pw, False))
         
         
         # For the settings table
@@ -157,12 +175,14 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
-                CREATE TABLE IF NOT EXISTS messages (
-                    recipient INTEGER NOT NULL,
-                    message TEXT NOT NULL,
-                    sender INTEGER NOT NULL
-                );
-                ''')
+        CREATE TABLE IF NOT EXISTS messages (
+            recipient INTEGER NOT NULL,
+            message TEXT NOT NULL,
+            sender INTEGER NOT NULL,
+            FOREIGN KEY (recipient) REFERENCES accounts(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (sender) REFERENCES accounts(user_id) ON DELETE CASCADE
+        );
+        ''')
 
         self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS settings (
@@ -648,6 +668,7 @@ class InCollegeAppManager:
                                 print("User Num did not match. Please try again.")
 
             # function that sends a friend request to the "receiver" user from the "sender" user
+
             def send_friend_request(sender, receiver):
                 request_exists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
                                         (sender, receiver)))[0][0]
@@ -707,7 +728,7 @@ class InCollegeAppManager:
                     friends_list[i] = list(friends_list[i])
                     friends_list[i].insert(0, i+1)
                     profile_status = self.db_manager.fetch('SELECT posted FROM profiles WHERE (username=?)', (friends_list[i][1],))
-                    if profile_status[0] == "yes":
+                    if profile_status and profile_status[0] == "yes":
                         friends_list[i].append("View Profile")
                     else:
                         friends_list[i].append("No Profile Posted")
@@ -719,6 +740,7 @@ class InCollegeAppManager:
 
                 if friends:
                     print("\nFriends List")
+                    print("-------------------------------")
                     head = ["Friend Num", "Username", "First Name", "Last Name", "University", "Major", "Profile"]
                     print(tabulate(friends, headers=head, tablefmt="grid"), "\n")
 
@@ -729,6 +751,9 @@ class InCollegeAppManager:
                 while True:
                     print(menu_seperate)
                     print(self.menus["show_my_network"])
+                    user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (self._current_user[0],))
+                    if user_messages and user_messages[0][0] > 0:
+                        print("You have a message waiting for you in the Message Center.")
                     choice = input("Please select an option: ")
 
                     if choice == "1":
@@ -1291,39 +1316,72 @@ class InCollegeAppManager:
                         #generate list of friends
                         print(menu_seperate)
                         print_friends()
-                        list = create_friends_list(self._current_user[1])
+                        friend_list = create_friends_list(self._current_user[1])
 
-                        print("1. Send one of your friends a message\n2. View the list of all users\nq. Quit\n")
+                        print("1. Send one of your friends a message\n2. View the list of all users (Plus)\nq.Quit\n")
                         choice = input("Select an option: ")
 
                         if choice == '1':
-                            receiverNumber = input("Enter the user num of the user to send a message: ")
+                            receiverNumber = input("Enter the friend num of the user to send a message: ")
                             try:
                                 found = False
                                 receiverNumber = int(receiverNumber) - 1
-                                if 0 <= receiverNumber < len(list):
+                                if 0 <= receiverNumber < len(friend_list):
 
-                                    r_user = list[receiverNumber][1]
+                                    r_user = friend_list[receiverNumber][1]
 
                                     sender = self._current_user[0]
                                     recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
+                                    assert recipient, "Error: This user does not exist."
+                                    is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient)
+                                    # Assert user is friend or user is plus
+                                    assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
                                     message = input("what message would you like to send?\nHit \"ENTER\" after you are done typing your message\n")
 
-                                    self.db_manager.execute("INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",(recipient, message, sender))
+                                    self.db_manager.execute(
+                                        "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
+                                        (recipient, message, sender))
                                     print(f"\nmessage sent to '{r_user}' successfully!")
 
                                     found = True
 
                                 if not found:
                                     print("User not found, please try again.")
-                            except:
-                                print("User Num did not match. Please try again.")
+                            except Exception as e:
+                                print("Error while sending a message:", e)
 
                         elif choice == '2':
                             if self._current_user[7]:
-                                print()
+                                try:
+                                    users = self.db_manager.fetchall("""SELECT * FROM 
+                                    accounts""")
+                                    if users:
+                                        display_user = lambda x: f"Name: {str(x[3]) + ' ' + str(x[4])}, ID: {x[0]}, University: {x[5]}, Major: {x[6]}\n"
+                                        
+                                        print("\n".join([display_user(user) for user in users]))
+
+                                        id = input("\n\nEnter the User ID of the user or q to quit: ").strip()
+
+                                        if id.lower() == "q": break
+                                        
+                                        id = int(id)
+
+                                        sender = self._current_user[0]
+                                        recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (id,))[0]
+                                        assert recipient, "Error: This user does not exist."
+                                        is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient[0])
+                                        # Assert user is friend or user is plus
+                                        assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
+                                        message = input("what message would you like to send?\n")
+
+                                        self.db_manager.execute(
+                                            "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
+                                            (recipient[0], message, sender))
+                                        print(f"\nmessage sent to '{recipient[3]}' successfully!")
+                                except Exception as e:
+                                    print("Error while sending a message:", e )
                             else:
-                                print("only plus members may view the list of all users")
+                                print("Only plus members may view the list of all users")
                         elif choice == 'q':
                             break
                         else:
@@ -1360,15 +1418,18 @@ class InCollegeAppManager:
                     #print a preview of all messages to this user
                     messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
                     modified_messages = []
-                    for i in range(len(messages)):
-                        modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
-                        username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
-                        modified_messages.append([i+1, username, modified_string])
+
+                    print(messages)
 
                     print(menu_seperate)
                     if not messages:
                         print("you have no messages\n")
                     else:
+                        for i in range(len(messages)):
+                            modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
+                            username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
+                            modified_messages.append([i+1, username, modified_string])
+
                         print("\nCurrent messages")
                         head = ["message ID", "sender", "message"]
                         print(tabulate(modified_messages, headers=head, tablefmt="grid"), "\n")
@@ -1446,6 +1507,9 @@ class InCollegeAppManager:
             _acc = self.__login(username=username, password=password)
             if _acc is not None:
                 print("\nYou have successfully logged in.")
+                user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (_acc[0],))
+                if user_messages and user_messages[0][0] > 0:
+                    print("You have a message waiting for you in the Message Center.")
                 signed_in_menu(_acc)
             else:
                 print('\nIncorrect username / password, please try again')
@@ -1531,7 +1595,7 @@ class InCollegeAppManager:
                 print("Invalid choice. Please try again.")
 
 def main():
-    InCollegeAppManager(DEBUG=__DEBUG__).Run()
+    InCollegeAppManager().Run()
 
 if __name__ == '__main__':
     main()
