@@ -30,7 +30,7 @@ def runInCollege(capsys):
 
 def __create_user_account():
     try:
-        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major')
+        main.InCollegeAppManager("test.db")._create_account('a', '!!!Goodpswd0', 'fname', 'lname', 'University', 'Major', False)
     except Exception as e:
         print(e)
 

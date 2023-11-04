@@ -61,7 +61,7 @@ def test_CreateAccount(monkeypatch, capsys):
     # then enter password, and first and last name, then to quit after account is attempted to
     # be created (3)
     uname = str(uuid.uuid4())
-    userInput = StringIO(f'2\n{uname}\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nq\n')
+    userInput = StringIO(f'2\n{uname}\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nn\nq\n')
     monkeypatch.setattr('sys.stdin', userInput)
 
     # Run program, test for exit code, and capture output
@@ -91,7 +91,7 @@ def test_PasswordStrength(monkeypatch, capsys):
     # with all 5 of these weak passwords
     # enter 2 to create account, username, weakPW1, 2, username, weakPW2, ...
     for i in range(5):
-        userIn += f"2\n{userName}\n{weakPW[i]}\n{fNameTest}\n{lNameTest}\n{University}\n{Major}\n"
+        userIn += f"2\n{userName}\n{weakPW[i]}\n{fNameTest}\n{lNameTest}\n{University}\n{Major}\nn\n"
 
     # exit program after testing
     userIn += "q\n"
@@ -137,7 +137,7 @@ def test_Create5Accounts(monkeypatch, capsys):
 
     userIn = ""
     for i in range(5):
-        userIn += f"2\n{userList[i]}\n{pw}\n{fname}\n{lname}\n{uni}\n{major}\n"
+        userIn += f"2\n{userList[i]}\n{pw}\n{fname}\n{lname}\n{uni}\n{major}\nn\n"
 
     # loop to verify login works correctly for all 10 following same process as above
 
@@ -220,7 +220,7 @@ def test_LoginLimit(monkeypatch, capsys):
 # function to verify that the program outputs a successful login message after logging in
 def test_SuccessfulLogin(monkeypatch, capsys):
     clear_accounts()
-    userIn = "2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\nq\nq\n"
+    userIn = "2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nn\n1\na\n!!!Goodpswd0\nq\nq\n"
     # successful login message after logging in we expect from the program
     expectedLoginSuccess = "You have successfully logged in"
     # create a StringIO object and set it as the test input:
@@ -256,7 +256,7 @@ def test_SkillsMenu(monkeypatch, capsys):
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, 1-skill #1, 3-Skills menu, 2-skill #2, 
     # 3-Skills menu, 3-skill #3, 3-Skills menu, 4-skill #4, 3-Skills menu, 5-skill #5, q-Logout, 4-exit
-    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\nq\n")
+    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nn\n1\na\n!!!Goodpswd0\n3\n1\n3\n2\n3\n3\n3\n4\n3\n5\nq\nq\n")
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -274,7 +274,7 @@ def test_QuitSkillsMenu(monkeypatch, capsys):
     expectedQuitOutput = "\nq: Quit\n\nPlease Select a Skill:"
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 3-Skills menu, "q"-option to quit, q-Logout, q-exit
-    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n3\nq\nq\nq\n")
+    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nn\n1\na\n!!!Goodpswd0\n3\nq\nq\nq\n")
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
@@ -289,7 +289,7 @@ def test_JobSearch(monkeypatch, capsys):
     expectedOut = "\nUnder Construction\n"
     # create a StringIO object and set it as the test input:
     # 1-login, "a"-username, "GoBulls24!"-password, 1-"search for a job" option, q-Logout, q-exit
-    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\n1\na\n!!!Goodpswd0\n1\nq\nq\n")
+    choiceInput = StringIO("2\na\n!!!Goodpswd0\nfirstname\nlastname\nUniversity\nMajor\nn\n1\na\n!!!Goodpswd0\n1\nq\nq\n")
     # Set the stdin stream as our desired input
     monkeypatch.setattr('sys.stdin', choiceInput)
     # Run the program and capture program input
