@@ -280,6 +280,15 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS new_job_notifs (
+            notifID INTEGER PRIMARY KEY AUTOINCREMENT,
+            recipientID INTEGER,
+            message TEXT NOT NULL,
+            FOREIGN KEY (recipientID) REFERENCES accounts(user_id) ON DELETE CASCADE
+        )
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS job_save (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             applicant INTEGER NOT NULL,
@@ -668,7 +677,6 @@ class InCollegeAppManager:
                                 print("User Num did not match. Please try again.")
 
             # function that sends a friend request to the "receiver" user from the "sender" user
-
             def send_friend_request(sender, receiver):
                 request_exists = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE (sender=? AND receiver=?)",
                                         (sender, receiver)))[0][0]
@@ -1081,7 +1089,13 @@ class InCollegeAppManager:
                         if not self.db_manager.post_job(skill_name, long_description, job_title, job_description, employer, location, salary, self._current_user[0]):
                             raise Exception("Could not create job.")
                         
-                        print('Successfully Posted Job.')
+                        all_incollege_users = self.db_manager.fetchall("SELECT * FROM accounts WHERE NOT user_id=?", (self._current_user[0],))
+                        message = f'A new job "{job_title}" has been posted.'
+                        for user in all_incollege_users:
+                            cur_user_id = user[0]
+                            self.db_manager.execute("INSERT INTO new_job_notifs(recipientID, message) VALUES(?, ?)", (cur_user_id, message))
+                        
+                        print('\nSuccessfully Posted Job.')
 
                     except Exception as e:
                         print('Error While Posting Job:\n', e)
@@ -1228,7 +1242,12 @@ class InCollegeAppManager:
                         correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
                         user = self._current_user[0]
 
-                        job = int(input("Enter the job ID: "))
+                        job = input("Enter the job ID (or enter 'q' to quit): ")
+
+                        if job.lower() == 'q':
+                            return
+
+                        job = int(job)
 
                         jobTest = self.db_manager.fetchall("SELECT * FROM jobs WHERE job_id=?;", (job,))
 
@@ -1244,9 +1263,9 @@ class InCollegeAppManager:
                         assert not self.db_manager.fetchall("SELECT COUNT(*) FROM job_applications WHERE (applicant=? AND job_id=?)",
                                                 (user, job))[0][0], "Cannot apply more than once for a job."
                         gr_date = input("Please Enter your Graduation Date (dd/mm/yyyy): ")
-                        assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                        assert gr_date and correct_date(gr_date.split('/')), 'Cannot enter empty or incorectly formatted date.'
                         w_date = input("Please Enter your Available Start Date (dd/mm/yyyy): ")
-                        assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted Date.'
+                        assert w_date and correct_date(w_date.split('/')), 'Cannot enter empty or incorectly formatted date.'
                         quals = input("Tell us about yourself and why you want the job: \n")
                         assert quals, 'Cannot Leave field Empty.'
                         self.db_manager.user_apply_job(user, job, gr_date, w_date, quals)
@@ -1287,21 +1306,35 @@ class InCollegeAppManager:
 
                     except Exception as e:
                         print("Error: ", e)
+                
+                def job_notifications():
+                    userID = self._current_user[0]
+                    num_jobs_applied_for = (self.db_manager.fetchall("SELECT COUNT(*) from job_applications WHERE applicant=?", (userID,)))[0][0]
+    
+                    print("Job Notifications:\n-------------------------------")
+                    print(f"* You have currently applied for {num_jobs_applied_for} job{'s' if num_jobs_applied_for != 1 else ''}.")
+
+                    # if there are any deleted_job_notif entries with this user's user_id, we will display the notifs and then remove the entries
+                    deleted_jobs = self.db_manager.fetchall("SELECT * FROM deleted_job_notifs WHERE applicantID=?", (userID,))
+                    if deleted_jobs:
+                        for job in deleted_jobs:
+                            print(f'* The job "{job[2]}" that you applied for was deleted.')
+                        self.db_manager.execute("DELETE FROM deleted_job_notifs where applicantID=?", (userID,))
+
+                    # if there are any new_job_notifs entries with this user's user_id, we will display the notifs and then remove the entries
+                    new_job_notifs = self.db_manager.fetchall("SELECT * FROM new_job_notifs WHERE recipientID=?", (userID,))
+                    if new_job_notifs:
+                        for notification in new_job_notifs:
+                            print(f'* {notification[2]}')
+                        self.db_manager.execute("DELETE FROM new_job_notifs where recipientID=?", (userID,))
+
 
                 functions = {'1':search_job, '2':post_job, '3':apply_for_job, '4':print_jobs_applied_for, '5':save_a_job, '6':print_saved_jobs, '7': print_jobs_not_applied_for, '8': delete_job}
                 while True:
                     print(menu_seperate)
+                    job_notifications()
 
-                    # if there are any deleted_job_notif entries with this user's user_id, we will display the notifs and then remove the entries
-                    userID = self._current_user[0]
-                    deleted_jobs = self.db_manager.fetchall("SELECT * FROM deleted_job_notifs WHERE applicantID=?", (userID,))
-                    if deleted_jobs:
-                        print("Job Notifications:\n-------------------------------")
-                        for i in deleted_jobs:
-                            print(f"The job posting with ID [{i[1]}] and title [{i[2]}] that you applied for was removed.\n")
-                        self.db_manager.execute("DELETE FROM deleted_job_notifs where applicantID=?", (userID,))
-
-                    print(self.menus["jobs"])
+                    print("\n" + self.menus["jobs"])
                     option = input("\nSelect an option: ")
                     if option in functions:
                         functions[option]()
