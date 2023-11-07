@@ -85,12 +85,12 @@ def test_plus_account_message_anybody_and_its_received(monkeypatch, capsys):
     userIn += "1\nc\n!!!Goodpswd0\n8\nq\nq\nq\n"
 
     # expect to see an option to have message sent to anyone, but only works for plus members
-    expectedOut1 = "View the list of all users (Plus)"
+    expectedOut1 = "View the list of all users (Plus users only)"
 
     # since this member is a plus member, we expect to see all 3 accounts presented like below
-    expectedOut2 = "Name: fname lname, ID: 1, University: University, Major: Major"
-    expectedOut3 = "Name: fname2 lname2, ID: 2, University: University2, Major: Major2"
-    expectedOut4 = "Name: fname3 lname3, ID: 3, University: University3, Major: Major3"
+    expectedOut2 = "|          1 | a          | fname        | lname       | University   | Major   |"
+    expectedOut3 = "|          2 | b          | fname2       | lname2      | University2  | Major2  |"
+    expectedOut4 = "|          3 | c          | fname3       | lname3      | University3  | Major3  |"
 
     # after sending the message to user c, user c should see the sender and the message
     expectedOut5 = "message ID"
@@ -211,7 +211,6 @@ def test_select_and_read_message(monkeypatch, capsys):
     assert expectedOut1 in capture.out
     assert expectedOut2 in capture.out
 
-
 def test_not_able_to_use_plus_benefits_standart_user(monkeypatch, capsys):
     clear_accounts()
     __create_user_account_standard()
@@ -230,7 +229,7 @@ def test_not_able_to_use_plus_benefits_standart_user(monkeypatch, capsys):
 
     assert expectedOut in capture.out
 
-def test_standart_user_can_respond_to_not_friend(monkeypatch, capsys):
+def test_standard_user_can_respond_to_not_friend(monkeypatch, capsys):
     clear_accounts()
     __create_user_account_plus()
     __create_user_account_standard()
@@ -245,7 +244,7 @@ def test_standart_user_can_respond_to_not_friend(monkeypatch, capsys):
     # expect to see actual message printed, as well as a signature showing sender
     expectedOut1 = "Test Message Works"
     expectedOut2 = "- a"
-    expectedOut3 = "reply sent to 'a' successfully!"
+    expectedOut3 = "Reply sent to 'a' successfully!"
     
     userInput = StringIO(userIn)
     monkeypatch.setattr('sys.stdin',userInput)
@@ -256,6 +255,7 @@ def test_standart_user_can_respond_to_not_friend(monkeypatch, capsys):
     assert expectedOut1 in capture.out
     assert expectedOut2 in capture.out
     assert expectedOut3 in capture.out
+
 def test_notification_for_waiting_message(monkeypatch, capsys):
     clear_accounts()
     __create_user_account_plus()
@@ -269,7 +269,7 @@ def test_notification_for_waiting_message(monkeypatch, capsys):
     # sign into account a, view message and sender fully, then exit
     userIn += "1\nb\n!!!Goodpswd0\n8\n3\n1\n2\n1\nHello\nq\nq\nq\nq\n"
     # expect to see actual message printed, as well as a signature showing sender
-    expectedOut1 = "You have a message waiting for you in the Message Center."
+    expectedOut1 = "You have a message waiting for you in the message menu!"
 
     
     userInput = StringIO(userIn)
@@ -303,6 +303,7 @@ def test_reply_works(monkeypatch, capsys):
 
     print(capture.out)
     assert expectedOut1 in capture.out
+
 def test_delete_works(monkeypatch, capsys):
     clear_accounts()
     __create_user_account_plus()

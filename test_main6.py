@@ -355,7 +355,7 @@ def test_post_10_jobs(monkeypatch, capsys):
     __create_user_account()
 
     # will occur 10 times for 10 successful job postings
-    expectedOut1 = "Successfully Posted Job."
+    expectedOut1 = "Successfully posted the job!"
     # will occur once for failed 11th posting
     expectedOut2 = "All jobs have been created. Please come back later."
 
@@ -384,7 +384,7 @@ def test_delete_job(monkeypatch, capsys):
     __create_user_account()
 
     # successfully post test job
-    expectedOut1 = "Successfully Posted Job."
+    expectedOut1 = "Successfully posted the job!"
     # first time we search newly created job, we will find it
     expectedOut2 = "Jobs Found\n-------------------------------\nTitle: Test"
     # successful job deletion message
@@ -419,7 +419,7 @@ def test_deleted_job_notification(monkeypatch, capsys):
     __create_user_account2()
 
     # expect to see a notification that the job was deleted only once when jobs section is first opened
-    expectedOutput = "The job posting with ID [1] and title [Test Job] that you applied for was removed."
+    expectedOutput = 'The job "Test Job" that you applied for was deleted.'
 
     # sign in and post Test Job under user a and post a Test Job
     userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest Job\ntest\ntest\ntest\ntest\ntest\n100\n"

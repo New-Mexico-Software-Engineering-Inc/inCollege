@@ -181,7 +181,7 @@ def test_Post5Jobs(monkeypatch, capsys):
     clear_accounts()
 
     # we expect to see that the job was successfully posted 5 times when we try to post 5 jobs
-    expectedOut = "Successfully Posted Job."
+    expectedOut = "Successfully posted the job!"
 
     userIn = ''
 
