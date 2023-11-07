@@ -5,6 +5,7 @@ import os
 import bcrypt
 from password_strength import PasswordPolicy
 from tabulate import tabulate
+from datetime import datetime
 
 __DEBUG__ = 0
 menu_seperate = '\n' + '{:*^150}'.format(' InCollege ') + '\n'
@@ -170,7 +171,8 @@ class InCollegeAppManager:
             last_name TEXT NOT NULL,
             university TEXT NOT NULL,
             major TEXT NOT NULL,
-            plus BOOL NOT NULL
+            plus BOOL NOT NULL,
+            last_job_application_timestamp TIMESTAMP NOT NULL
         );
         ''')
 
@@ -339,9 +341,9 @@ class InCollegeAppManager:
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         
         self.db_manager.execute(
-            'INSERT INTO accounts (username, password, first_name, last_name, university, major, plus) VALUES (?, ?, ?, ?, ?, ?, ?);',
+            'INSERT INTO accounts (username, password, first_name, last_name, university, major, plus, last_job_application_timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);',
             (username, hashed_password, first_name, last_name, university, major, plus))
-        
+
         self.db_manager.execute(
             'INSERT INTO settings (username, email_notifs, sms_notifs, target_ads, language) VALUES (?, ?, ?, ?, ?);',
             (username, 1, 1, 1, "English"))
@@ -1095,7 +1097,7 @@ class InCollegeAppManager:
                             cur_user_id = user[0]
                             self.db_manager.execute("INSERT INTO new_job_notifs(recipientID, message) VALUES(?, ?)", (cur_user_id, message))
                         
-                        print('\nSuccessfully Posted Job.')
+                        print('\nSuccessfully posted the job!')
 
                     except Exception as e:
                         print('Error While Posting Job:\n', e)
@@ -1269,6 +1271,10 @@ class InCollegeAppManager:
                         quals = input("Tell us about yourself and why you want the job: \n")
                         assert quals, 'Cannot Leave field Empty.'
                         self.db_manager.user_apply_job(user, job, gr_date, w_date, quals)
+                        
+                        # update last job application timestamp value for user to keep track of last job application
+                        self.db_manager.execute("UPDATE accounts SET last_job_application_timestamp = CURRENT_TIMESTAMP WHERE user_id=?", (currUserId,))
+                        
                         print("\nSuccessfully Applied for the job.")
                     except Exception as e:
                         print("Error Applying for Job:", e)
@@ -1348,83 +1354,91 @@ class InCollegeAppManager:
                     while True:
                         #generate list of friends
                         print(menu_seperate)
-                        print_friends()
-                        friend_list = create_friends_list(self._current_user[1])
 
-                        print("1. Send one of your friends a message\n2. View the list of all users (Plus)\nq.Quit\n")
+                        print(self.menus["send_message"])
                         choice = input("Select an option: ")
 
                         if choice == '1':
-                            receiverNumber = input("Enter the friend num of the user to send a message: ")
+                            friend_list = print_friends()
+                            if not friend_list:
+                                print("\nYou currently have no InCollege friends.")
+                                break
+                            receiverNumber = input("Enter the friend num of the user to send a message to: ")
                             try:
                                 found = False
                                 receiverNumber = int(receiverNumber) - 1
                                 if 0 <= receiverNumber < len(friend_list):
-
                                     r_user = friend_list[receiverNumber][1]
-
                                     sender = self._current_user[0]
                                     recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0][0]
-                                    assert recipient, "Error: This user does not exist."
+                                    assert recipient, "Error: User could not be found."
                                     is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient)
                                     # Assert user is friend or user is plus
                                     assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
-                                    message = input("what message would you like to send?\nHit \"ENTER\" after you are done typing your message\n")
+                                    message = input("What message would you like to send?\nHit \"ENTER\" after you are done typing your message.\n")
 
                                     self.db_manager.execute(
                                         "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
                                         (recipient, message, sender))
-                                    print(f"\nmessage sent to '{r_user}' successfully!")
+                                    print(f"\nMessage sent to '{r_user}' successfully!")
 
                                     found = True
-
                                 if not found:
                                     print("User not found, please try again.")
                             except Exception as e:
                                 print("Error while sending a message:", e)
-
                         elif choice == '2':
                             if self._current_user[7]:
                                 try:
-                                    users = self.db_manager.fetchall("""SELECT * FROM 
-                                    accounts""")
-                                    if users:
-                                        display_user = lambda x: f"Name: {str(x[3]) + ' ' + str(x[4])}, ID: {x[0]}, University: {x[5]}, Major: {x[6]}\n"
-                                        
-                                        print("\n".join([display_user(user) for user in users]))
+                                    users = self.db_manager.fetchall("SELECT username, first_name, last_name, university, major FROM accounts")
+                                    if not users:
+                                        print("No users to send messages to.")
+                                        break
+                                    
+                                    for i in range(len(users)):
+                                        users[i] = list(users[i])
+                                        users[i].insert(0, i+1)
 
-                                        id = input("\n\nEnter the User ID of the user or q to quit: ").strip()
+                                    print("\nAll Users List")
+                                    print("-------------------------------")
+                                    head = ["User Num", "Username", "First Name", "Last Name", "University", "Major"]
+                                    print(tabulate(users, headers=head, tablefmt="grid"), "\n")
 
-                                        if id.lower() == "q": break
-                                        
-                                        id = int(id)
+                                    id = input("Enter the User Num of the user to send a message to (or enter 'q' to quit): ").strip()
+                                    if id.lower() == "q": break
+                                    id = int(id) - 1
 
+                                    if 0 <= id < len(users):
+                                        r_user = users[id][1]
                                         sender = self._current_user[0]
-                                        recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (id,))[0]
-                                        assert recipient, "Error: This user does not exist."
-                                        is_friend = self.db_manager.check_friendship_status(self._current_user[0], recipient[0])
-                                        # Assert user is friend or user is plus
-                                        assert self._current_user[7] or is_friend, "Error: You must be a plus user to send messages to users who you are not friends with."
-                                        message = input("what message would you like to send?\n")
+                                        recipient = self.db_manager.fetchall("SELECT * FROM accounts WHERE (username =?)", (r_user,))[0]
+                                        assert recipient, "Error: User could not be found."
+                                        message = input("What message would you like to send?\nHit \"ENTER\" after you are done typing your message.\n")
 
                                         self.db_manager.execute(
                                             "INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",
                                             (recipient[0], message, sender))
-                                        print(f"\nmessage sent to '{recipient[3]}' successfully!")
+                                        
+                                        print(f"\nMessage sent to '{recipient[3]}' successfully!")
+                                    else:
+                                        print("User not found, please try again.")
                                 except Exception as e:
                                     print("Error while sending a message:", e )
                             else:
-                                print("Only plus members may view the list of all users")
+                                print("Only plus members may view the list of all users.")
                         elif choice == 'q':
                             break
                         else:
-                            print("invalid selection")
+                            print("Invalid choice. Please try again.")
 
                     return 0
+                
                 def view_full_message(text, user):
                     print(menu_seperate)
+                    print("Full Message\n-------------------------------")
                     print(text)
                     print("\n- " + user)
+                
                 def delete_message(message_to_delete):
                     recipient = message_to_delete[0]
                     message = message_to_delete[1]
@@ -1433,6 +1447,7 @@ class InCollegeAppManager:
                     self.db_manager.execute("DELETE FROM messages WHERE sender=? AND message=? AND recipient=?",((sender, message, recipient)))
                     print('\nMessage successfully deleted!')
                     return 0
+                
                 def reply_message(message_to_reply):
                     recipient = message_to_reply[0]
                     message = message_to_reply[1]
@@ -1440,79 +1455,99 @@ class InCollegeAppManager:
 
                     s_user = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (sender,))[0][1]
 
-                    reply = input("How would you like to reply to this message?\nHit \"ENTER\" after you are done typing your message\n")
+                    reply = input("How would you like to reply to this message?\nHit \"ENTER\" after you are done typing your reply.\n")
 
-                    new_message = message+"\n\n- "+ s_user + "\n-------------------\n" + reply
+                    new_message = reply + "\n\n- " + self._current_user[1] + "\n-------------------\n" + message
 
                     self.db_manager.execute("INSERT INTO messages(recipient, message, sender) VALUES (?, ?, ?)",(sender, new_message, recipient))
-                    print(f"\nreply sent to '{s_user}' successfully!")
+                    print(f"\nReply sent to '{s_user}' successfully!")
 
                 while True:
                     #print a preview of all messages to this user
                     messages = self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],))
                     modified_messages = []
 
-                    print(messages)
-
                     print(menu_seperate)
+                    print("Your Messages\n-------------------------------")
                     if not messages:
-                        print("you have no messages\n")
+                        print("You have no new messages.\n")
                     else:
                         for i in range(len(messages)):
                             modified_string = messages[i][1] [:100] + '...' if len(messages[i][1]) > 100 else messages[i][1]
                             username = self.db_manager.fetchall("SELECT * FROM accounts WHERE (user_id =?)", (messages[i][2],))[0][1]
                             modified_messages.append([i+1, username, modified_string])
 
-                        print("\nCurrent messages")
                         head = ["message ID", "sender", "message"]
                         print(tabulate(modified_messages, headers=head, tablefmt="grid"), "\n")
 
 
                     #print the menu
-                    print('1. Send a new message\n2. Reply to a message\n3. View full message\n4. Delete a message\nq. Quit\n')
+                    print(self.menus["messages"])
                     choice = input("Select an option: ")
 
                     #send a new message
-                    if(choice == '1'):
+                    if choice == '1':
                         send_message()
                     #reply to a message
-                    elif(choice == '2'):
-                        choice = input("Which message would you like to reply to?\nenter the message ID: ")
+                    elif choice == '2':
+                        choice = input("\nEnter the message ID of the message would you like to reply to: ")
                         try:
                             choice = int(choice) - 1
                             reply_message(messages[choice])
                         except:
-                            print("\nmessage not found")
+                            print("\nMessage not found. Please try again.")
                     #view full message
-                    elif(choice == '3'):
-                        choice = input("Which message would you like to view in full?\nenter the message ID: ")
+                    elif choice == '3':
+                        choice = input("\nEnter the message ID of the message you would like to view in full: ")
                         try:
                             choice = int(choice)-1
                             view_full_message(messages[choice][1],modified_messages[choice][1])
                         except:
-                            print("\nmessage not found")
+                            print("\nMessage not found. Please try again.")
                     #delete a message
-                    elif(choice == '4'):
-                        choice = input("Which message would you like to delete?\nenter the message ID: ")
+                    elif choice == '4':
+                        choice = input("\nEnter the message ID of the message you would like to delete: ")
                         try:
                             choice = int(choice) - 1
                             delete_message(messages[choice])
                         except:
-                            print("\nmessage not found")
+                            print("\nMessage not found. Please try again.")
                     #quit
-                    elif(choice == 'q'):
+                    elif choice == 'q':
                         break
                     #else invalid
                     else:
-                        print("invalid selection")
+                        print("Invalid choice. Please try again.")
+
+            def apply_for_jobs_reminder():
+                current_utc_time = datetime.utcnow()
+                last_application_time = datetime.strptime((self.db_manager.fetchall("SELECT last_job_application_timestamp FROM accounts WHERE user_id=?", (self._current_user[0],)))[0][0], "%Y-%m-%d %H:%M:%S")
+                difference_in_seconds = abs(int((current_utc_time-last_application_time).total_seconds()))
+                difference_in_days = difference_in_seconds // (24 * 60 * 60)
+                if difference_in_days >= 7:
+                    print("It seems like you haven't applied to a job in the last seven days.")
+                    print("Remember: you're going to want to have a job when you graduate. Make sure that you start to apply for jobs today!\n")
 
             options = {'1':jobs, '2':connect_with_user, '3':learn_skill, '4':useful_links, '5':important_InCollege_links, '6':show_my_network,
             '7': myProfileOptions, '8':messsaging_menu}
+            
+            reminderDisplayed = False
             while True:
                 print(menu_seperate) #menu
+
+                print(f"Welcome back to InCollege, {self._current_user[3]}!\n")
+                if not reminderDisplayed:
+                    apply_for_jobs_reminder()
+                    reminderDisplayed = True
+                
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
                 if numberOfRequests:
                     print(f"You have [{numberOfRequests}] new friend request{'s' if numberOfRequests > 1 else ''}!\n")
+                
+                user_messages = self.db_manager.fetchall("SELECT COUNT(*) from messages WHERE recipient=?", (self._current_user[0],))
+                if user_messages and user_messages[0][0] > 0:
+                    print("You have a message waiting for you in the message menu!\n")
+
                 print(self.menus["signed_in"])
 
                 option = input("Select an option: ")
@@ -1540,9 +1575,6 @@ class InCollegeAppManager:
             _acc = self.__login(username=username, password=password)
             if _acc is not None:
                 print("\nYou have successfully logged in.")
-                user_messages = self.db_manager.fetchall("""SELECT COUNT(*) from messages WHERE recipient=?""", (_acc[0],))
-                if user_messages and user_messages[0][0] > 0:
-                    print("You have a message waiting for you in the Message Center.")
                 signed_in_menu(_acc)
             else:
                 print('\nIncorrect username / password, please try again')
