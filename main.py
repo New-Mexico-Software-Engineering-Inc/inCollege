@@ -177,7 +177,7 @@ class InCollegeAppManager:
         self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS notifications (
             user_id INTEGER NOT NULL,
-            notification TEXT NOT NULL,
+            notification TEXT NOT NULL
         );
         ''')
 
@@ -1483,22 +1483,27 @@ class InCollegeAppManager:
             while True:
                 print(menu_seperate) #menu
 
+                # notify user of messages
                 numberOfMessages = len(self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],)))
                 if numberOfMessages:
                     print(f"You have [{numberOfMessages}] message{'s' if numberOfMessages > 1 else ''}!\n")
 
+                # notify user of no profile
                 has_profile = self.db_manager.fetchall("SELECT * FROM profiles WHERE (username =?)", (self._current_user[1],))
                 if not has_profile:
                     print("Don't forget to create a profile!\n")
 
+                # notify user of friend requests
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
                 if numberOfRequests:
                     print(f"You have [{numberOfRequests}] new friend request{'s' if numberOfRequests > 1 else ''}!\n")
 
+                # notify user of one time notifications
                 notifications = self.db_manager.fetchall("SELECT * FROM notifications WHERE (user_id =?)",(self._current_user[0],))
                 for notification in notifications:
                     print(notification[1])
-
+                #remove one time notifications from table
+                self.db_manager.execute("DELETE FROM notifications WHERE (user_id =?)",(self._current_user[0],))
 
                 print(self.menus["signed_in"])
 
@@ -1588,11 +1593,13 @@ class InCollegeAppManager:
                 if _acc is not None:
                     print('\nYou have successfully created an account!\nLog in to start using InCollege.')
                     #insert notifications of new account
-                    accounts = (self.db_manager.fetchall("SELECT COUNT(*) FROM accounts WHERE username!=?", (_acc[1], )))
+                    accounts = (self.db_manager.fetchall("SELECT * FROM accounts",))
                     for user in accounts:
+                        if user[0] == _acc[0]:
+                            continue
                         self.db_manager.execute(
-                            "INSERT INTO notifications(user_id, notification) VALUES (?, ?)",
-                            (user[0]), f"New User! {_acc[3]} {_acc[4]} created an account")
+                            "INSERT INTO notifications (user_id, notification) VALUES (?, ?)",
+                            ((user[0]), f"New User! {_acc[3]} {_acc[4]} created an account!\n"))
 
                 else:
                     print('\nThere has been an unexpected error while creating your account.')
