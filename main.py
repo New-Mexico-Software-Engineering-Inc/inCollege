@@ -1480,6 +1480,10 @@ class InCollegeAppManager:
                 if numberOfMessages:
                     print(f"You have [{numberOfMessages}] message{'s' if numberOfMessages > 1 else ''}!\n")
 
+                has_profile = self.db_manager.fetchall("SELECT * FROM profiles WHERE (username =?)", (self._current_user[1],))
+                if not has_profile:
+                    print("Don't forget to create a profile!\n")
+
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
                 if numberOfRequests:
                     print(f"You have [{numberOfRequests}] new friend request{'s' if numberOfRequests > 1 else ''}!\n")
