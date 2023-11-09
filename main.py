@@ -1556,7 +1556,7 @@ class InCollegeAppManager:
                     print("You have a message waiting for you in the message menu!\n")
 
                 # notify user of no profile
-                has_profile = self.db_manager.fetchall("SELECT * FROM profiles WHERE (username =?)", (self._current_user[1],))
+                has_profile = self.db_manager.fetchall("SELECT * FROM profiles WHERE username =? AND posted =?", (self._current_user[1],'yes'))
                 if not has_profile:
                     print("Don't forget to create a profile!\n")
 
