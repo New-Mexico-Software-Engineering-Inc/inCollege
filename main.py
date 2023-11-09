@@ -177,6 +177,13 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            user_id INTEGER NOT NULL,
+            notification TEXT NOT NULL
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             recipient INTEGER NOT NULL,
             message TEXT NOT NULL,
@@ -1548,6 +1555,18 @@ class InCollegeAppManager:
                 if user_messages and user_messages[0][0] > 0:
                     print("You have a message waiting for you in the message menu!\n")
 
+                # notify user of no profile
+                has_profile = self.db_manager.fetchall("SELECT * FROM profiles WHERE (username =?)", (self._current_user[1],))
+                if not has_profile:
+                    print("Don't forget to create a profile!\n")
+
+                # notify user of one time notifications
+                notifications = self.db_manager.fetchall("SELECT * FROM notifications WHERE (user_id =?)",(self._current_user[0],))
+                for notification in notifications:
+                    print(notification[1])
+                #remove one time notifications from table
+                self.db_manager.execute("DELETE FROM notifications WHERE (user_id =?)",(self._current_user[0],))
+
                 print(self.menus["signed_in"])
 
                 option = input("Select an option: ")
@@ -1632,6 +1651,15 @@ class InCollegeAppManager:
                 _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major, plus=plus)
                 if _acc is not None:
                     print('\nYou have successfully created an account!\nLog in to start using InCollege.')
+                    #insert notifications of new account
+                    accounts = (self.db_manager.fetchall("SELECT * FROM accounts",))
+                    for user in accounts:
+                        if user[0] == _acc[0]:
+                            continue
+                        self.db_manager.execute(
+                            "INSERT INTO notifications (user_id, notification) VALUES (?, ?)",
+                            ((user[0]), f"New User! {_acc[3]} {_acc[4]} created an account!\n"))
+
                 else:
                     print('\nThere has been an unexpected error while creating your account.')
             except Exception as e:
