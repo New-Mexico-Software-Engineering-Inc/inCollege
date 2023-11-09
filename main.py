@@ -1475,9 +1475,15 @@ class InCollegeAppManager:
             '7': myProfileOptions, '8':messsaging_menu}
             while True:
                 print(menu_seperate) #menu
+
+                numberOfMessages = len(self.db_manager.fetchall("SELECT * FROM messages WHERE (recipient =?)", (self._current_user[0],)))
+                if numberOfMessages:
+                    print(f"You have [{numberOfMessages}] message{'s' if numberOfMessages > 1 else ''}!\n")
+
                 numberOfRequests = (self.db_manager.fetchall("SELECT COUNT(*) FROM friend_requests WHERE receiver=?", (self._current_user[1], )))[0][0]
                 if numberOfRequests:
                     print(f"You have [{numberOfRequests}] new friend request{'s' if numberOfRequests > 1 else ''}!\n")
+
                 print(self.menus["signed_in"])
 
                 option = input("Select an option: ")
