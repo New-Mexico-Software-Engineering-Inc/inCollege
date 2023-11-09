@@ -175,6 +175,13 @@ class InCollegeAppManager:
         ''')
 
         self.db_manager.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            user_id INTEGER NOT NULL,
+            notification TEXT NOT NULL,
+        );
+        ''')
+
+        self.db_manager.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             recipient INTEGER NOT NULL,
             message TEXT NOT NULL,
@@ -1488,6 +1495,11 @@ class InCollegeAppManager:
                 if numberOfRequests:
                     print(f"You have [{numberOfRequests}] new friend request{'s' if numberOfRequests > 1 else ''}!\n")
 
+                notifications = self.db_manager.fetchall("SELECT * FROM notifications WHERE (user_id =?)",(self._current_user[0],))
+                for notification in notifications:
+                    print(notification[1])
+
+
                 print(self.menus["signed_in"])
 
                 option = input("Select an option: ")
@@ -1575,6 +1587,13 @@ class InCollegeAppManager:
                 _acc = self._create_account(username=username, password=password, first_name=name_first, last_name=name_last, university=univ, major=major, plus=plus)
                 if _acc is not None:
                     print('\nYou have successfully created an account!\nLog in to start using InCollege.')
+                    #insert notifications of new account
+                    accounts = (self.db_manager.fetchall("SELECT COUNT(*) FROM accounts WHERE username!=?", (_acc[1], )))
+                    for user in accounts:
+                        self.db_manager.execute(
+                            "INSERT INTO notifications(user_id, notification) VALUES (?, ?)",
+                            (user[0]), f"New User! {_acc[3]} {_acc[4]} created an account")
+
                 else:
                     print('\nThere has been an unexpected error while creating your account.')
             except Exception as e:
