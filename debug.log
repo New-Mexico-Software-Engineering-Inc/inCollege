@@ -1,79 +1,507 @@
-successfully logged in.
 
-********************************************************************* incollege **********************************************************************
+********************************************************************* InCollege **********************************************************************
 
-welcome back to incollege, fname!
+ Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! 
+ Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.
+ Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. 
+ Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.
+ Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! 
+ #CareerSuccess 
+ #InCollegeImpact 
 
-don't forget to create a profile!
-
-account options
+InCollege
 -------------------------------
-1. job search/internship
-2. find someone you know
-3. learn a new skill
-4. useful links
-5. incollege important links
-6. show my network
-7: my profile
-8. message menu
-9: delete my account
-q: log out
+1. Log in
+2. Create a new account
+3. Find someone you know
+4. Useful Links
+5. Play Demo Video
+6. InCollege Important Links
+q. Quit
 
-select an option: 
-********************************************************************* incollege **********************************************************************
+Select an option: 
+********************************************************************* InCollege **********************************************************************
 
-useful links
+Log In
 -------------------------------
-1. general
-2. browse incollege
-3. business solutions
-4. directories
-q. quit
+Enter your username: Enter your password: 
+You have successfully logged in.
 
-select an option: 
+********************************************************************* InCollege **********************************************************************
 
-********************************************************************* incollege **********************************************************************
+Welcome back to InCollege, fname!
 
-general help
+Don't forget to create a profile!
+
+Account Options
 -------------------------------
-1. help center
-2. about
-3. press
-4. blog
-5. careers
-6. developers
-q. quit
-select an option: 
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
 
-********************************************************************* incollege **********************************************************************
+Select an option: 
+********************************************************************* InCollege **********************************************************************
 
-useful links
+Job Notifications:
 -------------------------------
-1. general
-2. browse incollege
-3. business solutions
-4. directories
-q. quit
+* You have currently applied for 0 jobs.
 
-select an option: 
-
-********************************************************************* incollege **********************************************************************
-
-welcome back to incollege, fname!
-
-don't forget to create a profile!
-
-account options
+Job Search/Internship
 -------------------------------
-1. job search/internship
-2. find someone you know
-3. learn a new skill
-4. useful links
-5. incollege important links
-6. show my network
-7: my profile
-8. message menu
-9: delete my account
-q: log out
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
 
-select an option: 
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Create A Job
+-------------------------------
+Enter the job title: 
+Enter the job description: 
+Enter the required skill name: 
+Enter a long description for the skill: 
+Enter the employer: 
+Enter the location: 
+Enter the salary: 
+
+Successfully posted the job!
+
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 0 jobs.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: Succesfully Logged Out.
+
+********************************************************************* InCollege **********************************************************************
+
+ Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! 
+ Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.
+ Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. 
+ Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.
+ Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! 
+ #CareerSuccess 
+ #InCollegeImpact 
+
+InCollege
+-------------------------------
+1. Log in
+2. Create a new account
+3. Find someone you know
+4. Useful Links
+5. Play Demo Video
+6. InCollege Important Links
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Log In
+-------------------------------
+Enter your username: Enter your password: 
+You have successfully logged in.
+
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname2!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 0 jobs.
+* A new job "Test Job" has been posted.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Apply for a Job
+-------------------------------
+Enter the job ID (or enter 'q' to quit): Please Enter your Graduation Date (dd/mm/yyyy): Please Enter your Available Start Date (dd/mm/yyyy): Tell us about yourself and why you want the job: 
+
+Successfully Applied for the job.
+
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 1 job.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname2!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: Succesfully Logged Out.
+
+********************************************************************* InCollege **********************************************************************
+
+ Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! 
+ Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.
+ Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. 
+ Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.
+ Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! 
+ #CareerSuccess 
+ #InCollegeImpact 
+
+InCollege
+-------------------------------
+1. Log in
+2. Create a new account
+3. Find someone you know
+4. Useful Links
+5. Play Demo Video
+6. InCollege Important Links
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Log In
+-------------------------------
+Enter your username: Enter your password: 
+You have successfully logged in.
+
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 0 jobs.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Jobs you have posted
+-------------------------------
+Title: Test Job
+Description: test
+ID: 1
+
+Delete a job
+-------------------------------
+Enter the ID of the job you wish to delete (or enter q to cancel): Job with ID 1 has been successfully deleted.
+All applications to this job have also been deleted.
+
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 0 jobs.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: Succesfully Logged Out.
+
+********************************************************************* InCollege **********************************************************************
+
+ Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! 
+ Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.
+ Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. 
+ Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.
+ Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! 
+ #CareerSuccess 
+ #InCollegeImpact 
+
+InCollege
+-------------------------------
+1. Log in
+2. Create a new account
+3. Find someone you know
+4. Useful Links
+5. Play Demo Video
+6. InCollege Important Links
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Log In
+-------------------------------
+Enter your username: Enter your password: 
+You have successfully logged in.
+
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname2!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 0 jobs.
+* The job "Test Job" that you applied for was deleted.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname2!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Job Notifications:
+-------------------------------
+* You have currently applied for 0 jobs.
+
+Job Search/Internship
+-------------------------------
+1. Search for a job
+2. Post a job
+3. Apply for a job
+4. Show jobs I've applied to
+5. Save a job
+6. Show jobs I've saved
+7. Show jobs I've not applied to
+8. Delete a job
+q. Quit
+
+Select an option: 
+********************************************************************* InCollege **********************************************************************
+
+Welcome back to InCollege, fname2!
+
+Don't forget to create a profile!
+
+Account Options
+-------------------------------
+1. Job Search/Internship
+2. Find someone you know
+3. Learn a new skill
+4. Useful links
+5. InCollege important links
+6. Show my network
+7: My Profile
+8. Message Menu
+9: Delete my account
+q: Log out
+
+Select an option: Succesfully Logged Out.
+
+********************************************************************* InCollege **********************************************************************
+
+ Meet Sarah, a recent graduate who turned her dreams into reality with InCollege! 
+ Sarah joined InCollege during her final year, leveraging its vast network to connect with industry professionals.
+ Through insightful discussions and mentorship, she honed her skills and gained invaluable advice. 
+ Thanks to InCollege, Sarah secured her dream job as a marketing strategist at a leading tech company immediately after graduation.
+ Her journey from student to success story is proof that InCollege is the ultimate launchpad for your career! 
+ #CareerSuccess 
+ #InCollegeImpact 
+
+InCollege
+-------------------------------
+1. Log in
+2. Create a new account
+3. Find someone you know
+4. Useful Links
+5. Play Demo Video
+6. InCollege Important Links
+q. Quit
+
+Select an option: Goodbye!

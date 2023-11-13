@@ -12,6 +12,7 @@ from io import StringIO
 import re
 import uuid
 import os
+from datetime import datetime, timedelta
 os.system('clean')
 
 with open('./data/menus.json', 'r') as f:
@@ -167,3 +168,94 @@ def test_number_of_jobs_applied(monkeypatch, capsys):
 
     # Check if the expected output is present in the captured output
     assert expectedOut1 in capture.out
+
+def update_last_job_application_timestamp(username, days_delta):
+        new_timestamp = datetime.now() - timedelta(days=days_delta)
+        query = f'''
+            UPDATE accounts
+            SET last_job_application_timestamp = ?
+            WHERE username = ?;
+        '''
+        main.DatabaseManager("users.db").execute(query, (new_timestamp, username))
+        
+def test_number_of_jobs_applied_recent(monkeypatch, capsys):
+        clear_accounts()
+        __create_user_account_plus()
+        userIn = ""
+        update_last_job_application_timestamp("a", 3)
+        # Simulate user input for login and checking the number of applied jobs
+        userIn += "1\na\n!!!Goodpswd0\nq\nq\n"
+
+        # Expect to see the number of applied jobs
+        expectedOut = "It seems like you haven't applied to a job in the last seven days."
+
+        userInput = StringIO(userIn)
+
+        monkeypatch.setattr('sys.stdin', userInput)
+
+        # Run the function and capture output
+        capture = runInCollege(capsys)
+        print(capture.out)
+
+        # Check if the expected output is present in the captured output
+        assert expectedOut not in capture.out
+        
+        update_last_job_application_timestamp("a", 8)  # 8 days ago
+
+        userInput = StringIO(userIn)
+
+        monkeypatch.setattr('sys.stdin', userInput)
+
+        # Run the function and capture output
+        capture = runInCollege(capsys)
+        print(capture.out)
+
+        # Check if the expected output is present in the captured output
+        assert expectedOut not in capture.out
+
+def test_new_job_notification(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_plus()
+    __create_user_account_standard()
+    # sign in and post Test Job under user a and post a Test Job
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest Job\ntest\ntest\ntest\ntest\ntest\n100\n"
+    # logout and sign in with user b and begin to apply for posted job
+    userIn += "q\nq\n1\nb\n!!!Goodpswd0\n1\n3\n1\n"
+    # enter application details and then logout
+    userIn += "01/01/0001\n01/01/0001\nTesting\nq\nq\n"
+    # log back in to user a and delete the posted job, then log out
+    userIn += "1\na\n!!!Goodpswd0\n1\n8\n1\nq\nq\n"
+    # sign back into user b, check for notification of deleted job only upon first time entering job section
+    userIn += "1\nb\n!!!Goodpswd0\n1\nq\n1\nq\nq\nq\n"
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+    capture = runInCollege(capsys)
+    print(capture.out)
+    # we should only see the notification once since it only appears the first time someone enters their job section
+    with open("debug.log", "w") as f:
+        f.write(capture.out)
+    assert "A new job \"Test Job\" has been posted." in capture.out
+    
+def test_deleted_job_notification(monkeypatch, capsys):
+    clear_accounts()
+    __create_user_account_plus()
+    __create_user_account_standard()
+    # expect to see a notification that the job was deleted only once when jobs section is first opened
+    expectedOutput = 'The job "Test Job" that you applied for was deleted.'
+
+    # sign in and post Test Job under user a and post a Test Job
+    userIn = "1\na\n!!!Goodpswd0\n1\n2\nTest Job\ntest\ntest\ntest\ntest\ntest\n100\n"
+    # logout and sign in with user b and begin to apply for posted job
+    userIn += "q\nq\n1\nb\n!!!Goodpswd0\n1\n3\n1\n"
+    # enter application details and then logout
+    userIn += "01/01/0001\n01/01/0001\nTesting\nq\nq\n"
+    # log back in to user a and delete the posted job, then log out
+    userIn += "1\na\n!!!Goodpswd0\n1\n8\n1\nq\nq\n"
+    # sign back into user b, check for notification of deleted job only upon first time entering job section
+    userIn += "1\nb\n!!!Goodpswd0\n1\nq\n1\nq\nq\nq\n"
+    userInput = StringIO(userIn)
+    monkeypatch.setattr('sys.stdin', userInput)
+    capture = runInCollege(capsys)
+    print(capture.out)
+    # we should only see the notification once since it only appears the first time someone enters their job section
+    assert 1 == capture.out.count(expectedOutput)
