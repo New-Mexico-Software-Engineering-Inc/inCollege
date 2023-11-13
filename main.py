@@ -1150,7 +1150,7 @@ class InCollegeAppManager:
                     print("Titles of Jobs Currently Posted\n-------------------------------")
                     if job_titles:
                         for job_title in job_titles:
-                            print(f"Title: {job_title[0]} ID: {job_title[1]}")
+                            print(f"Title: {job_title[0]} - ID: {job_title[1]}")
                     else:
                         print("No job titles found.")
                     

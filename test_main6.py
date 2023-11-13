@@ -175,10 +175,12 @@ def test_job_titles(monkeypatch, capsys):
     monkeypatch.setattr('sys.stdin', userInput)
 
     #titles of jobs currently posted are to be displayed when searching for a job
-    expectedTitlesOutput = "Titles of Jobs Currently Posted\n-------------------------------\nJob A\nJob B"
+    expectedTitlesOutput = "Titles of Jobs Currently Posted\n-------------------------------\nTitle: Job A - ID: 1\nTitle: Job B - ID: 2"
 
     #capture output
     capture = runInCollege(capsys)
+
+    print(capture.out)
     
     #test that the job titles were displayed to the screen
     assert expectedTitlesOutput in capture.out
