@@ -1146,11 +1146,11 @@ class InCollegeAppManager:
 
                 def search_job():
                     print(menu_seperate)
-                    job_titles = self.db_manager.fetchall("SELECT job_title FROM jobs")
+                    job_titles = self.db_manager.fetchall("SELECT job_title, job_id FROM jobs")
                     print("Titles of Jobs Currently Posted\n-------------------------------")
                     if job_titles:
                         for job_title in job_titles:
-                            print(job_title[0])
+                            print(f"Title: {job_title[0]} ID: {job_title[1]}")
                     else:
                         print("No job titles found.")
                     
@@ -1246,6 +1246,14 @@ class InCollegeAppManager:
                 
                 def apply_for_job():
                     print(menu_seperate)
+                    job_titles = self.db_manager.fetchall("SELECT job_title, job_id FROM jobs")
+                    print("Titles of Jobs Currently Posted\n-------------------------------")
+                    if job_titles:
+                        for job_title in job_titles:
+                            print(f"Title: {job_title[0]} - ID: {job_title[1]}")
+                    else:
+                        print("No job titles found.")
+                    print("\n")
                     print("Apply for a Job\n-------------------------------")
                     try:
                         correct_date = lambda x: len(x) == 3 and len(x[0]) == 2 and len(x[1]) == 2 and len(x[2]) == 4
@@ -1288,6 +1296,14 @@ class InCollegeAppManager:
 
                 def save_a_job():
                     print(menu_seperate)
+                    job_titles = self.db_manager.fetchall("SELECT job_title, job_id FROM jobs")
+                    print("Titles of Jobs Currently Posted\n-------------------------------")
+                    if job_titles:
+                        for job_title in job_titles:
+                            print(f"Title: {job_title[0]} - ID: {job_title[1]}")
+                    else:
+                        print("No job titles found.")
+                    print("\n")
                     print("Save A Job\n-------------------------------")
                     try:
                         user_id = self._current_user[0]
